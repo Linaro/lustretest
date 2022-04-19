@@ -1,0 +1,28 @@
+- project:
+    name: 'project-lustre-build-release'
+    branch:
+      - 'master'
+    jobs:
+      - '{name}-{branch}'
+
+- job-template:
+    # default var values
+    branch: 'master'
+    build_linux: 'no'
+
+    name: '{name}-{branch}'
+    node: 'build'
+
+    parameters:
+      - string:
+          name: 'BRANCH'
+          default: '{branch}'
+          description: 'branch to build'
+      - string:
+          name: 'BUILD_LINUX'
+          default: '{build_linux}'
+          description: 'build linux kernel: yes or no'
+
+    builders:
+      - shell:
+          !include-raw-escape: scripts/build-release.sh
