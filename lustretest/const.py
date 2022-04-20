@@ -4,6 +4,7 @@ CLIENT = 'CLIENT'
 MDS = 'MDS'
 OST = 'OST'
 
+PROVISION_NEW_CLUSTER = True
 TEST_WORKSPACE = '/home/centos/workspace/'
 SSH_PRIVATE_KEY = '/home/centos/workspace/node/id_rsa'
 SSH_PRIKEY_EXEC = '/home/centos/.ssh/'
@@ -55,3 +56,29 @@ OST_DISK8 = "/dev/vdi"
 # hostname IP TYPE
 # TYPE: CLIENT MDS OST
 #
+
+# Terraform Resource Name
+LUSTRE_CLUSTER_PREFIX = "lustre_"
+LUSTRE_NODE_NUM_01 = "-01"
+LUSTRE_NODE_NUM_01 = "-02"
+LUSTRE_NODE_NUM_01 = "-03"
+LUSTRE_NODE_NUM_01 = "-04"
+LUSTRE_NODE_NUM_01 = "-05"
+
+LUSTRE_NODE_01 = "node01"
+LUSTRE_NODE_02 = "node02"
+LUSTRE_NODE_03 = "node03"
+LUSTRE_NODE_04 = "node04"
+LUSTRE_NODE_05 = "node05"
+
+LUSTRE_CLIENT01_PORT = "lustre_client01_port"
+LUSTRE_CLIENT02_PORT = "lustre_client02_port"
+LUSTRE_MDS01_PORT = "lustre_client01_port"
+LUSTRE_MDS01_PORT = "lustre_client01_port"
+LUSTRE_OST01_PORT = "lustre_client01_port"
+
+LUSTRE_CLIENT01_PORT_PREFIX = "_client01_port"
+LUSTRE_CLIENT02_PORT_PREFIX = "_client02_port"
+LUSTRE_MDS01_PORT_PREFIX = "_mds01_port"
+LUSTRE_MDS02_PORT_PREFIX = "_mds02_port"
+LUSTRE_OST01_PORT_PREFIX = "_ost01_port"

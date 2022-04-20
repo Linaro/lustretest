@@ -102,22 +102,22 @@ class Provision(object):
     #
     def prepare_tf_conf(self):
         test_hash = self.host_name_gen()
-        test_name = "lustre-" + test_hash
+        test_name = const.LUSTRE_CLUSTER_PREFIX + test_hash
         self.copy_dir(test_name)
         self.tf_conf_dir = const.TERRAFORM_CONF_DIR + test_name + "/"
 
-        network_port_prefix = "lustre_" + test_hash
+        network_port_prefix = const.LUSTRE_CLUSTER_PREFIX + test_hash
         tf_vars = {
-            "node01": test_name + "-01",
-            "node02": test_name + "-02",
-            "node03": test_name + "-03",
-            "node04": test_name + "-04",
-            "node05": test_name + "-05",
-            "lustre_client01_port": network_port_prefix + "_client01_port",
-            "lustre_client02_port": network_port_prefix + "_client02_port",
-            "lustre_mds01_port": network_port_prefix + "_mds01_port",
-            "lustre_mds02_port": network_port_prefix + "_mds02_port",
-            "lustre_ost01_port": network_port_prefix + "_ost01_port"
+            const.LUSTRE_NODE_01: test_name + const.LUSTRE_NODE_NUM_01,
+            const.LUSTRE_NODE_02: test_name + const.LUSTRE_NODE_NUM_02,
+            const.LUSTRE_NODE_03: test_name + const.LUSTRE_NODE_NUM_03,
+            const.LUSTRE_NODE_04: test_name + const.LUSTRE_NODE_NUM_04,
+            const.LUSTRE_NODE_05: test_name + const.LUSTRE_NODE_NUM_05,
+            const.LUSTRE_CLIENT01_PORT: network_port_prefix + const.LUSTRE_CLIENT01_PORT_PREFIX,
+            const.LUSTRE_CLIENT02_PORT: network_port_prefix + const.LUSTRE_CLIENT02_PORT_PREFIX,
+            const.LUSTRE_MDS01_PORT: network_port_prefix + const.LUSTRE_MDS01_PORT_PREFIX,
+            const.LUSTRE_MDS02_PORT: network_port_prefix + const.LUSTRE_MDS02_PORT_PREFIX,
+            const.LUSTRE_OST01_PORT: network_port_prefix + const.LUSTRE_OST01_PORT_PREFIX
         }
         # Write the file to json file
         with open(self.tf_conf_dir + const.TERRAFORM_VARIABLES_JSON, "w") as f:
@@ -302,8 +302,7 @@ class Provision(object):
     # procedures which is in cloud-init to another function.
     #
     def provision(self):
-        provision_new = False
-        if provision_new:
+        if const.PROVISION_NEW_CLUSTER:
             self.prepare_tf_conf()
         else:
             self.tf_conf_dir = const.TERRAFORM_CONF_DIR + \
@@ -319,7 +318,7 @@ class Provision(object):
         # check the file is there
         if exists(const.NODE_INFO):
             if self.node_check():
-                if not provision_new:
+                if not const.PROVISION_NEW_CLUSTER:
                     self._debug("Does not provision new instances, we "
                                 "need to reinstall Lustre from the repo")
                     return self.node_operate()
@@ -370,6 +369,7 @@ class Provision(object):
             cmd_result["3"] = True
         else:
             cmd_result["3"] = False
+
         if self.ssh_exec(client, cmd4):
             cmd_result["4"] = True
         else:
@@ -414,6 +414,7 @@ def main():
 
     cluster_provision = Provision(logger)
     cluster_provision.provision()
+
 
 if __name__ == "__main__":
     main()
