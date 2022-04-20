@@ -13,7 +13,7 @@ import logging
 import threading
 
 
-class Provisioner(object):
+class Provision(object):
     def __init__(self, logger):
         self.logger = logger
         self.node_map = None
@@ -33,11 +33,15 @@ class Provisioner(object):
         return ''.join(random.sample(string.ascii_letters + string.digits, 8))
 
     def ssh_connection(self, ip):
-        private_key = paramiko.RSAKey.from_private_key_file(const.SSH_PRIVATE_KEY)
+        private_key = \
+            paramiko.RSAKey.from_private_key_file(const.SSH_PRIVATE_KEY)
         ssh_client = paramiko.SSHClient()
         ssh_client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
         try:
-            ssh_client.connect(hostname=ip, port=22, username=self.ssh_user, pkey=private_key)
+            ssh_client.connect(hostname=ip,
+                               port=22,
+                               username=self.ssh_user,
+                               pkey=private_key)
         except ssh_exception.NoValidConnectionsError as e:
             self._debug("Not yet connected to this node: " + e)
             return
@@ -49,7 +53,8 @@ class Provisioner(object):
             self._error(error)
             return
 
-        self._debug("SSH client for IP: " + ip + " initialization is finished")
+        self._debug("SSH client for IP: " + ip +
+                    " initialization is finished")
         return ssh_client
 
     def ssh_close(self, ssh_client):
@@ -86,11 +91,14 @@ class Provisioner(object):
                 target_file = os.path.join(tf_conf_dir, f)
                 if not os.path.exists(target_file) or (
                         os.path.exists(target_file) and (
-                        os.path.getsize(target_file) != os.path.getsize(source_file))):
-                    open(target_file, "wb").write(open(source_file, "rb").read())
+                        os.path.getsize(target_file) !=
+                        os.path.getsize(source_file))):
+                    open(target_file, "wb").write(open(source_file,
+                                                       "rb").read())
 
     #
-    # Prepare the terraform configuration, all the args are defined at TERRAFORM_VARIABLES_JSON
+    # Prepare the terraform configuration, all the args are defined at
+    # TERRAFORM_VARIABLES_JSON
     #
     def prepare_tf_conf(self):
         test_hash = self.host_name_gen()
@@ -121,7 +129,9 @@ class Provisioner(object):
     def terraform_init(self):
         os.chdir(self.tf_conf_dir)
         if os.path.exists(const.TERRAFORM_VARIABLES_JSON):
-            p = subprocess.Popen([const.TERRAFORM_BIN, 'init'], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+            p = subprocess.Popen([const.TERRAFORM_BIN, 'init'],
+                                 stdout=subprocess.PIPE,
+                                 stderr=subprocess.STDOUT)
             self.realtime_output(p)
             if p.returncode == 0:
                 self._debug('Terraform init success')
@@ -131,7 +141,8 @@ class Provisioner(object):
                 return False
 
         else:
-            self._error("Terraform init failed: terraform args does not exist: " + const.TERRAFORM_VARIABLES_JSON)
+            self._error("Terraform init failed: terraform args does not exist: "
+                        + const.TERRAFORM_VARIABLES_JSON)
             return False
 
     def realtime_output(self, p):
@@ -148,7 +159,8 @@ class Provisioner(object):
         os.chdir(self.tf_conf_dir)
         if self.terraform_init():
             p = subprocess.Popen([const.TERRAFORM_BIN, 'apply', '-auto-approve'],
-                                 stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+                                 stdout=subprocess.PIPE,
+                                 stderr=subprocess.STDOUT)
             self.realtime_output(p)
             if p.returncode == 0:
                 self._debug('Terraform apply success')
@@ -164,7 +176,6 @@ class Provisioner(object):
     #
     def gen_node_info(self):
         result = subprocess.check_output([const.TERRAFORM_BIN, 'output'])
-
         lustre_node_info = result.splitlines()
         client01_ip = None
         client01_hostname = None
@@ -210,18 +221,22 @@ class Provisioner(object):
 
         # Generate the NODE_INFO, which will be used in the future process
         with open(const.NODE_INFO, 'w+') as node_conf:
-            node_conf.write(client01_hostname + ' ' + client01_ip + ' ' + const.CLIENT + '\n')
-            node_conf.write(client02_hostname + ' ' + client02_ip + ' ' + const.CLIENT + '\n')
-            node_conf.write(mds01_hostname + ' ' + mds01_ip + ' ' + const.MDS + '\n')
-            node_conf.write(mds02_hostname + ' ' + mds02_ip + ' ' + const.MDS + '\n')
-            node_conf.write(ost01_hostname + ' ' + ost01_ip + ' ' + const.OST)
+            node_conf.write(client01_hostname + ' ' +
+                            client01_ip + ' ' + const.CLIENT + '\n')
+            node_conf.write(client02_hostname + ' ' +
+                            client02_ip + ' ' + const.CLIENT + '\n')
+            node_conf.write(mds01_hostname + ' ' +
+                            mds01_ip + ' ' + const.MDS + '\n')
+            node_conf.write(mds02_hostname + ' ' +
+                            mds02_ip + ' ' + const.MDS + '\n')
+            node_conf.write(ost01_hostname + ' ' +
+                            ost01_ip + ' ' + const.OST)
 
     #
     # Check the node is alive and the cloud-init is finished.
     # Using SSH, all the ssh keys credential is the same
     #
     def node_check(self):
-
         if len(self.node_ip_list) == 5:
             ssh_check_cmd = "ls -l " + const.CLOUD_INIT_FINISH
             while True:
@@ -260,7 +275,8 @@ class Provisioner(object):
                 return True
             else:
                 self._error("The cloud-init processes of nodes are "
-                            "not totally ready, only ready: " + str(len(node_status)))
+                            "not totally ready, only ready: "
+                            + str(len(node_status)))
                 return False
 
         else:
@@ -280,17 +296,18 @@ class Provisioner(object):
 
     #
     # The main process
-    # For stablity, we can set provision_new to False, and then set the terraform dir
-    # then each running will use the same 5 nodes for test.
-    # Note: This will not install all the packages, so we needs to do some procedures which
-    # is in cloud-init to another function.
+    # For stablity, we can set provision_new to False, and then set the
+    # terraform dir then each running will use the same 5 nodes for test.
+    # Note: This will not install all the packages, so we needs to do some
+    # procedures which is in cloud-init to another function.
     #
     def provision(self):
         provision_new = False
         if provision_new:
             self.prepare_tf_conf()
         else:
-            self.tf_conf_dir = const.TERRAFORM_CONF_DIR + const.TERRAFORM_EXIST_CONF
+            self.tf_conf_dir = const.TERRAFORM_CONF_DIR + \
+                               const.TERRAFORM_EXIST_CONF
 
         self.clean_node_info()
         tf_return = self.terraform_apply()
@@ -303,7 +320,8 @@ class Provisioner(object):
         if exists(const.NODE_INFO):
             if self.node_check():
                 if not provision_new:
-                    self._debug("Does not provision new instances, we need to reinstall Lustre from the repo")
+                    self._debug("Does not provision new instances, we "
+                                "need to reinstall Lustre from the repo")
                     return self.node_operate()
                 else:
                     return True
@@ -317,23 +335,64 @@ class Provisioner(object):
     def install_lustre(self, client):
         cmd1 = "sudo dnf config-manager --set-enabled ha"
         cmd2 = "sudo dnf config-manager --set-enabled powertools"
-        cmd3 = "sudo dnf install epel-release pdsh pdsh-rcmd-ssh net-tools dbench fio linux-firmware -y"
-        cmd4 = "sudo dnf --disablerepo = \"*\"  --enablerepo = \"lustre\" install kernel kernel-debuginfo kernel-debuginfo-common-aarch64 kernel-devel kernel-core kernel-headers kernel-modules kernel-modules-extra kernel-tools kernel-tools-libs kernel-tools-libs-devel kernel-tools-debuginfo -y"
-        cmd5 = "sudo dnf install e2fsprogs e2fsprogs-devel e2fsprogs-debuginfo e2fsprogs-static e2fsprogs-libs e2fsprogs-libs-debuginfo libcom_err libcom_err-devel libcom_err-debuginfo libss libss-devel libss-debuginfo -y"
-        cmd6 = "sudo dnf install lustre lustre-debuginfo lustre-debugsource lustre-devel lustre-iokit lustre-osd-ldiskfs-mount lustre-osd-ldiskfs-mount-debuginfo lustre-resource-agents lustre-tests lustre-tests-debuginfo kmod-lustre kmod-lustre-debuginfo kmod-lustre-osd-ldiskfs kmod-lustre-tests -y"
+        cmd3 = "sudo dnf update libmodulemd -y"
+        cmd4 = "sudo dnf install epel-release pdsh pdsh-rcmd-ssh " \
+               "net-tools dbench fio linux-firmware -y"
+        cmd5 = "sudo dnf --disablerepo = \"*\"  --enablerepo = \"lustre\" " \
+               "install kernel kernel-debuginfo " \
+               "kernel-debuginfo-common-aarch64 kernel-devel kernel-core " \
+               "kernel-headers kernel-modules kernel-modules-extra " \
+               "kernel-tools kernel-tools-libs kernel-tools-libs-devel " \
+               "kernel-tools-debuginfo -y"
+        cmd6 = "sudo dnf install e2fsprogs e2fsprogs-devel " \
+               "e2fsprogs-debuginfo e2fsprogs-static e2fsprogs-libs " \
+               "e2fsprogs-libs-debuginfo libcom_err libcom_err-devel " \
+               "libcom_err-debuginfo libss libss-devel libss-debuginfo -y"
+        cmd7 = "sudo dnf install lustre lustre-debuginfo lustre-debugsource " \
+               "lustre-devel lustre-iokit lustre-osd-ldiskfs-mount " \
+               "lustre-osd-ldiskfs-mount-debuginfo lustre-resource-agents " \
+               "lustre-tests lustre-tests-debuginfo kmod-lustre " \
+               "kmod-lustre-debuginfo kmod-lustre-osd-ldiskfs " \
+               "kmod-lustre-tests -y"
 
-        if not self.ssh_exec(client, cmd1):
-            self._error("cmd1 Failed")
-        if not self.ssh_exec(client, cmd2):
-            self._error("cmd2 Failed")
-        if not self.ssh_exec(client, cmd3):
-            self._error("cmd3 Failed")
-        if not self.ssh_exec(client, cmd4):
-            self._error("cmd4 Failed")
-        if not self.ssh_exec(client, cmd5):
-            self._error("cmd5 Failed")
-        if not self.ssh_exec(client, cmd6):
-            self._error("cmd6 Failed")
+        cmd_result = {}
+        if self.ssh_exec(client, cmd1):
+            cmd_result["1"] = True
+        else:
+            cmd_result["1"] = False
+
+        if self.ssh_exec(client, cmd2):
+            cmd_result["2"] = True
+        else:
+            cmd_result["2"] = False
+
+        if self.ssh_exec(client, cmd3):
+            cmd_result["3"] = True
+        else:
+            cmd_result["3"] = False
+        if self.ssh_exec(client, cmd4):
+            cmd_result["4"] = True
+        else:
+            cmd_result["4"] = False
+
+        if self.ssh_exec(client, cmd5):
+            cmd_result["5"] = True
+        else:
+            cmd_result["5"] = False
+
+        if self.ssh_exec(client, cmd6):
+            cmd_result["6"] = True
+        else:
+            cmd_result["6"] = False
+
+        if self.ssh_exec(client, cmd7):
+            cmd_result["7"] = True
+        else:
+            cmd_result["7"] = False
+
+        for key, value in dict.items():
+            result = "Install Lustre: procedure: " + key + " " + value
+            self._debug(result)
 
     def node_operate(self):
         thread_list = []
@@ -348,11 +407,13 @@ class Provisioner(object):
 
 
 def main():
-    logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    logging.basicConfig(level=logging.DEBUG,
+                        format='%(asctime)s - %(name)s - '
+                               '%(levelname)s - %(message)s')
     logger = logging.getLogger(__name__)
 
-    lustre_cluster_provisioner = Provisioner(logger)
-    lustre_cluster_provisioner.provision()
+    cluster_provision = Provision(logger)
+    cluster_provision.provision()
 
 if __name__ == "__main__":
     main()

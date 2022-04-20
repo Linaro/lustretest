@@ -1,3 +1,4 @@
+import os
 
 CLIENT = 'CLIENT'
 MDS = 'MDS'
@@ -7,7 +8,7 @@ TEST_WORKSPACE = '/home/centos/workspace/'
 SSH_PRIVATE_KEY = '/home/centos/workspace/node/id_rsa'
 SSH_PRIKEY_EXEC = '/home/centos/.ssh/'
 NODE_INFO = TEST_WORKSPACE + 'lustre-test-node.conf'
-TERRAFORM_CONF_TEMPLATE_DIR = '/home/centos/tf/devbox/lustre/builder/tf'
+TERRAFORM_CONF_TEMPLATE_DIR = os.getcwd() + '/tf'
 TERRAFORM_CONF_DIR = '/home/centos/tf/'
 
 TERRAFORM_EXIST_CONF = "lustre-NJQWIdPR/"
