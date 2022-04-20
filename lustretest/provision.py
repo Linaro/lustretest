@@ -337,7 +337,7 @@ class Provision(object):
         cmd3 = "sudo dnf update libmodulemd -y"
         cmd4 = "sudo dnf install epel-release pdsh pdsh-rcmd-ssh " \
                "net-tools dbench fio linux-firmware -y"
-        cmd5 = "sudo dnf --disablerepo = \"*\"  --enablerepo = \"lustre\" " \
+        cmd5 = "sudo dnf --disablerepo=* --enablerepo=lustre " \
                "install kernel kernel-debuginfo " \
                "kernel-debuginfo-common-aarch64 kernel-devel kernel-core " \
                "kernel-headers kernel-modules kernel-modules-extra " \
