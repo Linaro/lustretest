@@ -356,41 +356,41 @@ class Provision(object):
 
         cmd_result = {}
         if self.ssh_exec(client, cmd1):
-            cmd_result["1"] = True
+            cmd_result["1"] = "Success"
         else:
-            cmd_result["1"] = False
+            cmd_result["1"] = "Failed"
 
         if self.ssh_exec(client, cmd2):
-            cmd_result["2"] = True
+            cmd_result["2"] = "Success"
         else:
-            cmd_result["2"] = False
+            cmd_result["2"] = "Failed"
 
         if self.ssh_exec(client, cmd3):
-            cmd_result["3"] = True
+            cmd_result["3"] = "Success"
         else:
-            cmd_result["3"] = False
+            cmd_result["3"] = "Failed"
 
         if self.ssh_exec(client, cmd4):
-            cmd_result["4"] = True
+            cmd_result["4"] = "Success"
         else:
-            cmd_result["4"] = False
+            cmd_result["4"] = "Failed"
 
         if self.ssh_exec(client, cmd5):
-            cmd_result["5"] = True
+            cmd_result["5"] = "Success"
         else:
-            cmd_result["5"] = False
+            cmd_result["5"] = "Failed"
 
         if self.ssh_exec(client, cmd6):
-            cmd_result["6"] = True
+            cmd_result["6"] = "Success"
         else:
-            cmd_result["6"] = False
+            cmd_result["6"] = "Failed"
 
         if self.ssh_exec(client, cmd7):
-            cmd_result["7"] = True
+            cmd_result["7"] = "Success"
         else:
-            cmd_result["7"] = False
+            cmd_result["7"] = "Failed"
 
-        for key, value in dict.items():
+        for key, value in cmd_result.items():
             result = "Install Lustre: procedure: " + key + " " + value
             self._debug(result)
 
