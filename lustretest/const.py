@@ -5,10 +5,12 @@ MDS = 'MDS'
 OST = 'OST'
 
 PROVISION_NEW_CLUSTER = False
-TEST_WORKSPACE = '/home/centos/workspace/'
-SSH_PRIVATE_KEY = '/home/centos/workspace/node/id_rsa'
-SSH_PRIKEY_EXEC = '/home/centos/.ssh/'
+TEST_WORKSPACE = '/home/centos/workspace/node/'
 NODE_INFO = TEST_WORKSPACE + 'lustre-test-node.conf'
+SSH_PRIVATE_KEY = '/home/centos/workspace/node/id_rsa'
+SSH_PRIKEY_EXEC = '/home/jenkins/.ssh'
+
+
 TERRAFORM_CONF_TEMPLATE_DIR = os.getcwd() + '/tf'
 TERRAFORM_CONF_DIR = '/home/centos/tf/'
 
@@ -21,11 +23,7 @@ TERRAFORM_BIN = "/home/centos/terraform"
 TEST_SERVER = "TEST_SERVER"
 TEST_CLIENT = "TEST_CLIENT"
 
-TERRAFORM_CLIENT01_IP = "client01_ip"
-TERRAFORM_CLIENT02_IP = "client02_ip"
-TERRAFORM_MDS01_IP = "mds01_ip"
-TERRAFORM_MDS02_IP = "mds02_ip"
-TERRAFORM_OST01_IP = "ost01_ip"
+
 
 TERRAFORM_CLIENT01_HOSTNAME = "client01_hostname"
 TERRAFORM_CLIENT02_HOSTNAME = "client02_hostname"
@@ -82,3 +80,13 @@ LUSTRE_CLIENT02_PORT_PREFIX = "_client02_port"
 LUSTRE_MDS01_PORT_PREFIX = "_mds01_port"
 LUSTRE_MDS02_PORT_PREFIX = "_mds02_port"
 LUSTRE_OST01_PORT_PREFIX = "_ost01_port"
+
+TERRAFORM_CLIENT01_IP = "client01_ip"
+TERRAFORM_CLIENT02_IP = "client02_ip"
+TERRAFORM_MDS01_IP = "mds01_ip"
+TERRAFORM_MDS02_IP = "mds02_ip"
+TERRAFORM_OST01_IP = "ost01_ip"
+
+# Lustre Test
+MULTI_NODE_CONFIG = "multinode.sh"
+LUSTRE_TEST_CFG_DIR = "/usr/lib64/lustre/tests/cfg"

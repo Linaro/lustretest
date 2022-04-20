@@ -5,14 +5,15 @@ import const
 
 
 class Node(object):
-    def __init__(self, host, ip, type, node_map):
+    def __init__(self, host, ip, node_type, node_map, logger):
         self.host = host
         self.ip = ip
-        self.type = type
+        self.type = node_type
         self.ssh_user = const.DEFAULT_SSH_USER
         self.ssh_private_key = None
         self.node_map = node_map
-        self.ssh_client = self.ssh_connection
+        self.ssh_client = None
+        self.logger = logger
 
     def _debug(self, msg, *args):
         self.logger.debug(msg, *args)
@@ -30,41 +31,46 @@ class Node(object):
         stdin, stdout, stderr = self.ssh_client.exec_command('ls /')
         result = stdout.read()
         self._debug(result.decode('utf-8'))
+        return self.ssh_client
 
     def ssh_close(self):
         self.ssh_client.close()
 
     def ssh_exec(self, cmd):
-        # Test SSH connection
         stdin, stdout, stderr = self.ssh_client.exec_command(cmd)
-        result = stdout.read()
-        self._debug(result.decode('utf-8'))
+        while True:
+            line = stdout.readline()
+            if not line:
+                break
+            print(line)
+        error = stderr.read()
+        if error.strip():
+            self._error(error)
+            return False
+        return True
 
-        if stderr:
-            result = stderr.read()
-            self._debug(result.decode('utf-8'))
-
-    def scp_send(self, file, remote_path):
-        scpclient = SCPClient(self.ssh_client.get_transport(), socket_timeout=15.0)
-        local_path = file
+    def scp_send(self, filename, remote_path):
+        scp_client = SCPClient(self.ssh_client.get_transport(), socket_timeout=15.0)
+        local_path = filename
         try:
-            scpclient.put(local_path, remote_path, True)
+            scp_client.put(local_path, remote_path, True)
         except FileNotFoundError:
-            self._error("Scp failed: " + local_path)
+            self._error("SCP failed: " + local_path)
         else:
-            self._debug("scp success" + local_path)
+            self._debug("SCP success" + local_path)
 
     def scp_get(self, remote_path, local_path):
-        scpclient = SCPClient(self.ssh_client.get_transport(), socket_timeout=15.0)
+        scp_client = SCPClient(self.ssh_client.get_transport(), socket_timeout=15.0)
         try:
-            scpclient.get(remote_path, local_path)
+            scp_client.get(remote_path, local_path)
         except FileNotFoundError:
-            self._error("Scp failed: " + local_path)
+            self._error("SCP failed: " + local_path)
         else:
-            self._debug("scp success" + local_path)
+            self._debug("SCP success" + local_path)
 
     def init(self):
-        # Install the Lustre client packages on two machines, and the Lustre server packages on the other four, using the same version of Lustre
+        # Install the Lustre client packages on two machines, and the Lustre server
+        # packages on the other four, using the same version of Lustre
         # Follow this guide to install Lustre RPMs and e2fsprogs
         # Install PDSH and ensure you can execute commands across the cluster
         # Install the epel-release package to enable the EPEL repo
@@ -78,28 +84,46 @@ class Node(object):
 
         # The above process can be done in cloud-init
 
-        # Generate passwordless ssh keys for hosts and exchange identities across all nodes, and also accept the host fingerprints
+        # Generate passwordless ssh keys for hosts and exchange identities across
+        # all nodes, and also accept the host fingerprints
         # The goal is to be able to pdsh using ssh from all machines without requiring any user input
         # All the node use the same keys to login
+        self.ssh_connection()
+        if self.ssh_connection() is None:
+            self._error("SSH client initialization failed: " + self.ip)
+            return
+        # please make sure to remove the file first
+        self.ssh_exec("yes | rm -i " + const.SSH_PRIKEY_EXEC + "/" + "id_rsa")
         self.scp_send(const.SSH_PRIVATE_KEY, const.SSH_PRIKEY_EXEC)
 
         # Create an NFS share that is mounted on all the nodes
         # A small number of tests will make use of a shared storage location
 
+        self.ssh_exec("yes | sudo rm -i " + "/etc/hosts")
         # Configure hostnames and populate /etc/hosts
-        host_info = None
+        host_info = "127.0.0.1   localhost localhost.localdomain localhost4 localhost4.localdomain4\n" \
+                    "::1         localhost localhost.localdomain localhost6 localhost6.localdomain6\n"
+        print(self.node_map)
         for key, node_info in self.node_map.items():
             host_info += node_info[1] + ' ' + node_info[0] + '\n'
 
-        self.ssh_exec('echo ' + host_info + ' | sudo tee -a /etc/hosts')
+        write_hosts = 'echo \"' + host_info + "\"" + ' | sudo tee -a /etc/hosts'
+        if self.ssh_exec(write_hosts):
+            self._error("Write the /etc/hosts failed")
         self.ssh_exec('cat /etc/hosts')
+
+        remote_cfg_location = const.LUSTRE_TEST_CFG_DIR + '/' + const.MULTI_NODE_CONFIG
+        self.ssh_exec("yes | sudo rm -i " + remote_cfg_location)
+        self.scp_send(const.TEST_WORKSPACE + const.MULTI_NODE_CONFIG, "/home/jenkins")
+        self.ssh_exec("yes | sudo mv /home/jenkins/" + const.MULTI_NODE_CONFIG + " " + remote_cfg_location)
+
 
 def multinode_conf_gen(node_map):
     total_client = 0
     total_mds = 0
     CLIENTS = None
 
-    with open(const.TEST_WORKSPACE + "multinode.sh", 'w+') as test_conf:
+    with open(const.TEST_WORKSPACE + const.MULTI_NODE_CONFIG, 'w+') as test_conf:
         for key, node_info in node_map.items():
             if node_info[2] == const.CLIENT:
                 if total_client == 0:
@@ -139,7 +163,7 @@ def multinode_conf_gen(node_map):
             if node_info[2] == const.OST:
                 ostcount = "OSTCOUNT=8\n"
                 ost1_host = "ost_HOST=\"" + node_info[0] + "\"\n"
-                ostdev1 = "OSTDEV1=\"/dev/sdb\"\n"
+                ostdev1 = "OSTDEV1=\"" + const.OST_DISK2 + "\"\n"
                 test_conf.write(ostcount)
                 test_conf.write(ost1_host)
                 test_conf.write(ostdev1)
@@ -175,12 +199,13 @@ def multinode_conf_gen(node_map):
         NCLI_SH_CMD = ". /usr/lib64/lustre/tests/cfg/ncli.sh\n"
         test_conf.write(NCLI_SH_CMD)
 
-def node_init(node_map):
+
+def node_init(node_map, logger):
     total_client = 0
     total_mds = 0
 
     for key, node_info in node_map.items():
-        test_node = Node(node_info[0], node_info[1], node_info[2])
+        test_node = Node(node_info[0], node_info[1], node_info[2], node_map, logger)
         if node_info[2] == const.CLIENT:
             if total_client == 0:
                 test_client1 = test_node
@@ -198,7 +223,6 @@ def node_init(node_map):
         if node_info[2] == const.OST:
                 test_ost = test_node
 
-    # Initial CLIENT Node
     test_client1.init()
     test_client2.init()
     test_mds1.init()
@@ -207,9 +231,11 @@ def node_init(node_map):
 
 
 def main():
-
     node_map = {}
-    logging.basicConfig(format='%(asctime)s %(message)s', level=logging.DEBUG)
+    logging.basicConfig(format='%(asctime)s - %(name)s - '
+                               '%(levelname)s - %(message)s',
+                        level=logging.DEBUG)
+    logger = logging.getLogger(__name__)
     with open(const.NODE_INFO, 'r') as f2:
         line = f2.readline()
         i = 0
@@ -227,9 +253,8 @@ def main():
     else:
         print("Unsupported Test nodes numbers!")
 
-    node_init(node_map)
-
     multinode_conf_gen(node_map)
+    node_init(node_map, logger)
 
 
 if __name__ == "__main__":
