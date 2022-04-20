@@ -1,0 +1,5 @@
+- job:
+    name: project-lustre-periodical-test
+    project-type: pipeline
+    dsl:
+      !include-raw: scripts/lustre-test-pipeline.groovy
