@@ -2,7 +2,8 @@ import logging
 import paramiko
 from scp import SCPClient
 import const
-
+from datetime import datetime
+import time
 
 class Node(object):
     def __init__(self, host, ip, node_type, node_map, logger):
@@ -18,6 +19,9 @@ class Node(object):
     def _debug(self, msg, *args):
         self.logger.debug(msg, *args)
 
+    def _info(self, msg, *args):
+        self.logger.info(msg, *args)
+
     def _error(self, msg, *args):
         self.logger.error(msg, *args)
 
@@ -30,7 +34,7 @@ class Node(object):
         # Test SSH connection
         stdin, stdout, stderr = self.ssh_client.exec_command('ls /')
         result = stdout.read()
-        self._debug(result.decode('utf-8'))
+        self._info(result.decode('utf-8'))
         return self.ssh_client
 
     def ssh_close(self):
@@ -57,7 +61,7 @@ class Node(object):
         except FileNotFoundError:
             self._error("SCP failed: " + local_path)
         else:
-            self._debug("SCP success" + local_path)
+            self._info("SCP success" + local_path)
 
     def scp_get(self, remote_path, local_path):
         scp_client = SCPClient(self.ssh_client.get_transport(), socket_timeout=15.0)
@@ -66,7 +70,7 @@ class Node(object):
         except FileNotFoundError:
             self._error("SCP failed: " + local_path)
         else:
-            self._debug("SCP success" + local_path)
+            self._info("SCP success" + local_path)
 
     def init(self):
         # Install the Lustre client packages on two machines, and the Lustre server
@@ -116,6 +120,15 @@ class Node(object):
         self.ssh_exec("yes | sudo rm -i " + remote_cfg_location)
         self.scp_send(const.TEST_WORKSPACE + const.MULTI_NODE_CONFIG, "/home/jenkins")
         self.ssh_exec("yes | sudo mv /home/jenkins/" + const.MULTI_NODE_CONFIG + " " + remote_cfg_location)
+
+        # SSH .ssh/config add like below:
+        # Host *
+        #     StrictHostKeyChecking   no
+        # chmod 600
+
+    def reboot(self):
+        self.ssh_connection()
+        self.ssh_exec("sudo reboot")
 
 
 def multinode_conf_gen(node_map):
@@ -203,6 +216,11 @@ def multinode_conf_gen(node_map):
 def node_init(node_map, logger):
     total_client = 0
     total_mds = 0
+    test_client1 = None
+    test_client2 = None
+    test_mds1 = None
+    test_mds2 = None
+    test_ost1 = None
 
     for key, node_info in node_map.items():
         test_node = Node(node_info[0], node_info[1], node_info[2], node_map, logger)
@@ -210,31 +228,73 @@ def node_init(node_map, logger):
             if total_client == 0:
                 test_client1 = test_node
                 total_client += 1
-            if total_client == 1:
+            elif total_client == 1:
                 test_client2 = test_node
                 total_client += 1
         if node_info[2] == const.MDS:
             if total_mds == 0:
                 test_mds1 = test_node
                 total_mds += 1
-            if total_mds == 1:
+            elif total_mds == 1:
                 test_mds2 = test_node
                 total_mds += 1
         if node_info[2] == const.OST:
-                test_ost = test_node
+            test_ost1 = test_node
 
     test_client1.init()
     test_client2.init()
     test_mds1.init()
     test_mds2.init()
-    test_ost.init()
+    test_ost1.init()
+
+    test_client1.reboot()
+    test_client2.reboot()
+    test_mds1.reboot()
+    test_mds2.reboot()
+    test_ost1.reboot()
+
+    node_status = []
+    node_list = [test_client1, test_client2, test_mds1, test_mds2, test_ost1]
+    t1 = datetime.now()
+    while (datetime.now() - t1).seconds <= const.REBOOT_TIMEOUT:
+        for node in node_list:
+            if node.ip in node_status:
+                continue
+            else:
+                try:
+                    if node.ssh_connection():
+                        node_status.append(node.ip)
+                    else:
+                        print("The node reboot is not finished")
+                except paramiko.ssh_exception.NoValidConnectionsError:
+                    print("can not connect to the node, wait")
+
+        ready_node = len(node_status)
+        print("Ready nodes: " + str(node_status))
+        if ready_node == 5:
+            break
+        time.sleep(5)
+
+    if len(node_status) == 5:
+        return True
+    else:
+        print("The reboot processes of nodes are "
+              "not totally ready, only ready: "
+              + str(len(node_status)))
+        return False
+
+    test_client1.ssh_close()
+    test_client2.ssh_close()
+    test_mds1.ssh_close()
+    test_mds2.ssh_close()
+    test_ost1.ssh_close()
 
 
 def main():
     node_map = {}
     logging.basicConfig(format='%(asctime)s - %(name)s - '
                                '%(levelname)s - %(message)s',
-                        level=logging.DEBUG)
+                        level=logging.INFO)
     logger = logging.getLogger(__name__)
     with open(const.NODE_INFO, 'r') as f2:
         line = f2.readline()
@@ -255,6 +315,7 @@ def main():
 
     multinode_conf_gen(node_map)
     node_init(node_map, logger)
+
 
 
 if __name__ == "__main__":

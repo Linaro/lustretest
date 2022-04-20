@@ -25,6 +25,9 @@ class Provision(object):
     def _debug(self, msg, *args):
         self.logger.debug(msg, *args)
 
+    def _info(self, msg, *args):
+        self.logger.error(msg, *args)
+
     def _error(self, msg, *args):
         self.logger.error(msg, *args)
 
@@ -43,7 +46,7 @@ class Provision(object):
                                username=self.ssh_user,
                                pkey=private_key)
         except ssh_exception.NoValidConnectionsError as e:
-            self._debug("Not yet connected to this node: " + e)
+            self._info("Not yet connected to this node: " + e)
             return
 
         # Test SSH connection
@@ -53,9 +56,8 @@ class Provision(object):
             self._error(error)
             return
 
-        self._debug("SSH client for IP: " + ip +
+        self._info("SSH client for IP: " + ip +
                     " initialization is finished")
-        return ssh_client
 
     def ssh_close(self, ssh_client):
         ssh_client.close()
@@ -134,7 +136,7 @@ class Provision(object):
                                  stderr=subprocess.STDOUT)
             self.realtime_output(p)
             if p.returncode == 0:
-                self._debug('Terraform init success')
+                self._info('Terraform init success')
                 return True
             else:
                 self._error('Terraform init failed')
@@ -163,7 +165,7 @@ class Provision(object):
                                  stderr=subprocess.STDOUT)
             self.realtime_output(p)
             if p.returncode == 0:
-                self._debug('Terraform apply success')
+                self._info('Terraform apply success')
                 return True
             else:
                 self._error('Terraform apply failed')
@@ -248,10 +250,10 @@ class Provision(object):
 
                 ready_clients = len(self.ssh_clients)
                 if ready_clients == 5:
-                    self._debug("All the clients is ready")
+                    self._info("All the clients is ready")
                     break
                 else:
-                    self._debug("Ready clients are: " + str(ready_clients))
+                    self._info("Ready clients are: " + str(ready_clients))
                     time.sleep(10)
 
             t1 = datetime.now()
@@ -266,7 +268,7 @@ class Provision(object):
                         else:
                             self._error("The cloud-init process is not finished")
                 ready_node = len(node_status)
-                self._debug("Ready nodes: " + str(ready_node))
+                self._info("Ready nodes: " + str(ready_node))
                 if ready_node == 5:
                     break
                 time.sleep(10)
@@ -288,7 +290,7 @@ class Provision(object):
                              stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
         self.realtime_output(p)
         if p.returncode == 0:
-            self._debug('Terraform apply success')
+            self._info('Terraform apply success')
             return True
         else:
             self._error('Terraform apply failed')
@@ -319,7 +321,7 @@ class Provision(object):
         if exists(const.NODE_INFO):
             if self.node_check():
                 if not const.PROVISION_NEW_CLUSTER:
-                    self._debug("Does not provision new instances, we "
+                    self._info("Does not provision new instances, we "
                                 "need to reinstall Lustre from the repo")
                     return self.node_operate()
                 else:
@@ -330,6 +332,8 @@ class Provision(object):
         else:
             self._error("The config file does not exist: " + const.NODE_INFO)
             return False
+
+
 
     def install_lustre(self, client):
         cmd1 = "sudo dnf config-manager --set-enabled ha"
@@ -392,7 +396,7 @@ class Provision(object):
 
         for key, value in cmd_result.items():
             result = "Install Lustre: procedure: " + key + " " + value
-            self._debug(result)
+            self._info(result)
 
     def node_operate(self):
         thread_list = []
@@ -407,13 +411,19 @@ class Provision(object):
 
 
 def main():
-    logging.basicConfig(level=logging.DEBUG,
+    logging.basicConfig(level=logging.INFO,
                         format='%(asctime)s - %(name)s - '
                                '%(levelname)s - %(message)s')
     logger = logging.getLogger(__name__)
 
     cluster_provision = Provision(logger)
-    cluster_provision.provision()
+    result = cluster_provision.provision()
+    if result:
+        logger.info("The provision process is successful")
+        for client in cluster_provision.ssh_clients:
+            cluster_provision.ssh_close(client)
+    else:
+        logger.error("The provision process is not successful")
 
 
 if __name__ == "__main__":

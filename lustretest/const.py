@@ -32,6 +32,7 @@ TERRAFORM_MDS02_HOSTNAME = "mds02_hostname"
 TERRAFORM_OST01_HOSTNAME = "ost01_hostname"
 
 DEFAULT_SSH_USER = 'jenkins'
+REBOOT_TIMEOUT = 300
 CLOUD_INIT_TIMEOUT = 900
 CLOUD_INIT_FINISH = "/var/lib/cloud/instance/boot-finished"
 
