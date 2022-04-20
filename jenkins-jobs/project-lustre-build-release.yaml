@@ -8,7 +8,7 @@
 - job-template:
     # default var values
     branch: 'master'
-    build_linux: 'no'
+    build_linux: 'yes'
 
     name: '{name}-{branch}'
     node: 'build'
