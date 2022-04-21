@@ -65,7 +65,7 @@ class Provision(object):
             line = stdout.readline()
             if not line:
                 break
-            print(line.strip())
+            self._info(line.strip())
         error = stderr.read()
         if error.strip():
             self._error(error)
@@ -148,7 +148,7 @@ class Provision(object):
             line = p.stdout.readline()
             line = line.strip()
             if line:
-                print(line.decode('utf-8'))
+                self._info(line.decode('utf-8'))
 
     #
     # Terraform Apply
@@ -250,12 +250,12 @@ class Provision(object):
                             if ssh_client not in self.ssh_clients:
                                 self.ssh_clients[ip] = ssh_client
                         else:
-                            print("The node reboot is not finished")
+                            self._error("The node reboot is not finished")
                     except paramiko.ssh_exception.NoValidConnectionsError:
-                        print("can not connect to the node: " + ip)
+                        self._info("can not connect to the node: " + ip)
                     except paramiko.ssh_exception.SSHException:
-                        print("Error reading SSH protocol banner[Errno 104] "
-                              "Connection reset by peer: " + ip)
+                        self._info("Error reading SSH protocol banner[Errno 104] "
+                                   "Connection reset by peer: " + ip)
 
                 ready_clients = len(self.ssh_clients)
                 if ready_clients == 5:
@@ -425,8 +425,7 @@ class Provision(object):
 
 def main():
     logging.basicConfig(level=logging.INFO,
-                        format='%(asctime)s - %(name)s - '
-                               '%(levelname)s - %(message)s')
+                        format='%(message)s')
     logger = logging.getLogger(__name__)
 
     cluster_provision = Provision(logger)

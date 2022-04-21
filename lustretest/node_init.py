@@ -46,7 +46,7 @@ class Node(object):
             line = stdout.readline()
             if not line:
                 break
-            print(line.strip())
+            self._info(line.strip())
         error = stderr.read()
         if error.strip():
             self._error(error)
@@ -97,9 +97,11 @@ class Node(object):
             if self.ssh_connection() is None:
                 self._error("SSH client initialization failed: " + self.ip)
                 return
+        except paramiko.ssh_exception.NoValidConnectionsError:
+            self._info("can not connect to the node: " + self.ip)
         except paramiko.ssh_exception.SSHException:
-                    print("Error reading SSH protocol banner[Errno 104] "
-                          "Connection reset by peer: " + self.ip)
+            self._info("Error reading SSH protocol banner[Errno 104] "
+                       "Connection reset by peer: " + self.ip)
         # please make sure to remove the file first
         self.ssh_exec("yes | rm -i " + const.SSH_CFG_DIR + "/" + "id_rsa")
         self.scp_send(const.SSH_PRIVATE_KEY, const.SSH_CFG_DIR)
@@ -152,11 +154,9 @@ def multinode_conf_gen(node_map):
                 if total_client == 0:
                     total_clients = node_info[0]
                     total_client += 1
-                    print(total_clients)
                 elif total_client == 1:
                     total_client += 1
                     total_clients += ' ' + node_info[0]
-                    print(total_clients)
                     rclient_write = "RCLIENTS=\"" + total_clients + "\"\n"
                     test_conf.write("CLIENTCOUNT=2\n")
                     test_conf.write(rclient_write)
@@ -257,8 +257,8 @@ def node_init(node_map, logger):
     test_ost1.init()
 
     nodes = [test_client1, test_client2, test_mds1, test_mds2, test_ost1]
-    if not reboot_and_check(nodes):
-        print("The reboot process is not finished")
+    if not reboot_and_check(nodes, logger):
+        logger.info("The reboot process is not finished")
 
     test_client1.ssh_close()
     test_client2.ssh_close()
@@ -267,7 +267,7 @@ def node_init(node_map, logger):
     test_ost1.ssh_close()
 
 
-def reboot_and_check(nodes):
+def reboot_and_check(nodes, logger):
     for node in nodes:
         node.reboot()
 
@@ -283,15 +283,15 @@ def reboot_and_check(nodes):
                     if node.ssh_connection():
                         node_status.append(node.ip)
                     else:
-                        print("The node reboot is not finished: " + node.ip)
+                        logger.info("The node reboot is not finished: " + node.ip)
                 except paramiko.ssh_exception.NoValidConnectionsError:
-                    print("can not connect to the node: " + node.ip)
+                    logger.info("can not connect to the node: " + node.ip)
                 except paramiko.ssh_exception.SSHException:
-                    print("Error reading SSH protocol banner[Errno 104] "
-                          "Connection reset by peer: " + node.ip)
+                    logger.info("Error reading SSH protocol banner[Errno 104] "
+                                "Connection reset by peer: " + node.ip)
 
         ready_node = len(node_status)
-        print("Ready nodes: " + str(node_status))
+        logger.info("Ready nodes: " + str(node_status))
         if ready_node == 5:
             break
         time.sleep(5)
@@ -299,16 +299,15 @@ def reboot_and_check(nodes):
     if len(node_status) == 5:
         return True
     else:
-        print("The reboot processes of nodes are "
-              "not totally ready, only ready: "
-              + str(len(node_status)))
+        logger.info("The reboot processes of nodes are "
+                    "not totally ready, only ready: "
+                    + str(len(node_status)))
         return False
 
 
 def main():
     node_map = {}
-    logging.basicConfig(format='%(asctime)s - %(name)s - '
-                               '%(levelname)s - %(message)s',
+    logging.basicConfig(format='%(message)s',
                         level=logging.INFO)
     logger = logging.getLogger(__name__)
     with open(const.NODE_INFO, 'r') as f2:
@@ -322,13 +321,13 @@ def main():
 
     node_count = len(node_map)
     if node_count == 4:
-        print("Execute the test for 2 clients, 1 MDS and 1 OST")
+        logger.info("Execute the test for 2 clients, 1 MDS and 1 OST")
     elif node_count == 5:
-        print("Execute the test for 2 clients, 2 MDS and 1 OST")
+        logger.info("Execute the test for 2 clients, 2 MDS and 1 OST")
     else:
-        print("Unsupported Test nodes numbers!")
+        logger.info("Unsupported Test nodes numbers!")
 
-    multinode_conf_gen(node_map)
+    multinode_conf_gen(node_map, logger)
     node_init(node_map, logger)
 
 
