@@ -53,7 +53,7 @@ class Auster(object):
             line = stdout.readline()
             if not line:
                 break
-            print(line)
+            print(line.strip())
         error = stderr.read()
         if error.strip():
             self._error(error)
