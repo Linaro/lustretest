@@ -252,7 +252,10 @@ class Provision(object):
                         else:
                             print("The node reboot is not finished")
                     except paramiko.ssh_exception.NoValidConnectionsError:
-                        print("can not connect to the node, wait")
+                        print("can not connect to the node: " + ip)
+                    except paramiko.ssh_exception.SSHException:
+                        print("Error reading SSH protocol banner[Errno 104] "
+                              "Connection reset by peer: " + ip)
 
                 ready_clients = len(self.ssh_clients)
                 if ready_clients == 5:

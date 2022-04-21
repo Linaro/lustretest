@@ -92,10 +92,14 @@ class Node(object):
         # all nodes, and also accept the host fingerprints
         # The goal is to be able to pdsh using ssh from all machines without requiring any user input
         # All the node use the same keys to login
-        self.ssh_connection()
-        if self.ssh_connection() is None:
-            self._error("SSH client initialization failed: " + self.ip)
-            return
+        try:
+            self.ssh_connection()
+            if self.ssh_connection() is None:
+                self._error("SSH client initialization failed: " + self.ip)
+                return
+        except paramiko.ssh_exception.SSHException:
+                    print("Error reading SSH protocol banner[Errno 104] "
+                          "Connection reset by peer: " + self.ip)
         # please make sure to remove the file first
         self.ssh_exec("yes | rm -i " + const.SSH_CFG_DIR + "/" + "id_rsa")
         self.scp_send(const.SSH_PRIVATE_KEY, const.SSH_CFG_DIR)
@@ -282,6 +286,9 @@ def reboot_and_check(nodes):
                         print("The node reboot is not finished: " + node.ip)
                 except paramiko.ssh_exception.NoValidConnectionsError:
                     print("can not connect to the node: " + node.ip)
+                except paramiko.ssh_exception.SSHException:
+                    print("Error reading SSH protocol banner[Errno 104] "
+                          "Connection reset by peer: " + node.ip)
 
         ready_node = len(node_status)
         print("Ready nodes: " + str(node_status))
