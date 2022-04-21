@@ -29,32 +29,22 @@ pipeline {
         stage('Provision test excution nodes') {
             steps {
                 dir("lustretest-main/lustretest") {
-                    //sh 'python3 provision.py'
-                    sh 'ls -l'
-                    sh 'python3 --version'
+                    sh 'source /home/centos/venv3/bin/activate;python3 provision.py'
                 }
             }
         }
         stage('Client node init') {
             steps {
                 dir("lustretest-main/lustretest") {
-                    //sh 'python3 node_init.py'
-                    sh 'ls -l'
-                    sh 'python3 --version'
+                    sh 'source /home/centos/venv3/bin/activate;python3 node_init.py'
                 }
             }
         }
         stage('Run test') {
             steps {
                 dir("lustretest-main/lustretest") {
-                    sh 'ls -l'
-                    sh 'python3 --version'
+                    sh 'source /home/centos/venv3/bin/activate;python3 auster.py'
                 }
-            }
-        }
-        stage('Upload test results to maloo DB') {
-            steps {
-                echo 'upload test results....'
             }
         }
     }
