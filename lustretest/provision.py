@@ -1,5 +1,4 @@
 import paramiko
-from paramiko import ssh_exception
 import random
 import string
 import os
@@ -20,7 +19,7 @@ class Provision(object):
         self.tf_conf_dir = None
         self.node_ip_list = []
         self.ssh_user = const.DEFAULT_SSH_USER
-        self.ssh_clients = []
+        self.ssh_clients = {}
 
     def _debug(self, msg, *args):
         self.logger.debug(msg, *args)
@@ -40,14 +39,10 @@ class Provision(object):
             paramiko.RSAKey.from_private_key_file(const.SSH_PRIVATE_KEY)
         ssh_client = paramiko.SSHClient()
         ssh_client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-        try:
-            ssh_client.connect(hostname=ip,
-                               port=22,
-                               username=self.ssh_user,
-                               pkey=private_key)
-        except ssh_exception.NoValidConnectionsError as e:
-            self._info("Not yet connected to this node: " + e)
-            return
+        ssh_client.connect(hostname=ip,
+                           port=22,
+                           username=self.ssh_user,
+                           pkey=private_key)
 
         # # Test SSH connection
         # stdin, stdout, stderr = ssh_client.exec_command('ls /')
@@ -253,7 +248,7 @@ class Provision(object):
                         ssh_client = self.ssh_connection(ip)
                         if ssh_client is not None:
                             if ssh_client not in self.ssh_clients:
-                                self.ssh_clients.append(ssh_client)
+                                self.ssh_clients[ip] = ssh_client
                         else:
                             print("The node reboot is not finished")
                     except paramiko.ssh_exception.NoValidConnectionsError:
@@ -269,17 +264,18 @@ class Provision(object):
 
             t1 = datetime.now()
             node_status = []
+            self._info("====================check cloud init=======================")
             while (datetime.now() - t1).seconds <= const.CLOUD_INIT_TIMEOUT:
-                for client in self.ssh_clients:
-                    if client in node_status:
+                for ip, client in self.ssh_clients.items():
+                    if ip in node_status:
                         continue
                     else:
                         if self.ssh_exec(client, ssh_check_cmd):
-                            node_status.append(client)
+                            node_status.append(ip)
                         else:
-                            self._error("The cloud-init process is not finished")
+                            self._error("The cloud-init process is not finished: " + ip)
                 ready_node = len(node_status)
-                self._info("Ready nodes: " + str(ready_node))
+                self._info("Ready nodes: " + str(node_status))
                 if ready_node == 5:
                     break
                 time.sleep(10)
@@ -333,7 +329,7 @@ class Provision(object):
             if self.node_check():
                 if not const.PROVISION_NEW_CLUSTER:
                     self._info("Does not provision new instances, we "
-                                "need to reinstall Lustre from the repo")
+                               "need to reinstall Lustre from the repo")
                     return self.node_operate()
                 else:
                     return True
@@ -344,24 +340,23 @@ class Provision(object):
             self._error("The config file does not exist: " + const.NODE_INFO)
             return False
 
-
-    def install_lustre(self, client):
+    def install_lustre(self, node, client):
         cmd1 = "sudo dnf config-manager --set-enabled ha"
         cmd2 = "sudo dnf config-manager --set-enabled powertools"
         cmd3 = "sudo dnf update libmodulemd -y"
-        cmd4 = "sudo dnf install epel-release pdsh pdsh-rcmd-ssh " \
-               "net-tools dbench fio linux-firmware -y"
-        cmd5 = "sudo dnf --disablerepo=* --enablerepo=lustre " \
+        cmd4 = "sudo dnf install epel-release -y"
+        cmd5 = "sudo dnf install pdsh pdsh-rcmd-ssh net-tools dbench fio linux-firmware -y"
+        cmd6 = "sudo dnf --disablerepo=* --enablerepo=lustre " \
                "install kernel kernel-debuginfo " \
                "kernel-debuginfo-common-aarch64 kernel-devel kernel-core " \
                "kernel-headers kernel-modules kernel-modules-extra " \
                "kernel-tools kernel-tools-libs kernel-tools-libs-devel " \
                "kernel-tools-debuginfo -y"
-        cmd6 = "sudo dnf install e2fsprogs e2fsprogs-devel " \
+        cmd7 = "sudo dnf install e2fsprogs e2fsprogs-devel " \
                "e2fsprogs-debuginfo e2fsprogs-static e2fsprogs-libs " \
                "e2fsprogs-libs-debuginfo libcom_err libcom_err-devel " \
                "libcom_err-debuginfo libss libss-devel libss-debuginfo -y"
-        cmd7 = "sudo dnf install lustre lustre-debuginfo lustre-debugsource " \
+        cmd8 = "sudo dnf install lustre lustre-debuginfo lustre-debugsource " \
                "lustre-devel lustre-iokit lustre-osd-ldiskfs-mount " \
                "lustre-osd-ldiskfs-mount-debuginfo lustre-resource-agents " \
                "lustre-tests lustre-tests-debuginfo kmod-lustre " \
@@ -404,14 +399,19 @@ class Provision(object):
         else:
             cmd_result["7"] = "Failed"
 
+        if self.ssh_exec(client, cmd8):
+            cmd_result["8"] = "Success"
+        else:
+            cmd_result["8"] = "Failed"
+
         for key, value in cmd_result.items():
-            result = "Install Lustre: procedure: " + key + " " + value
+            result = node + " Install Lustre: procedure: " + key + " " + value
             self._info(result)
 
     def node_operate(self):
         thread_list = []
-        for client in self.ssh_clients:
-            x = threading.Thread(target=self.install_lustre, args=(client,))
+        for node, client in self.ssh_clients.items():
+            x = threading.Thread(target=self.install_lustre, args=(node, client,))
             x.start()
             thread_list.append(x)
 
@@ -430,7 +430,7 @@ def main():
     result = cluster_provision.provision()
     if result:
         logger.info("The provision process is successful")
-        for client in cluster_provision.ssh_clients:
+        for node, client in cluster_provision.ssh_clients.items():
             cluster_provision.ssh_close(client)
     else:
         logger.error("The provision process is not successful")
