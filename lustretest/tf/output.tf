@@ -1,21 +1,21 @@
 output "client01_ip" {
-  value = "${openstack_networking_floatingip_v2.client01_floating.address}"
+  value = "${openstack_compute_instance_v2.client01.network[0].fixed_ip_v4}"
 }
 
 output "client02_ip" {
-  value = "${openstack_networking_floatingip_v2.client02_floating.address}"
+  value = "${openstack_compute_instance_v2.client02.network[0].fixed_ip_v4}"
 }
 
 output "mds01_ip" {
-  value = "${openstack_networking_floatingip_v2.mds01_floating.address}"
+  value = "${openstack_compute_instance_v2.mds01.network[0].fixed_ip_v4}"
 }
 
 output "mds02_ip" {
-  value = "${openstack_networking_floatingip_v2.mds02_floating.address}"
+  value = "${openstack_compute_instance_v2.mds02.network[0].fixed_ip_v4}"
 }
 
 output "ost01_ip" {
-  value = "${openstack_networking_floatingip_v2.ost01_floating.address}"
+  value = "${openstack_compute_instance_v2.ost01.network[0].fixed_ip_v4}"
 }
 
 output "client01_hostname" {
