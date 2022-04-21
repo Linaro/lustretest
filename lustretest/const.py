@@ -8,39 +8,30 @@ PROVISION_NEW_CLUSTER = False
 TEST_WORKSPACE = '/home/centos/workspace/node/'
 NODE_INFO = TEST_WORKSPACE + 'lustre-test-node.conf'
 SSH_PRIVATE_KEY = '/home/centos/workspace/node/id_rsa'
-SSH_PRIKEY_EXEC = '/home/jenkins/.ssh'
-
 
 TERRAFORM_CONF_TEMPLATE_DIR = os.getcwd() + '/tf'
 TERRAFORM_CONF_DIR = '/home/centos/tf/'
-
-TERRAFORM_EXIST_CONF = "lustre-NJQWIdPR/"
-
 TERRAFORM_VARIABLES_JSON = "terraform.tfvars.json"
 TERRAFORM_BIN = "/home/centos/terraform"
+SSH_CONFIG = os.getcwd() + '/cfg/ssh_config'
+TERRAFORM_EXIST_CONF = "lustre_Bdl8Ieag/"
 
-# test_type
-TEST_SERVER = "TEST_SERVER"
-TEST_CLIENT = "TEST_CLIENT"
-
-
-
-TERRAFORM_CLIENT01_HOSTNAME = "client01_hostname"
-TERRAFORM_CLIENT02_HOSTNAME = "client02_hostname"
-TERRAFORM_MDS01_HOSTNAME = "mds01_hostname"
-TERRAFORM_MDS02_HOSTNAME = "mds02_hostname"
-TERRAFORM_OST01_HOSTNAME = "ost01_hostname"
-
-DEFAULT_SSH_USER = 'jenkins'
+# Test Node Related
+TEST_NODE_ROOT = '/root'
+SSH_CFG_DIR = TEST_NODE_ROOT + '/.ssh'
+REMOTE_SSH_CONFIG = SSH_CFG_DIR + '/config'
+DEFAULT_SSH_USER = 'root'
 REBOOT_TIMEOUT = 300
 CLOUD_INIT_TIMEOUT = 900
 CLOUD_INIT_FINISH = "/var/lib/cloud/instance/boot-finished"
-
 LUSTER_TEST_CFG = '/usr/lib64/lustre/tests/cfg/'
+# Lustre Test
+MULTI_NODE_CONFIG = "multinode.sh"
+LUSTRE_TEST_CFG_DIR = "/usr/lib64/lustre/tests/cfg"
+
 
 MDS_DISK1 = "/dev/vdb"
 MDS_DISK2 = "/dev/vdc"
-
 OST_DISK1 = "/dev/vdb"
 OST_DISK2 = "/dev/vdc"
 OST_DISK3 = "/dev/vdd"
@@ -88,6 +79,9 @@ TERRAFORM_MDS01_IP = "mds01_ip"
 TERRAFORM_MDS02_IP = "mds02_ip"
 TERRAFORM_OST01_IP = "ost01_ip"
 
-# Lustre Test
-MULTI_NODE_CONFIG = "multinode.sh"
-LUSTRE_TEST_CFG_DIR = "/usr/lib64/lustre/tests/cfg"
+TERRAFORM_CLIENT01_HOSTNAME = "client01_hostname"
+TERRAFORM_CLIENT02_HOSTNAME = "client02_hostname"
+TERRAFORM_MDS01_HOSTNAME = "mds01_hostname"
+TERRAFORM_MDS02_HOSTNAME = "mds02_hostname"
+TERRAFORM_OST01_HOSTNAME = "ost01_hostname"
+

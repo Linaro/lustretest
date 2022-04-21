@@ -24,6 +24,8 @@ yum_repos:
 runcmd:
  - [ sudo, dnf, config-manager, --set-enabled, ha ]
  - [ sudo, dnf, config-manager, --set-enabled, powertools ]
+ - [ sudo, rm, -rf, /root/.ssh/authorized_keys ]
+ - [ sh, -c, "echo \"ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQCbuE4m/llUIOraqsqw626p52jm5vM+nRU63n0571ECEWPJxB2oK8zIVcLBXHP/E3IZwQ8/I5dFw1CKBUIS444LJqrfSci8GZx73o4j8lSmDzEfYbgnDimrz+zwNpijvL3wXWSG0rk8xF3kuTOz43oeIadIpjdxeBJsApXtUJfG9+5/GU4lxUtFHWGFdbrp8EJz8zOMPUEkQYnvhep1eD0mBRZn60uxPQEnjxGs+arJ6RG9zyZq9hwPMFNy1rM1HMdKs0banUYnOR/UbjMmBWXISpi6tT2OLLEhkV8ejKuroOmLsekSbENaatWdoehuv9Lm5LFN5ow0gpI8wJrC05HFxjoh/HFdqc16Ysmgk9IbylvF3lOqfYnWOXyP+X5XVcpzSRPk/eLmdyhb+Yk0ReBt0MWqXcQSSaWs+n9vo14323Tco6+LcUvgBPO9BRbE/sr6PNSTFuw3JKbn9dk4oCES7BMCRq5w03MvE0JMgSFNGd8dfvgvpdcy9qdzELUoJ2c= jenkins@db16e3de51cf\" | sudo tee -a /root/.ssh/authorized_keys" ]
  - [ sudo, dnf, install, epel-release, -y ]
  - [ sudo, dnf, install, java, pdsh, pdsh-rcmd-ssh, net-tools, dbench, fio, -y ]
  - [ sudo, groupadd, -g, 500, runas ]

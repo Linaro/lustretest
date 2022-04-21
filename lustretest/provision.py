@@ -26,7 +26,7 @@ class Provision(object):
         self.logger.debug(msg, *args)
 
     def _info(self, msg, *args):
-        self.logger.error(msg, *args)
+        self.logger.info(msg, *args)
 
     def _error(self, msg, *args):
         self.logger.error(msg, *args)
@@ -58,6 +58,7 @@ class Provision(object):
 
         self._info("SSH client for IP: " + ip +
                     " initialization is finished")
+        return ssh_client
 
     def ssh_close(self, ssh_client):
         ssh_client.close()
@@ -243,10 +244,17 @@ class Provision(object):
             ssh_check_cmd = "ls -l " + const.CLOUD_INIT_FINISH
             while True:
                 for ip in self.node_ip_list:
-                    ssh_client = self.ssh_connection(ip)
-                    if ssh_client is not None:
-                        if ssh_client not in self.ssh_clients:
-                            self.ssh_clients.append(ssh_client)
+                    try:
+                        ssh_client = self.ssh_connection(ip)
+                        if ssh_client is not None:
+                            if ssh_client not in self.ssh_clients:
+                                self.ssh_clients.append(ssh_client)
+                        else:
+                            print("The node reboot is not finished")
+                    except paramiko.ssh_exception.NoValidConnectionsError:
+                        print("can not connect to the node, wait")
+
+
 
                 ready_clients = len(self.ssh_clients)
                 if ready_clients == 5:
