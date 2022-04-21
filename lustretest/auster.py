@@ -63,7 +63,7 @@ class Auster(object):
     def test(self):
         self.ssh_connection()
         if self.ssh_client:
-            cmd = "/usr/lib64/lustre/tests/auster -f multinode -rsv sanity --only 0a"
+            cmd = "/usr/lib64/lustre/tests/auster -f multinode -rsv sanity"
             if not self.ssh_exec(cmd):
                 self._error("Auster test failed: " + cmd)
         else:
