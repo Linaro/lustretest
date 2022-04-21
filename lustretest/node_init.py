@@ -273,7 +273,7 @@ def reboot_and_check(nodes, logger):
 
     node_status = []
     t1 = datetime.now()
-    print("Begin to check the Node Reboot process")
+    logger.info("Begin to check the Node Reboot process")
     while (datetime.now() - t1).seconds <= const.REBOOT_TIMEOUT:
         for node in nodes:
             if node.ip in node_status:
@@ -327,7 +327,7 @@ def main():
     else:
         logger.info("Unsupported Test nodes numbers!")
 
-    multinode_conf_gen(node_map, logger)
+    multinode_conf_gen(node_map)
     node_init(node_map, logger)
 
 
