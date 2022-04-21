@@ -53,7 +53,7 @@ class Auster(object):
             line = stdout.readline()
             if not line:
                 break
-            print(line.strip())
+            self._info(line.strip())
         error = stderr.read()
         if error.strip():
             self._error(error)
@@ -72,8 +72,7 @@ class Auster(object):
 
 def main():
     node_map = {}
-    logging.basicConfig(format='%(asctime)s - %(name)s - '
-                               '%(levelname)s - %(message)s',
+    logging.basicConfig(format='%(message)s',
                         level=logging.INFO)
     logger = logging.getLogger(__name__)
     with open(const.NODE_INFO, 'r') as f2:
