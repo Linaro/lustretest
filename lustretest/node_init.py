@@ -31,10 +31,10 @@ class Node(object):
         self.ssh_client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
         self.ssh_client.connect(hostname=self.ip, port=22, username=self.ssh_user, pkey=private_key)
 
-        # Test SSH connection
-        stdin, stdout, stderr = self.ssh_client.exec_command('ls /')
-        result = stdout.read()
-        self._info(result.decode('utf-8'))
+        # # Test SSH connection
+        # stdin, stdout, stderr = self.ssh_client.exec_command('ls /')
+        # result = stdout.read()
+        # self._info(result.decode('utf-8'))
         return self.ssh_client
 
     def ssh_close(self):
@@ -111,9 +111,8 @@ class Node(object):
             host_info += node_info[1] + ' ' + node_info[0] + '\n'
 
         write_hosts = 'echo \"' + host_info + "\"" + ' | sudo tee -a /etc/hosts'
-        if self.ssh_exec(write_hosts):
+        if not self.ssh_exec(write_hosts):
             self._error("Write the /etc/hosts failed")
-        self.ssh_exec('cat /etc/hosts')
 
         remote_cfg_location = const.LUSTRE_TEST_CFG_DIR + '/' + const.MULTI_NODE_CONFIG
         self.ssh_exec("yes | sudo rm -i " + remote_cfg_location)
@@ -126,6 +125,12 @@ class Node(object):
         # chmod 600
         self.ssh_exec("yes | sudo rm -i " + const.REMOTE_SSH_CONFIG)
         self.scp_send(const.SSH_CONFIG, const.REMOTE_SSH_CONFIG)
+
+        # /etc/hostname remove the .novalocal
+        self.ssh_exec("yes | sudo rm -i /etc/hostname")
+        write_hostname = 'echo \"' + self.host + "\"" + ' | sudo tee -a /etc/hostname'
+        if not self.ssh_exec(write_hostname):
+            self._error("Write the /etc/hostname failed")
 
     def reboot(self):
         self.ssh_connection()
@@ -153,9 +158,9 @@ def multinode_conf_gen(node_map):
                     test_conf.write(rclient_write)
             if node_info[2] == const.MDS:
                 if total_mds == 0:
-                    mds_host = "mds_HOST=\"" + node_info[0] + "\n"
+                    mds_host = "mds_HOST=\"" + node_info[0] + "\"\n"
                     mds_dev1 = "MDSDEV1=\"" + const.MDS_DISK1 + "\"\n"
-                    mds3_host = "mds3_HOST=\"" + node_info[0] + "\n"
+                    mds3_host = "mds3_HOST=\"" + node_info[0] + "\"\n"
                     mds_dev3 = "MDSDEV3=\"" + const.MDS_DISK2 + "\"\n"
                     test_conf.write(mds_host)
                     test_conf.write(mds_dev1)
@@ -163,9 +168,9 @@ def multinode_conf_gen(node_map):
                     test_conf.write(mds_dev3)
                     total_mds += 1
                 elif total_mds == 1:
-                    mds2_host = "mds2_HOST=\"" + node_info[0] + "\n"
+                    mds2_host = "mds2_HOST=\"" + node_info[0] + "\"\n"
                     mds_dev2 = "MDSDEV2=\"" + const.MDS_DISK1 + "\"\n"
-                    mds4_host = "mds4_HOST=\"" + node_info[0] + "\n"
+                    mds4_host = "mds4_HOST=\"" + node_info[0] + "\"\n"
                     mds_dev4 = "MDSDEV4=\"" + const.MDS_DISK2 + "\"\n"
                     test_conf.write(mds2_host)
                     test_conf.write(mds_dev2)
@@ -266,7 +271,6 @@ def reboot_and_check(nodes):
     t1 = datetime.now()
     print("Begin to check the Node Reboot process")
     while (datetime.now() - t1).seconds <= const.REBOOT_TIMEOUT:
-        print("====while====")
         for node in nodes:
             if node.ip in node_status:
                 continue

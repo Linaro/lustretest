@@ -48,7 +48,7 @@ OST_DISK8 = "/dev/vdi"
 #
 
 # Terraform Resource Name
-LUSTRE_CLUSTER_PREFIX = "lustre_"
+LUSTRE_CLUSTER_PREFIX = "lustre-"
 LUSTRE_NODE_NUM_01 = "-01"
 LUSTRE_NODE_NUM_02 = "-02"
 LUSTRE_NODE_NUM_03 = "-03"

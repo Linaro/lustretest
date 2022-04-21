@@ -34,12 +34,12 @@ class Auster(object):
             self._info("Not yet connected to this node: " + e)
             return
 
-        # Test SSH connection
-        stdin, stdout, stderr = self.ssh_client.exec_command('ls /')
-        error = stderr.read()
-        if error.strip():
-            self._error(error)
-            return
+        # # Test SSH connection
+        # stdin, stdout, stderr = self.ssh_client.exec_command('ls /')
+        # error = stderr.read()
+        # if error.strip():
+        #     self._error(error)
+        #     return
 
         self._info("SSH client for IP: " + self.ip +
                     " initialization is finished")

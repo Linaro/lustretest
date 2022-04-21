@@ -49,12 +49,12 @@ class Provision(object):
             self._info("Not yet connected to this node: " + e)
             return
 
-        # Test SSH connection
-        stdin, stdout, stderr = ssh_client.exec_command('ls /')
-        error = stderr.read()
-        if error.strip():
-            self._error(error)
-            return
+        # # Test SSH connection
+        # stdin, stdout, stderr = ssh_client.exec_command('ls /')
+        # error = stderr.read()
+        # if error.strip():
+        #     self._error(error)
+        #     return
 
         self._info("SSH client for IP: " + ip +
                     " initialization is finished")
@@ -211,14 +211,19 @@ class Provision(object):
                 self.node_ip_list.append(ost01_ip)
             elif node_info[0] == const.TERRAFORM_CLIENT01_HOSTNAME:
                 client01_hostname = eval(node_info[1])
+                client01_hostname = client01_hostname.lower()
             elif node_info[0] == const.TERRAFORM_CLIENT02_HOSTNAME:
                 client02_hostname = eval(node_info[1])
+                client02_hostname = client02_hostname.lower()
             elif node_info[0] == const.TERRAFORM_MDS01_HOSTNAME:
                 mds01_hostname = eval(node_info[1])
+                mds01_hostname = mds01_hostname.lower()
             elif node_info[0] == const.TERRAFORM_MDS02_HOSTNAME:
                 mds02_hostname = eval(node_info[1])
+                mds02_hostname = mds02_hostname.lower()
             elif node_info[0] == const.TERRAFORM_OST01_HOSTNAME:
                 ost01_hostname = eval(node_info[1])
+                ost01_hostname = ost01_hostname.lower()
             else:
                 self._error("The node info is not correct.")
 
@@ -253,8 +258,6 @@ class Provision(object):
                             print("The node reboot is not finished")
                     except paramiko.ssh_exception.NoValidConnectionsError:
                         print("can not connect to the node, wait")
-
-
 
                 ready_clients = len(self.ssh_clients)
                 if ready_clients == 5:
@@ -340,7 +343,6 @@ class Provision(object):
         else:
             self._error("The config file does not exist: " + const.NODE_INFO)
             return False
-
 
 
     def install_lustre(self, client):
