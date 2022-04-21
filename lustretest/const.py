@@ -14,7 +14,7 @@ TERRAFORM_CONF_DIR = '/home/centos/tf/'
 TERRAFORM_VARIABLES_JSON = "terraform.tfvars.json"
 TERRAFORM_BIN = "/home/centos/terraform"
 SSH_CONFIG = os.getcwd() + '/cfg/ssh_config'
-TERRAFORM_EXIST_CONF = "lustre_Bdl8Ieag/"
+TERRAFORM_EXIST_CONF = "lustre-WLEIlF4j/"
 
 # Test Node Related
 TEST_NODE_ROOT = '/root'
@@ -32,6 +32,7 @@ LUSTRE_TEST_CFG_DIR = "/usr/lib64/lustre/tests/cfg"
 
 MDS_DISK1 = "/dev/vdb"
 MDS_DISK2 = "/dev/vdc"
+
 OST_DISK1 = "/dev/vdb"
 OST_DISK2 = "/dev/vdc"
 OST_DISK3 = "/dev/vdd"

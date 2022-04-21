@@ -180,13 +180,13 @@ def multinode_conf_gen(node_map):
                     mds_count = "MDSCOUNT=4\n"
                     test_conf.write(mds_count)
             if node_info[2] == const.OST:
-                ost_count = "OSTCOUNT=8\n"
+                ost_count = "OSTCOUNT=7\n"
                 ost1_host = "ost_HOST=\"" + node_info[0] + "\"\n"
-                ost_dev1 = "OSTDEV1=\"" + const.OST_DISK2 + "\"\n"
+                ost_dev1 = "OSTDEV1=\"" + const.OST_DISK1 + "\"\n"
                 test_conf.write(ost_count)
                 test_conf.write(ost1_host)
                 test_conf.write(ost_dev1)
-                for num in range(2, 9):
+                for num in range(2, 8):
                     ost_disk = None
                     if num == 2:
                         ost_disk = const.OST_DISK2
@@ -200,8 +200,8 @@ def multinode_conf_gen(node_map):
                         ost_disk = const.OST_DISK6
                     elif num == 7:
                         ost_disk = const.OST_DISK7
-                    elif num == 8:
-                        ost_disk = const.OST_DISK8
+                    # elif num == 8:
+                    #     ost_disk = const.OST_DISK8
 
                     ost_host = "ost" + str(num) + "_HOST=\"" + node_info[0] + "\"\n"
                     ost_dev = "OSTDEV" + str(num) + "=\"" + ost_disk + "\"\n"
