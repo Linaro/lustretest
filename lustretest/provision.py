@@ -21,7 +21,7 @@ class Provision(object):
         self.node_map = None
         self.tf_conf_dir = None
         self.node_ip_list = []
-        self.ssh_user = const.DEFAULT_SSH_USER
+        self.ssh_user = const.CLOUD_INIT_CHECK_USER
         self.ssh_clients = {}
         self.test_suites_num = test_suites_num
         self.node_conf_dir = utils.find_node_conf(self.test_suites_num)
