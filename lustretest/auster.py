@@ -2,6 +2,8 @@ import const
 import paramiko
 from paramiko import ssh_exception
 import logging
+import utils
+import sys
 
 
 class Auster(object):
@@ -41,8 +43,8 @@ class Auster(object):
         #     self._error(error)
         #     return
 
-        self._info("SSH client for IP: " + self.ip +
-                    " initialization is finished")
+        self._info("SSH client for IP: " +
+                   self.ip + " initialization is finished")
 
     def ssh_close(self):
         self.ssh_client.close()
@@ -60,10 +62,12 @@ class Auster(object):
             return False
         return True
 
-    def test(self):
+    def test(self, test_suites):
         self.ssh_connection()
         if self.ssh_client:
-            cmd = "/usr/lib64/lustre/tests/auster -f multinode -rsv sanity"
+            cmd = "/usr/lib64/lustre/tests/auster -f multinode -rsv " + test_suites
+            self._info("Exec the test suites on the node: " + self.ip)
+            self._info(cmd)
             if not self.ssh_exec(cmd):
                 self._error("Auster test failed: " + cmd)
         else:
@@ -71,27 +75,26 @@ class Auster(object):
 
 
 def main():
-    node_map = {}
     logging.basicConfig(format='%(message)s',
                         level=logging.INFO)
     logger = logging.getLogger(__name__)
-    with open(const.NODE_INFO, 'r') as f2:
-        line = f2.readline()
-        i = 0
-        while line is not None and line != '':
-            node_info = line.split()
-            node_map[i] = [node_info[0], node_info[1], node_info[2]]
-            line = f2.readline()
-            i += 1
 
-    node_count = len(node_map)
-    if node_count == 4:
-        print("Execute the test for 2 clients, 1 MDS and 1 OST")
-    elif node_count == 5:
-        print("Execute the test for 2 clients, 2 MDS and 1 OST")
-    else:
-        print("Unsupported Test nodes numbers!")
+    args = sys.argv[1:]
+    if len(args) == 0:
+        logger.error("No test suites args specified")
+        return
 
+    test_suites_num = args[0]
+    if test_suites_num not in const.LUSTRE_TEST_SUITE_NUM_LIST:
+        logger.error("The test suites: " + args[0] + " is not support")
+        return
+
+    node_conf = utils.find_node_conf(test_suites_num)
+    node_map, test_suites = utils.read_node_info(node_conf + const.NODE_INFO)
+    if test_suites is None:
+        return
+
+    # Choose the first node as the test exec node.
     exec_node_ip = ""
     for key, node_info in node_map.items():
         if node_info[2] == const.CLIENT:
@@ -99,7 +102,7 @@ def main():
             break
 
     auster_test = Auster(exec_node_ip, logger)
-    auster_test.test()
+    auster_test.test(test_suites)
 
 
 if __name__ == "__main__":

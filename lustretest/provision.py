@@ -10,16 +10,22 @@ import time
 from datetime import datetime
 import logging
 import threading
+import sys
+import utils
+from distutils.util import strtobool
 
 
 class Provision(object):
-    def __init__(self, logger):
+    def __init__(self, logger, test_suites_num, provision_new):
         self.logger = logger
         self.node_map = None
         self.tf_conf_dir = None
         self.node_ip_list = []
         self.ssh_user = const.DEFAULT_SSH_USER
         self.ssh_clients = {}
+        self.test_suites_num = test_suites_num
+        self.node_conf_dir = utils.find_node_conf(self.test_suites_num)
+        self.provision_new = provision_new
 
     def _debug(self, msg, *args):
         self.logger.debug(msg, *args)
@@ -51,8 +57,8 @@ class Provision(object):
         #     self._error(error)
         #     return
 
-        self._info("SSH client for IP: " + ip +
-                    " initialization is finished")
+        self._info("SSH client for IP: " +
+                   ip + " initialization is finished")
         return ssh_client
 
     def ssh_close(self, ssh_client):
@@ -75,8 +81,8 @@ class Provision(object):
     #
     # Copy the terraform template from the source file to another destination
     #
-    def copy_dir(self, test_name):
-        tf_conf_dir = const.TERRAFORM_CONF_DIR + test_name
+    def copy_dir(self, dir_path, test_name):
+        tf_conf_dir = dir_path + test_name
         source_dir = const.TERRAFORM_CONF_TEMPLATE_DIR
         if not os.path.exists(tf_conf_dir):
             try:
@@ -100,9 +106,9 @@ class Provision(object):
     #
     def prepare_tf_conf(self):
         test_hash = self.host_name_gen()
-        test_name = const.LUSTRE_CLUSTER_PREFIX + test_hash
-        self.copy_dir(test_name)
-        self.tf_conf_dir = const.TERRAFORM_CONF_DIR + test_name + "/"
+        test_name = const.LUSTRE_CLUSTER_PREFIX + test_hash.lower()
+        self.tf_conf_dir = self.node_conf_dir + test_name + "/"
+        self.copy_dir(self.node_conf_dir, test_name)
 
         network_port_prefix = const.LUSTRE_CLUSTER_PREFIX + test_hash
         tf_vars = {
@@ -155,6 +161,7 @@ class Provision(object):
     #
     def terraform_apply(self):
         os.chdir(self.tf_conf_dir)
+        self._info(self.tf_conf_dir)
         if self.terraform_init():
             p = subprocess.Popen([const.TERRAFORM_BIN, 'apply', '-auto-approve'],
                                  stdout=subprocess.PIPE,
@@ -223,7 +230,9 @@ class Provision(object):
                 self._error("The node info is not correct.")
 
         # Generate the NODE_INFO, which will be used in the future process
-        with open(const.NODE_INFO, 'w+') as node_conf:
+        with open(self.node_conf_dir + const.NODE_INFO, 'w+') as node_conf:
+            node_conf.write(const.TEST_SUITES_PREFIX + ' ' +
+                            self.test_suites_num + '\n')
             node_conf.write(client01_hostname + ' ' +
                             client01_ip + ' ' + const.CLIENT + '\n')
             node_conf.write(client02_hostname + ' ' +
@@ -276,7 +285,7 @@ class Provision(object):
                         if self.ssh_exec(client, ssh_check_cmd):
                             node_status.append(ip)
                         else:
-                            self._error("The cloud-init process is not finished: " + ip)
+                            self._info("The cloud-init process is not finished: " + ip)
                 ready_node = len(node_status)
                 self._info("Ready nodes: " + str(node_status))
                 if ready_node == 5:
@@ -296,7 +305,7 @@ class Provision(object):
             return False
 
     def clean_node_info(self):
-        p = subprocess.Popen(['rm', '-rf', const.NODE_INFO],
+        p = subprocess.Popen(['rm', '-rf', self.node_conf_dir + const.NODE_INFO],
                              stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
         self.realtime_output(p)
         if p.returncode == 0:
@@ -308,18 +317,22 @@ class Provision(object):
 
     #
     # The main process
-    # For stablity, we can set provision_new to False, and then set the
+    # For stability, we can set provision_new to False, and then set the
     # terraform dir then each running will use the same 5 nodes for test.
     # Note: This will not install all the packages, so we needs to do some
     # procedures which is in cloud-init to another function.
     #
-    def provision(self):
-        if const.PROVISION_NEW_CLUSTER:
+    def provision(self,exist_tf_dir):
+        if self.provision_new:
+            self._info("Prepare to provision the new cluster")
             self.prepare_tf_conf()
         else:
-            self.tf_conf_dir = const.TERRAFORM_CONF_DIR + \
-                               const.TERRAFORM_EXIST_CONF
+            self._info("Prepare to use the exist cluster: " + exist_tf_dir)
+            self.tf_conf_dir = self.node_conf_dir + exist_tf_dir
 
+        if not os.path.exists(self.tf_conf_dir):
+            self._error("No exist terraform config path exist")
+            return False
         self.clean_node_info()
         tf_return = self.terraform_apply()
         if tf_return:
@@ -328,9 +341,9 @@ class Provision(object):
             return False
 
         # check the file is there
-        if exists(const.NODE_INFO):
+        if exists(self.node_conf_dir + const.NODE_INFO):
             if self.node_check():
-                if not const.PROVISION_NEW_CLUSTER:
+                if not self.provision_new:
                     self._info("Does not provision new instances, we "
                                "need to reinstall Lustre from the repo")
                     return self.node_operate()
@@ -340,7 +353,7 @@ class Provision(object):
                 self._error("The node_check is failed")
                 return False
         else:
-            self._error("The config file does not exist: " + const.NODE_INFO)
+            self._error("The config file does not exist: " + self.node_conf_dir + const.NODE_INFO)
             return False
 
     def install_lustre(self, node, client):
@@ -427,15 +440,37 @@ def main():
     logging.basicConfig(level=logging.INFO,
                         format='%(message)s')
     logger = logging.getLogger(__name__)
+    args = sys.argv[1:]
+    if len(args) < 2 or len(args) > 3:
+        logger.error("no exact args specified")
+        return
+    test_suites_num = args[0]
+    if test_suites_num not in const.LUSTRE_TEST_SUITE_NUM_LIST:
+        logger.error("The test suites: " + args[0] + " is not support")
+        return
 
-    cluster_provision = Provision(logger)
-    result = cluster_provision.provision()
+    provision_new = bool(strtobool(args[1]))
+    exist_tf_dir = ""
+    if not provision_new:
+        if len(args) == 3:
+            exist_tf_dir = args[2]
+        else:
+            logger.error("Choose not provision new cluster, "
+                         "please specify the lustre terraform dir")
+            return
+
+    cluster_provision = Provision(logger, test_suites_num, provision_new)
+    result = cluster_provision.provision(exist_tf_dir)
     if result:
         logger.info("The provision process is successful")
         for node, client in cluster_provision.ssh_clients.items():
             cluster_provision.ssh_close(client)
     else:
         logger.error("The provision process is not successful")
+
+# Args:                   test_suites_num provision_new    lustre-exist-tf-dir
+# E.g 3 args:                    1              False          lustre-abdg1b
+# E.g 2 args if provision new:   2              True
 
 
 if __name__ == "__main__":

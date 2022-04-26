@@ -4,23 +4,21 @@ CLIENT = 'CLIENT'
 MDS = 'MDS'
 OST = 'OST'
 
-PROVISION_NEW_CLUSTER = False
 TEST_WORKSPACE = '/home/centos/workspace/node/'
-NODE_INFO = TEST_WORKSPACE + 'lustre-test-node.conf'
-SSH_PRIVATE_KEY = '/home/centos/workspace/node/id_rsa'
+NODE_INFO = 'lustre-test-node.conf'
+SSH_PRIVATE_KEY = TEST_WORKSPACE + 'id_rsa'
 
 TERRAFORM_CONF_TEMPLATE_DIR = os.getcwd() + '/tf'
-TERRAFORM_CONF_DIR = '/home/centos/tf/'
 TERRAFORM_VARIABLES_JSON = "terraform.tfvars.json"
 TERRAFORM_BIN = "/home/centos/terraform"
 SSH_CONFIG = os.getcwd() + '/cfg/ssh_config'
-TERRAFORM_EXIST_CONF = "lustre-WLEIlF4j/"
 
 # Test Node Related
 TEST_NODE_ROOT = '/root'
 SSH_CFG_DIR = TEST_NODE_ROOT + '/.ssh'
 REMOTE_SSH_CONFIG = SSH_CFG_DIR + '/config'
 DEFAULT_SSH_USER = 'root'
+CLOUD_INIT_CHECK_USER = 'centos'
 REBOOT_TIMEOUT = 300
 CLOUD_INIT_TIMEOUT = 900
 CLOUD_INIT_FINISH = "/var/lib/cloud/instance/boot-finished"
@@ -29,6 +27,14 @@ LUSTER_TEST_CFG = '/usr/lib64/lustre/tests/cfg/'
 MULTI_NODE_CONFIG = "multinode.sh"
 LUSTRE_TEST_CFG_DIR = "/usr/lib64/lustre/tests/cfg"
 
+LUSTRE_TEST_SUITE_NUM_LIST = ["1", "2", "3", "4", "5", "6"]
+LUSTRE_TEST_SUITE_1 = "sanity sanity-pfl"
+LUSTRE_TEST_SUITE_2 = "ost-pools replay-single conf-sanity"
+LUSTRE_TEST_SUITE_3 = "insanity mmp replay-ost-single sanity-dom sanity-flr sanity-hsm sanity-quota"
+LUSTRE_TEST_SUITE_4 = "lustre-rsync-test recovery-small sanity-scrub sanityn"
+LUSTRE_TEST_SUITE_5 = "mds-survey replay-dual runtests sanity-lfsck sanity-sec"
+LUSTRE_TEST_SUITE_6 = "recovery-small sanity-sec sanity-selinux large-scale"
+TEST_SUITES_PREFIX = "test-suites"
 
 MDS_DISK1 = "/dev/vdb"
 MDS_DISK2 = "/dev/vdc"

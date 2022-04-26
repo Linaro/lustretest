@@ -4,6 +4,8 @@ from scp import SCPClient
 import const
 from datetime import datetime
 import time
+import utils
+import sys
 
 class Node(object):
     def __init__(self, host, ip, node_type, node_map, logger):
@@ -306,26 +308,24 @@ def reboot_and_check(nodes, logger):
 
 
 def main():
-    node_map = {}
-    logging.basicConfig(format='%(message)s',
-                        level=logging.INFO)
+    logging.basicConfig(format='%(message)s', level=logging.INFO)
     logger = logging.getLogger(__name__)
-    with open(const.NODE_INFO, 'r') as f2:
-        line = f2.readline()
-        i = 0
-        while line is not None and line != '':
-            node_info = line.split()
-            node_map[i] = [node_info[0], node_info[1], node_info[2]]
-            line = f2.readline()
-            i += 1
 
-    node_count = len(node_map)
-    if node_count == 4:
-        logger.info("Execute the test for 2 clients, 1 MDS and 1 OST")
-    elif node_count == 5:
-        logger.info("Execute the test for 2 clients, 2 MDS and 1 OST")
-    else:
-        logger.info("Unsupported Test nodes numbers!")
+    args = sys.argv[1:]
+    if len(args) == 0:
+        logger.error("No test suites args specified")
+        return
+
+    test_suites_num = args[0]
+    if test_suites_num not in const.LUSTRE_TEST_SUITE_NUM_LIST:
+        logger.error("The test suites: " + args[0] + " is not support")
+        return
+
+    node_conf = utils.find_node_conf(test_suites_num)
+    node_map, test_suites = utils.read_node_info(node_conf + const.NODE_INFO)
+    if test_suites is None:
+        logger.error("No available test suites recorded in: " + const.NODE_INFO)
+        return
 
     multinode_conf_gen(node_map)
     node_init(node_map, logger)
