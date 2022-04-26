@@ -433,7 +433,15 @@ class Provision(object):
 
         for x in thread_list:
             x.join()
+
+        for node, client in self.ssh_clients.items():
+            self.node_volume_check(node, client)
         return True
+
+    def node_volume_check(self, node, client):
+        check_volume = 'lsblk'
+        self._info("The node " + node + " volumes info: ")
+        self.ssh_exec(client, check_volume)
 
 
 def main():

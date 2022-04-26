@@ -277,6 +277,8 @@ def reboot_and_check(nodes, logger):
     t1 = datetime.now()
     logger.info("Begin to check the Node Reboot process")
     while (datetime.now() - t1).seconds <= const.REBOOT_TIMEOUT:
+        logger.info("Check all the clients every 5s")
+        logger.info("Ready nodes: " + str(node_status))
         for node in nodes:
             if node.ip in node_status:
                 continue
