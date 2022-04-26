@@ -37,7 +37,7 @@ def get_test_list(test_suites):
         return
 
 
-def find_node_conf(test_suites_num):
+def find_node_conf_dir(test_suites_num):
     node_conf_dir = const.TEST_WORKSPACE + const.TEST_SUITES_PREFIX + test_suites_num
     if not os.path.exists(node_conf_dir):
         os.mkdir(node_conf_dir)

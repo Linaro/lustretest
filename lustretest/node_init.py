@@ -7,6 +7,7 @@ import time
 import utils
 import sys
 
+
 class Node(object):
     def __init__(self, host, ip, node_type, node_map, logger):
         self.host = host
@@ -74,7 +75,7 @@ class Node(object):
         else:
             self._info("SCP success: " + local_path)
 
-    def init(self):
+    def init(self, node_conf_dir):
         # Install the Lustre client packages on two machines, and the Lustre server
         # packages on the other four, using the same version of Lustre
         # Follow this guide to install Lustre RPMs and e2fsprogs
@@ -124,7 +125,7 @@ class Node(object):
 
         remote_cfg_location = const.LUSTRE_TEST_CFG_DIR + '/' + const.MULTI_NODE_CONFIG
         self.ssh_exec("yes | sudo rm -i " + remote_cfg_location)
-        self.scp_send(const.TEST_WORKSPACE + const.MULTI_NODE_CONFIG, "/home/jenkins")
+        self.scp_send(node_conf_dir + const.MULTI_NODE_CONFIG, "/home/jenkins")
         self.ssh_exec("yes | sudo mv /home/jenkins/" + const.MULTI_NODE_CONFIG + " " + remote_cfg_location)
 
         # SSH .ssh/config add like below:
@@ -145,12 +146,12 @@ class Node(object):
         self.ssh_exec("sudo reboot")
 
 
-def multinode_conf_gen(node_map):
+def multinode_conf_gen(node_map, node_conf_dir):
     total_client = 0
     total_mds = 0
     total_clients = ""
 
-    with open(const.TEST_WORKSPACE + const.MULTI_NODE_CONFIG, 'w+') as test_conf:
+    with open(node_conf_dir + const.MULTI_NODE_CONFIG, 'w+') as test_conf:
         for key, node_info in node_map.items():
             if node_info[2] == const.CLIENT:
                 if total_client == 0:
@@ -224,7 +225,7 @@ def multinode_conf_gen(node_map):
         test_conf.write(ncli_sh_cmd)
 
 
-def node_init(node_map, logger):
+def node_init(node_map, node_conf_dir, logger):
     total_client = 0
     total_mds = 0
     test_client1 = None
@@ -323,14 +324,14 @@ def main():
         logger.error("The test suites: " + args[0] + " is not support")
         return
 
-    node_conf = utils.find_node_conf(test_suites_num)
-    node_map, test_suites = utils.read_node_info(node_conf + const.NODE_INFO)
+    node_conf_dir = utils.find_node_conf_dir(test_suites_num)
+    node_map, test_suites = utils.read_node_info(node_conf_dir + const.NODE_INFO)
     if test_suites is None:
         logger.error("No available test suites recorded in: " + const.NODE_INFO)
         return
 
-    multinode_conf_gen(node_map)
-    node_init(node_map, logger)
+    multinode_conf_gen(node_map, node_conf_dir)
+    node_init(node_map, node_conf_dir, logger)
 
 
 if __name__ == "__main__":

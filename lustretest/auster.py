@@ -89,8 +89,8 @@ def main():
         logger.error("The test suites: " + args[0] + " is not support")
         return
 
-    node_conf = utils.find_node_conf(test_suites_num)
-    node_map, test_suites = utils.read_node_info(node_conf + const.NODE_INFO)
+    node_conf_dir = utils.find_node_conf_dir(test_suites_num)
+    node_map, test_suites = utils.read_node_info(node_conf_dir + const.NODE_INFO)
     if test_suites is None:
         return
 

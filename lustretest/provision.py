@@ -24,7 +24,7 @@ class Provision(object):
         self.ssh_user = const.CLOUD_INIT_CHECK_USER
         self.ssh_clients = {}
         self.test_suites_num = test_suites_num
-        self.node_conf_dir = utils.find_node_conf(self.test_suites_num)
+        self.node_conf_dir = utils.find_node_conf_dir(self.test_suites_num)
         self.provision_new = provision_new
 
     def _debug(self, msg, *args):
