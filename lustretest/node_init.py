@@ -253,11 +253,11 @@ def node_init(node_map, node_conf_dir, logger):
         if node_info[2] == const.OST:
             test_ost1 = test_node
 
-    test_client1.init()
-    test_client2.init()
-    test_mds1.init()
-    test_mds2.init()
-    test_ost1.init()
+    test_client1.init(node_conf_dir)
+    test_client2.init(node_conf_dir)
+    test_mds1.init(node_conf_dir)
+    test_mds2.init(node_conf_dir)
+    test_ost1.init(node_conf_dir)
 
     nodes = [test_client1, test_client2, test_mds1, test_mds2, test_ost1]
     if not reboot_and_check(nodes, logger):
