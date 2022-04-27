@@ -30,21 +30,21 @@ pipeline {
             parallel {
                 stage('Test Suites 1'){
                     stages{
-                        stage('Provision test excution nodes') {
+                        stage('Provision test cluster 1') {
                             steps {
                                 dir("lustretest-main/lustretest") {
                                     sh 'source /home/centos/venv3/bin/activate;python3 provision.py 1 False lustre-wleilf4j'
                                 }
                             }
                         }
-                        stage('Client node init') {
+                        stage('Client node init 1') {
                             steps {
                                 dir("lustretest-main/lustretest") {
                                     sh 'source /home/centos/venv3/bin/activate;python3 node_init.py 1'
                                 }
                             }
                         }
-                        stage('Run test') {
+                        stage('Run test suites 1') {
                             steps {
                                 dir("lustretest-main/lustretest") {
                                     sh 'source /home/centos/venv3/bin/activate;python3 auster.py 1'
@@ -55,21 +55,21 @@ pipeline {
                 }
                 stage('Test Suites 2'){
                     stages{
-                        stage('Provision test excution nodes') {
+                        stage('Provision test cluster 2') {
                             steps {
                                 dir("lustretest-main/lustretest") {
                                     sh 'source /home/centos/venv3/bin/activate;python3 provision.py 2 False lustre-ghbemii7'
                                 }
                             }
                         }
-                        stage('Client node init') {
+                        stage('Client node init 2') {
                             steps {
                                 dir("lustretest-main/lustretest") {
                                     sh 'source /home/centos/venv3/bin/activate;python3 node_init.py 2'
                                 }
                             }
                         }
-                        stage('Run test') {
+                        stage('Run test suites 2') {
                             steps {
                                 dir("lustretest-main/lustretest") {
                                     sh 'source /home/centos/venv3/bin/activate;python3 auster.py 2'
@@ -80,21 +80,21 @@ pipeline {
                 }
                 stage('Test Suites 3'){
                     stages{
-                        stage('Provision test excution nodes') {
+                        stage('Provision test cluster 3') {
                             steps {
                                 dir("lustretest-main/lustretest") {
                                     sh 'source /home/centos/venv3/bin/activate;python3 provision.py 3 False lustre-wujqyzn6'
                                 }
                             }
                         }
-                        stage('Client node init') {
+                        stage('Client node init 3') {
                             steps {
                                 dir("lustretest-main/lustretest") {
                                     sh 'source /home/centos/venv3/bin/activate;python3 node_init.py 3'
                                 }
                             }
                         }
-                        stage('Run test') {
+                        stage('Run test suites 3') {
                             steps {
                                 dir("lustretest-main/lustretest") {
                                     sh 'source /home/centos/venv3/bin/activate;python3 auster.py 3'
