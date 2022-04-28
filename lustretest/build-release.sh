@@ -21,7 +21,7 @@ rm -rf ${WORKSPACE}/*
 echo "Generate the release tar bz..."
 mkdir -p $build_dir
 cd $build_dir
-git clone --depth 1 --branch $branch --reference $local_repo $remote_repo
+git clone --branch $branch --reference $local_repo $remote_repo
 cd lustre-release
 
 # (TODO): download config from github
@@ -30,7 +30,7 @@ cp $kernel_src_dir/kernel-4.18.0-4.18-rhel8.5-aarch64.config-debug \
 
 # Generate the source tar file
 sh autogen.sh
-./configure --enable-dist
+./configure -C --enable-dist
 make dist
 code_base=$(find . -name "lustre*tar.gz")
 code_base=${code_base: 2}
