@@ -4,6 +4,7 @@ from paramiko import ssh_exception
 import logging
 import utils
 import sys
+from distutils.util import strtobool
 
 
 class Auster(object):
@@ -80,8 +81,8 @@ def main():
     logger = logging.getLogger(__name__)
 
     args = sys.argv[1:]
-    if len(args) == 0:
-        logger.error("No test suites args specified")
+    if len(args) != 2:
+        logger.error("no exact args specified")
         return
 
     test_suites_num = args[0]
@@ -89,10 +90,19 @@ def main():
         logger.error("The test suites: " + args[0] + " is not support")
         return
 
-    node_conf_dir = utils.find_node_conf_dir(test_suites_num)
-    node_map, test_suites = utils.read_node_info(node_conf_dir + const.NODE_INFO)
-    if test_suites is None:
-        return
+    exec_suites = bool(strtobool(args[1]))
+
+    # We transfer the num for which is > 3 to -3, and use 1-3 clusters already
+    # to execute the test
+    # test suite 4: 1
+    # test suite 5: 2
+    # test suite 6: 3
+    test_cluster_num = test_suites_num
+    if int(test_suites_num) > 3:
+        test_cluster_num = str(int(test_suites_num) - 3)
+    node_conf_dir = utils.find_node_conf_dir(test_cluster_num)
+    node_map, _ = utils.read_node_info(node_conf_dir + const.NODE_INFO)
+    test_suites = utils.get_test_list(test_suites_num)
 
     # Choose the first node as the test exec node.
     exec_node_ip = ""
@@ -101,8 +111,11 @@ def main():
             exec_node_ip = node_info[1]
             break
 
-    auster_test = Auster(exec_node_ip, logger)
-    auster_test.test(test_suites)
+    if exec_suites:
+        auster_test = Auster(exec_node_ip, logger)
+        auster_test.test(test_suites)
+    else:
+        logger.info("Skip the test suites: " + test_suites_num + ": " + test_suites)
 
 
 if __name__ == "__main__":

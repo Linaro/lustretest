@@ -4,11 +4,11 @@ import os
 
 def read_node_info(config_path):
     node_map = {}
-    test_suites = ""
+    test_suites_num = ""
     with open(config_path, 'r') as f2:
         line = f2.readline()
         test_info = line.split()
-        test_suites = test_info[1]
+        test_suites_num = test_info[1]
         i = 0
         line = f2.readline()
         while line is not None and line != '':
@@ -17,7 +17,7 @@ def read_node_info(config_path):
             line = f2.readline()
             i += 1
 
-    return node_map, get_test_list(test_suites)
+    return node_map, test_suites_num
 
 
 def get_test_list(test_suites):
