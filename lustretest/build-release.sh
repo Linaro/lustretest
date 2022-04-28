@@ -23,6 +23,7 @@ mkdir -p $build_dir
 cd $build_dir
 git clone --branch $branch --reference $local_repo $remote_repo
 cd lustre-release
+commit_id=$(git rev-parse --short HEAD)
 
 # (TODO): download config from github
 cp $kernel_src_dir/kernel-4.18.0-4.18-rhel8.5-aarch64.config-debug \
@@ -71,4 +72,4 @@ fi
 sudo mv -f $build_dir/RPMS/aarch64/*.aarch64.rpm $rpm_repo
 sudo createrepo --update $rpm_repo
 
-echo "Finish build."
+echo "Finish build. branch: $branch, commit ID: $commit_id"
