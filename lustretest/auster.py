@@ -52,17 +52,11 @@ class Auster(object):
         self.ssh_client.close()
 
     def ssh_exec(self, cmd):
-        stdin, stdout, stderr = self.ssh_client.exec_command(cmd)
-        while True:
-            line = stdout.readline()
-            if not line:
-                break
+        # pty make stderr stream into stdout, so we can
+        # print stdout and stderr in realtime
+        stdin, stdout, stderr = self.ssh_client.exec_command(cmd, get_pty=True)
+        for line in iter(stdout.readline, ""):
             self._info(line.strip())
-        error = stderr.read()
-        if error.strip():
-            self._error(error)
-            return False
-        return True
 
     def test(self, test_suites, num):
         log_dir = env['WORKSPACE'] + '/test_logs/log-' \
@@ -74,8 +68,14 @@ class Auster(object):
                     + log_dir + " " + test_suites
             self._info("Exec the test suites on the node: " + self.ip)
             self._info(cmd)
-            if not self.ssh_exec(cmd):
-                self._error("Auster test failed: " + cmd)
+            self.ssh_exec(cmd)
+            self._info("Auster test finish: " + cmd)
+
+            """
+            (liuxl)TODO: Check results.yaml file to judge a test is failed
+            or success.
+            self._error("Auster test failed: " + cmd)
+            """
         else:
             self._error("No available ssh client for: " + self.ip)
 
