@@ -8,6 +8,7 @@ pipeline {
             steps {
                 sh 'ls -l ${WORKSPACE}'
                 sh 'rm -fr *'
+                sh 'ln -sf /home/centos/workspace/nfs/test_logs ${WORKSPACE}/test_logs'
             }
         }
         stage('Build') {

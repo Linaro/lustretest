@@ -5,6 +5,7 @@ import logging
 import utils
 import sys
 from distutils.util import strtobool
+from os import environ as env
 
 
 class Auster(object):
@@ -63,10 +64,14 @@ class Auster(object):
             return False
         return True
 
-    def test(self, test_suites):
+    def test(self, test_suites, num):
+        log_dir = env['WORKSPACE'] + '/test_logs/log-' \
+                    + env['BUILD_ID'] + '/' + 'group-' + num
+
         self.ssh_connection()
         if self.ssh_client:
-            cmd = "/usr/lib64/lustre/tests/auster -f multinode -rsv " + test_suites
+            cmd = "/usr/lib64/lustre/tests/auster -f multinode -rkv -D " \
+                    + log_dir + " " + test_suites
             self._info("Exec the test suites on the node: " + self.ip)
             self._info(cmd)
             if not self.ssh_exec(cmd):
@@ -113,7 +118,7 @@ def main():
 
     if exec_suites:
         auster_test = Auster(exec_node_ip, logger)
-        auster_test.test(test_suites)
+        auster_test.test(test_suites, test_suites_num)
     else:
         logger.info("Skip the test suites: " + test_suites_num + ": " + test_suites)
 
