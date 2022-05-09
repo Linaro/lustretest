@@ -12,12 +12,12 @@ users:
 
 yum_repos:
     lustre:
-        baseurl: http://213.146.155.48/repo/lustre
+        baseurl: https://uk.linaro.cloud/repo/lustre
         name: lustre
         enabled: true
         gpgcheck: false
     e2fsprogs:
-        baseurl: http://213.146.155.48/repo/e2fsprogs
+        baseurl: https://uk.linaro.cloud/repo/e2fsprogs
         name: e2fsprogs
         enabled: true
         gpgcheck: false
