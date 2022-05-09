@@ -38,7 +38,7 @@ pipeline {
                                 }
                             }
                         }
-                        stage('Client node init 1') {
+                        stage('Cluster nodes init 1') {
                             steps {
                                 dir("lustretest-main/lustretest") {
                                     sh 'source /home/centos/venv3/bin/activate;python3 node_init.py 1'
@@ -48,7 +48,21 @@ pipeline {
                         stage('Run test suites 1') {
                             steps {
                                 dir("lustretest-main/lustretest") {
-                                    sh 'source /home/centos/venv3/bin/activate;python3 auster.py 1'
+                                    sh 'source /home/centos/venv3/bin/activate;python3 auster.py 1 False'
+                                }
+                            }
+                        }
+                        stage('Cluster nodes init 4') {
+                            steps {
+                                dir("lustretest-main/lustretest") {
+                                    sh 'source /home/centos/venv3/bin/activate;python3 node_init.py 4'
+                                }
+                            }
+                        }
+                        stage('Run test suites 4') {
+                            steps {
+                                dir("lustretest-main/lustretest") {
+                                    sh 'source /home/centos/venv3/bin/activate;python3 auster.py 4 True'
                                 }
                             }
                         }
@@ -63,7 +77,7 @@ pipeline {
                                 }
                             }
                         }
-                        stage('Client node init 2') {
+                        stage('Cluster nodes init 2') {
                             steps {
                                 dir("lustretest-main/lustretest") {
                                     sh 'source /home/centos/venv3/bin/activate;python3 node_init.py 2'
@@ -73,7 +87,21 @@ pipeline {
                         stage('Run test suites 2') {
                             steps {
                                 dir("lustretest-main/lustretest") {
-                                    sh 'source /home/centos/venv3/bin/activate;python3 auster.py 2'
+                                    sh 'source /home/centos/venv3/bin/activate;python3 auster.py 2 False'
+                                }
+                            }
+                        }
+                        stage('Client node init 5') {
+                            steps {
+                                dir("lustretest-main/lustretest") {
+                                    sh 'source /home/centos/venv3/bin/activate;python3 node_init.py 5'
+                                }
+                            }
+                        }
+                        stage('Run test suites 5') {
+                            steps {
+                                dir("lustretest-main/lustretest") {
+                                    sh 'source /home/centos/venv3/bin/activate;python3 auster.py 5 True'
                                 }
                             }
                         }
@@ -88,7 +116,7 @@ pipeline {
                                 }
                             }
                         }
-                        stage('Client node init 3') {
+                        stage('Cluster nodes init 3') {
                             steps {
                                 dir("lustretest-main/lustretest") {
                                     sh 'source /home/centos/venv3/bin/activate;python3 node_init.py 3'
@@ -98,7 +126,21 @@ pipeline {
                         stage('Run test suites 3') {
                             steps {
                                 dir("lustretest-main/lustretest") {
-                                    sh 'source /home/centos/venv3/bin/activate;python3 auster.py 3'
+                                    sh 'source /home/centos/venv3/bin/activate;python3 auster.py 3 False'
+                                }
+                            }
+                        }
+                        stage('Client node init 6') {
+                            steps {
+                                dir("lustretest-main/lustretest") {
+                                    sh 'source /home/centos/venv3/bin/activate;python3 node_init.py 6'
+                                }
+                            }
+                        }
+                        stage('Run test suites 6') {
+                            steps {
+                                dir("lustretest-main/lustretest") {
+                                    sh 'source /home/centos/venv3/bin/activate;python3 auster.py 6 True'
                                 }
                             }
                         }
