@@ -9,11 +9,33 @@ from os import environ as env
 
 
 class Auster(object):
-    def __init__(self, ip, logger):
+    def __init__(self, logger, test_group_id):
         self.logger = logger
         self.ssh_user = const.DEFAULT_SSH_USER
         self.ssh_client = None
-        self.ip = ip
+        self.test_group_id = test_group_id
+        self.test_suites = utils.get_test_list(test_group_id)
+        self.test_log_dir = '/tmp/test_logs/log-' + env['BUILD_ID'] + \
+                            '/' + 'group-' + test_group_id
+
+        # We transfer the num for which is > 3 to -3, and use 1-3 clusters already
+        # to execute the test
+        # test suite 4: 1
+        # test suite 5: 2
+        # test suite 6: 3
+        test_cluster_num = test_group_id
+        if int(test_group_id) > 3:
+            test_cluster_num = str(int(test_group_id) - 3)
+        node_conf_dir = utils.find_node_conf_dir(test_cluster_num)
+        node_map, _ = utils.read_node_info(node_conf_dir + const.NODE_INFO)
+
+        # Choose the first node as the test exec node.
+        exec_node_ip = ""
+        for key, node_info in node_map.items():
+            if node_info[2] == const.CLIENT:
+                exec_node_ip = node_info[1]
+                break
+        self.ip = exec_node_ip
 
     def _debug(self, msg, *args):
         self.logger.debug(msg, *args)
@@ -58,14 +80,11 @@ class Auster(object):
         for line in iter(stdout.readline, ""):
             self._info(line.strip())
 
-    def test(self, test_suites, num):
-        log_dir = env['WORKSPACE'] + '/test_logs/log-' \
-                    + env['BUILD_ID'] + '/' + 'group-' + num
-
+    def test(self):
         self.ssh_connection()
         if self.ssh_client:
             cmd = "/usr/lib64/lustre/tests/auster -f multinode -rkv -D " \
-                    + log_dir + " " + test_suites
+                    + self.test_log_dir + " " + self.test_suites
             self._info("Exec the test suites on the node: " + self.ip)
             self._info(cmd)
             self.ssh_exec(cmd)
@@ -90,37 +109,18 @@ def main():
         logger.error("no exact args specified")
         return
 
-    test_suites_num = args[0]
-    if test_suites_num not in const.LUSTRE_TEST_SUITE_NUM_LIST:
+    test_group_id = args[0]
+    if test_group_id not in const.LUSTRE_TEST_SUITE_NUM_LIST:
         logger.error("The test suites: " + args[0] + " is not support")
         return
 
     exec_suites = bool(strtobool(args[1]))
 
-    # We transfer the num for which is > 3 to -3, and use 1-3 clusters already
-    # to execute the test
-    # test suite 4: 1
-    # test suite 5: 2
-    # test suite 6: 3
-    test_cluster_num = test_suites_num
-    if int(test_suites_num) > 3:
-        test_cluster_num = str(int(test_suites_num) - 3)
-    node_conf_dir = utils.find_node_conf_dir(test_cluster_num)
-    node_map, _ = utils.read_node_info(node_conf_dir + const.NODE_INFO)
-    test_suites = utils.get_test_list(test_suites_num)
-
-    # Choose the first node as the test exec node.
-    exec_node_ip = ""
-    for key, node_info in node_map.items():
-        if node_info[2] == const.CLIENT:
-            exec_node_ip = node_info[1]
-            break
-
     if exec_suites:
-        auster_test = Auster(exec_node_ip, logger)
-        auster_test.test(test_suites, test_suites_num)
+        auster_test = Auster(logger, test_group_id)
+        auster_test.test()
     else:
-        logger.info("Skip the test suites: " + test_suites_num + ": " + test_suites)
+        logger.info("Skip the test suites: " + test_group_id)
 
 
 if __name__ == "__main__":
