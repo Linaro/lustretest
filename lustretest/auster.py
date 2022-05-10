@@ -6,6 +6,7 @@ import utils
 import sys
 from distutils.util import strtobool
 from os import environ as env
+import yaml
 
 
 class Auster(object):
@@ -81,10 +82,11 @@ class Auster(object):
             self._info(line.strip())
 
     def test(self):
+        full_test_args = self.get_test_args(self.test_suites)
         self.ssh_connection()
         if self.ssh_client:
             cmd = "/usr/lib64/lustre/tests/auster -f multinode -rkv -D " \
-                    + self.test_log_dir + " " + self.test_suites
+                    + self.test_log_dir + " " + full_test_args
             self._info("Exec the test suites on the node: " + self.ip)
             self._info(cmd)
             self.ssh_exec(cmd)
@@ -97,6 +99,32 @@ class Auster(object):
             """
         else:
             self._error("No available ssh client for: " + self.ip)
+
+    def get_test_args(self, test_suites):
+        test_suites_full_args = ""
+        with open(const.TEST_ARGS_CONFIG, "r") as test_args:
+            full_test_args = yaml.load(test_args, Loader=yaml.FullLoader)
+            testargs_list = full_test_args['testargs']
+            print(testargs_list)
+            test_suite_list = test_suites.split(" ")
+            for test_suite in test_suite_list:
+                for key, testargs in enumerate(testargs_list):
+                    test_suite_name = testargs.get('test')
+                    if test_suite == test_suite_name:
+                        args = testargs.get('args')
+                        if args is not None:
+                            skip_list = args.get('skip')
+                            if skip_list and len(skip_list) != 0:
+                                skip_cases = ""
+                                for key, skip_case in enumerate(skip_list):
+                                    skip_cases += str(skip_case) + ","
+                                skip_cases = skip_cases[:-1]
+                                test_suites_full_args += test_suite + " --except \'" + skip_cases + "\' "
+                            else:
+                                test_suites_full_args += test_suite + " "
+                        else:
+                            test_suites_full_args += test_suite + " "
+        return test_suites_full_args
 
 
 def main():

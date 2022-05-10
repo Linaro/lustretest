@@ -7,6 +7,7 @@ OST = 'OST'
 TEST_WORKSPACE = '/home/centos/workspace/node/'
 NODE_INFO = 'lustre-test-node.conf'
 SSH_PRIVATE_KEY = TEST_WORKSPACE + 'id_rsa'
+TEST_ARGS_CONFIG = './cfg/test-args.yaml'
 
 TERRAFORM_CONF_TEMPLATE_DIR = os.getcwd() + '/tf'
 TERRAFORM_VARIABLES_JSON = "terraform.tfvars.json"
