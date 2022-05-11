@@ -1,14 +1,16 @@
+from datetime import datetime
 import logging
+import sys
+import time
+
 import paramiko
 from scp import SCPClient
+
 import const
-from datetime import datetime
-import time
 import utils
-import sys
 
 
-class Node(object):
+class Node():
     def __init__(self, host, ip, node_type, node_map, logger):
         self.host = host
         self.ip = ip
@@ -29,10 +31,12 @@ class Node(object):
         self.logger.error(msg, *args)
 
     def ssh_connection(self):
-        private_key = paramiko.RSAKey.from_private_key_file(const.SSH_PRIVATE_KEY)
+        private_key = paramiko.RSAKey.from_private_key_file(
+            const.SSH_PRIVATE_KEY)
         self.ssh_client = paramiko.SSHClient()
         self.ssh_client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-        self.ssh_client.connect(hostname=self.ip, port=22, username=self.ssh_user, pkey=private_key)
+        self.ssh_client.connect(hostname=self.ip, port=22,
+                                username=self.ssh_user, pkey=private_key)
 
         # # Test SSH connection
         # stdin, stdout, stderr = self.ssh_client.exec_command('ls /')
@@ -44,34 +48,35 @@ class Node(object):
         self.ssh_client.close()
 
     def ssh_exec(self, cmd):
-        stdin, stdout, stderr = self.ssh_client.exec_command(cmd)
-        while True:
-            line = stdout.readline()
-            if not line:
-                break
+        # pty make stderr stream into stdout, so we can
+        # print stdout and stderr in realtime
+        _, stdout, _ = self.ssh_client.exec_command(cmd, get_pty=True)
+        for line in iter(stdout.readline, ""):
             self._info(line.strip())
-        error = stderr.read()
-        if error.strip():
-            self._error(error)
+
+        rc = stdout.channel.recv_exit_status()
+        if rc != 0:
             return False
         return True
 
     def scp_send(self, filename, remote_path):
-        scp_client = SCPClient(self.ssh_client.get_transport(), socket_timeout=15.0)
+        scp_client = SCPClient(
+            self.ssh_client.get_transport(), socket_timeout=15.0)
         local_path = filename
         try:
             scp_client.put(local_path, remote_path, True)
         except FileNotFoundError:
-            self._error("SCP failed: " + local_path)
+            sys.exit("SCP failed: " + local_path)
         else:
             self._info("SCP success: " + local_path)
 
     def scp_get(self, remote_path, local_path):
-        scp_client = SCPClient(self.ssh_client.get_transport(), socket_timeout=15.0)
+        scp_client = SCPClient(
+            self.ssh_client.get_transport(), socket_timeout=15.0)
         try:
             scp_client.get(remote_path, local_path)
         except FileNotFoundError:
-            self._error("SCP failed: " + local_path)
+            sys.exit("SCP failed: " + local_path)
         else:
             self._info("SCP success: " + local_path)
 
@@ -93,13 +98,13 @@ class Node(object):
 
         # Generate passwordless ssh keys for hosts and exchange identities across
         # all nodes, and also accept the host fingerprints
-        # The goal is to be able to pdsh using ssh from all machines without requiring any user input
+        # The goal is to be able to pdsh using ssh from all machines without
+        # requiring any user input
         # All the node use the same keys to login
         try:
             self.ssh_connection()
             if self.ssh_connection() is None:
-                self._error("SSH client initialization failed: " + self.ip)
-                return
+                sys.exit("SSH client initialization failed: " + self.ip)
         except paramiko.ssh_exception.NoValidConnectionsError:
             self._info("can not connect to the node: " + self.ip)
         except paramiko.ssh_exception.SSHException:
@@ -114,19 +119,22 @@ class Node(object):
 
         self.ssh_exec("yes | sudo rm -i " + "/etc/hosts")
         # Configure hostnames and populate /etc/hosts
-        host_info = "127.0.0.1   localhost localhost.localdomain localhost4 localhost4.localdomain4\n" \
-                    "::1         localhost localhost.localdomain localhost6 localhost6.localdomain6\n"
-        for key, node_info in self.node_map.items():
+        host_info = "127.0.0.1   localhost localhost.localdomain localhost4" \
+            " localhost4.localdomain4\n" \
+                    "::1         localhost localhost.localdomain localhost6" \
+            " localhost6.localdomain6\n"
+        for _, node_info in self.node_map.items():
             host_info += node_info[1] + ' ' + node_info[0] + '\n'
 
         write_hosts = 'echo \"' + host_info + "\"" + ' | sudo tee -a /etc/hosts'
         if not self.ssh_exec(write_hosts):
-            self._error("Write the /etc/hosts failed")
+            sys.exit("Write the /etc/hosts failed")
 
         remote_cfg_location = const.LUSTRE_TEST_CFG_DIR + '/' + const.MULTI_NODE_CONFIG
         self.ssh_exec("yes | sudo rm -i " + remote_cfg_location)
         self.scp_send(node_conf_dir + const.MULTI_NODE_CONFIG, "/home/jenkins")
-        self.ssh_exec("yes | sudo mv /home/jenkins/" + const.MULTI_NODE_CONFIG + " " + remote_cfg_location)
+        self.ssh_exec("yes | sudo mv /home/jenkins/" +
+                      const.MULTI_NODE_CONFIG + " " + remote_cfg_location)
 
         # SSH .ssh/config add like below:
         # Host *
@@ -139,7 +147,7 @@ class Node(object):
         self.ssh_exec("yes | sudo rm -i /etc/hostname")
         write_hostname = 'echo \"' + self.host + "\"" + ' | sudo tee -a /etc/hostname'
         if not self.ssh_exec(write_hostname):
-            self._error("Write the /etc/hostname failed")
+            sys.exit("Write the /etc/hostname failed")
 
     def reboot(self):
         self.ssh_connection()
@@ -152,7 +160,7 @@ def multinode_conf_gen(node_map, node_conf_dir):
     total_clients = ""
 
     with open(node_conf_dir + const.MULTI_NODE_CONFIG, 'w+') as test_conf:
-        for key, node_info in node_map.items():
+        for _, node_info in node_map.items():
             if node_info[2] == const.CLIENT:
                 if total_client == 0:
                     total_clients = node_info[0]
@@ -210,7 +218,8 @@ def multinode_conf_gen(node_map, node_conf_dir):
                     # elif num == 8:
                     #     ost_disk = const.OST_DISK8
 
-                    ost_host = "ost" + str(num) + "_HOST=\"" + node_info[0] + "\"\n"
+                    ost_host = "ost" + str(num) + \
+                        "_HOST=\"" + node_info[0] + "\"\n"
                     ost_dev = "OSTDEV" + str(num) + "=\"" + ost_disk + "\"\n"
                     test_conf.write(ost_host)
                     test_conf.write(ost_dev)
@@ -234,8 +243,9 @@ def node_init(node_map, node_conf_dir, logger):
     test_mds2 = None
     test_ost1 = None
 
-    for key, node_info in node_map.items():
-        test_node = Node(node_info[0], node_info[1], node_info[2], node_map, logger)
+    for _, node_info in node_map.items():
+        test_node = Node(node_info[0], node_info[1],
+                         node_info[2], node_map, logger)
         if node_info[2] == const.CLIENT:
             if total_client == 0:
                 test_client1 = test_node
@@ -261,7 +271,7 @@ def node_init(node_map, node_conf_dir, logger):
 
     nodes = [test_client1, test_client2, test_mds1, test_mds2, test_ost1]
     if not reboot_and_check(nodes, logger):
-        logger.info("The reboot process is not finished")
+        sys.exit("The reboot process is not finished")
 
     test_client1.ssh_close()
     test_client2.ssh_close()
@@ -275,25 +285,26 @@ def reboot_and_check(nodes, logger):
         node.reboot()
 
     node_status = []
-    t1 = datetime.now()
+    start_time = datetime.now()
     logger.info("Begin to check the Node Reboot process")
-    while (datetime.now() - t1).seconds <= const.REBOOT_TIMEOUT:
+    while (datetime.now() - start_time).seconds <= const.REBOOT_TIMEOUT:
         logger.info("Check all the clients every 5s")
         logger.info("Ready nodes: " + str(node_status))
         for node in nodes:
             if node.ip in node_status:
                 continue
-            else:
-                try:
-                    if node.ssh_connection():
-                        node_status.append(node.ip)
-                    else:
-                        logger.info("The node reboot is not finished: " + node.ip)
-                except paramiko.ssh_exception.NoValidConnectionsError:
-                    logger.info("can not connect to the node: " + node.ip)
-                except paramiko.ssh_exception.SSHException:
-                    logger.info("Error reading SSH protocol banner[Errno 104] "
-                                "Connection reset by peer: " + node.ip)
+
+            try:
+                if node.ssh_connection():
+                    node_status.append(node.ip)
+                else:
+                    logger.info(
+                        "The node reboot is not finished: " + node.ip)
+            except paramiko.ssh_exception.NoValidConnectionsError:
+                logger.info("can not connect to the node: " + node.ip)
+            except paramiko.ssh_exception.SSHException:
+                logger.info("Error reading SSH protocol banner[Errno 104] "
+                            "Connection reset by peer: " + node.ip)
 
         ready_node = len(node_status)
         logger.info("Ready nodes: " + str(node_status))
@@ -303,11 +314,11 @@ def reboot_and_check(nodes, logger):
 
     if len(node_status) == 5:
         return True
-    else:
-        logger.info("The reboot processes of nodes are "
-                    "not totally ready, only ready: "
-                    + str(len(node_status)))
-        return False
+
+    logger.info("The reboot processes of nodes are "
+                "not totally ready, only ready: "
+                + str(len(node_status)))
+    return False
 
 
 def main():
@@ -316,22 +327,22 @@ def main():
 
     args = sys.argv[1:]
     if len(args) == 0:
-        logger.error("No test suites args specified")
-        return
+        sys.exit("No test group args specified")
 
-    test_suites_num = args[0]
-    if test_suites_num not in const.LUSTRE_TEST_SUITE_NUM_LIST:
-        logger.error("The test suites: " + args[0] + " is not support")
-        return
+    test_group_id = args[0]
+    if test_group_id not in const.LUSTRE_TEST_SUITE_NUM_LIST:
+        msg = "The test group: " + args[0] + " is not support"
+        sys.exit(msg)
+
     # We transfer the num for which is > 3 to -3, and use 1-3 clusters already
     # to execute the test
     # test suite 4: 1
     # test suite 5: 2
     # test suite 6: 3
-    test_cluster_num = test_suites_num
+    test_cluster_num = test_group_id
     just_reboot_check = False
-    if int(test_suites_num) > 3:
-        test_cluster_num = str(int(test_suites_num) - 3)
+    if int(test_group_id) > 3:
+        test_cluster_num = str(int(test_group_id) - 3)
         just_reboot_check = True
     node_conf_dir = utils.find_node_conf_dir(test_cluster_num)
     node_map, _ = utils.read_node_info(node_conf_dir + const.NODE_INFO)

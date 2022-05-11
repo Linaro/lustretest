@@ -46,6 +46,7 @@ import subprocess
 import time
 import urllib
 
+
 def _getenv_list(key, default=None, sep=':'):
     """
     'PATH' => ['/bin', '/usr/bin', ...]
@@ -55,6 +56,7 @@ def _getenv_list(key, default=None, sep=':'):
         return default
     else:
         return value.split(sep)
+
 
 GERRIT_HOST = os.getenv('GERRIT_HOST', 'review.whamcloud.com')
 GERRIT_PROJECT = os.getenv('GERRIT_PROJECT', 'fs/lustre-release')
@@ -72,7 +74,8 @@ GERRIT_AUTH_PATH = os.getenv('GERRIT_AUTH_PATH', 'GERRIT_AUTH')
 #     ...
 # }
 
-CHECKPATCH_PATHS = _getenv_list('CHECKPATCH_PATHS', ['/root/test/devbox/lustre/builder/run-build.sh'])
+CHECKPATCH_PATHS = _getenv_list(
+    'CHECKPATCH_PATHS', ['/root/test/devbox/lustre/builder/run-build.sh'])
 REVIEW_HISTORY_PATH = os.getenv('REVIEW_HISTORY_PATH', 'REVIEW_HISTORY')
 
 BUILDER_TYPE = 'Arm64 Builder'
@@ -81,6 +84,7 @@ USE_CODE_REVIEW_SCORE = False
 UPDATE_INTERVAL = 300
 POST_INTERVAL = 60
 REQUEST_TIMEOUT = 60
+
 
 def review_input_and_score(exitcode, text):
     """
@@ -103,9 +107,9 @@ def review_input_and_score(exitcode, text):
                         (BUILDER_TYPE, exitcode, text)),
             'labels': {
                 'Code-Review': code_review_score
-                },
+            },
             'notify': 'OWNER',
-            }, score
+        }, score
 
     else:
         return {
@@ -113,9 +117,9 @@ def review_input_and_score(exitcode, text):
                         (BUILDER_TYPE)),
             'labels': {
                 'Code-Review': code_review_score
-                },
+            },
             'notify': 'NONE',
-            }, score
+        }, score
 
 
 def _now():
@@ -131,16 +135,18 @@ class Reviewer(object):
     * Post ReviewInput() to gerrit instance.
     * Track reviewed revisions in history_path.
     """
+
     def __init__(self, host, project, branch, username, password, history_path):
         self.host = host
         self.project = project
         self.branch = branch
-        self.auth = requests.auth.HTTPBasicAuth('KevinZhao', 'c1qjF7+KcOdKwEPB47PhdDMXArQIxpWcsuV9iJKk/Q')
+        self.auth = requests.auth.HTTPBasicAuth(
+            'KevinZhao', 'c1qjF7+KcOdKwEPB47PhdDMXArQIxpWcsuV9iJKk/Q')
         self.logger = logging.getLogger(__name__)
         self.history_path = history_path
         self.history_mode = 'rw'
         self.history = {}
-        self.timestamp = 0L
+        self.timestamp = 0
         self.post_enabled = False
 
     def _debug(self, msg, *args):
@@ -162,13 +168,13 @@ class Reviewer(object):
         url = self._url(path)
         try:
             res = requests.get(url, auth=self.auth, timeout=REQUEST_TIMEOUT)
-        except Exception as exc: # requests.exceptions.RequestException as exc:
+        except Exception as exc:  # requests.exceptions.RequestException as exc:
             self._error("cannot GET '%s': exception = %s", url, str(exc))
             return None
 
         if res.status_code != requests.codes.ok:
             self._error("cannot GET '%s': reason = %s, status_code = %d",
-                       url, res.reason, res.status_code)
+                        url, res.reason, res.status_code)
             return None
 
         return res
@@ -188,13 +194,13 @@ class Reviewer(object):
                                 headers={'Content-Type': 'application/json'},
                                 auth=self.auth,
                                 timeout=REQUEST_TIMEOUT)
-        except Exception as exc: # requests.exceptions.RequestException as exc:
+        except Exception as exc:  # requests.exceptions.RequestException as exc:
             self._error("cannot POST '%s': exception = %s", url, str(exc))
             return False
 
         if res.status_code != requests.codes.ok:
             self._error("cannot POST '%s': reason = %s, status_code = %d",
-                       url, res.reason, res.status_code)
+                        url, res.reason, res.status_code)
             return False
 
         return True
@@ -269,7 +275,8 @@ class Reviewer(object):
         """
         POST review_input for the given revision of change.
         """
-        path = '/changes/' + change['id'] + '/revisions/' + revision + '/review'
+        path = '/changes/' + change['id'] + \
+            '/revisions/' + revision + '/review'
         self._debug("set_review: path = '%s'", path)
         return self._post(path, review_input)
 
@@ -279,7 +286,8 @@ class Reviewer(object):
         ReviewInput() and score.
         """
 
-        ref = change['revisions'][str(revision)]['fetch']['anonymous http']['ref']
+        ref = change['revisions'][str(
+            revision)]['fetch']['anonymous http']['ref']
 
         for path in CHECKPATCH_PATHS:
             pipe = subprocess.Popen([path, ref, str(revision)],
@@ -334,11 +342,11 @@ class Reviewer(object):
         GET recently updated changes and review as needed.
         """
         new_timestamp = _now()
-        age = new_timestamp - self.timestamp + 60 * 60 # 1h padding
+        age = new_timestamp - self.timestamp + 60 * 60  # 1h padding
         self._debug("update: age = %d", age)
 
-        open_changes = self.get_changes({'status':'open',
-                                         '-age':str(age) + 's'})
+        open_changes = self.get_changes({'status': 'open',
+                                         '-age': str(age) + 's'})
         if open_changes is None:
             self._error("update: cannot fetch open changes")
             return

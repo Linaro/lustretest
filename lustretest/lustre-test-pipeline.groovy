@@ -3,6 +3,10 @@ pipeline {
         label 'lustre-test-agent'
     }
 
+    environment {
+        CUMULATIVE_RESULT_ID = UUID.randomUUID().toString()
+    }
+
     stages {
         stage('Cleanup workspace') {
             steps {
@@ -48,7 +52,7 @@ pipeline {
                         stage('Run test suites 1') {
                             steps {
                                 dir("lustretest-main/lustretest") {
-                                    sh 'source /home/centos/venv3/bin/activate;python3 auster.py 1 False'
+                                    sh 'source /home/centos/venv3/bin/activate;python3 auster.py 1 True'
                                 }
                             }
                         }
@@ -87,7 +91,7 @@ pipeline {
                         stage('Run test suites 2') {
                             steps {
                                 dir("lustretest-main/lustretest") {
-                                    sh 'source /home/centos/venv3/bin/activate;python3 auster.py 2 False'
+                                    sh 'source /home/centos/venv3/bin/activate;python3 auster.py 2 True'
                                 }
                             }
                         }
@@ -126,7 +130,7 @@ pipeline {
                         stage('Run test suites 3') {
                             steps {
                                 dir("lustretest-main/lustretest") {
-                                    sh 'source /home/centos/venv3/bin/activate;python3 auster.py 3 False'
+                                    sh 'source /home/centos/venv3/bin/activate;python3 auster.py 3 True'
                                 }
                             }
                         }

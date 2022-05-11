@@ -39,7 +39,7 @@ code_base=${code_base: 2}
 echo "Build options prepare..."
 build_opts=""
 if [[ "$build_type" == "debug" ]]; then
-	build_opts+="--extraversion=debug --enable-kernel-debug "
+	build_opts+="--enable-kernel-debug "
 fi
 
 if [[ "$build_linux" == "yes" ]]; then
@@ -55,7 +55,7 @@ cd $build_dir
 $build_dir/lustre-release/contrib/lbuild/lbuild \
 	--lustre=$build_dir/lustre-release/$code_base  \
 	--target=4.18-rhel8.5 --distro=rhel8.5 \
-	--ccache $build_opts
+	--ccache --extraversion=$commit_id $build_opts
 
 echo "Re-generate rpm repo..."
 if [[ "$build_linux" == "yes" ]]; then
@@ -73,3 +73,4 @@ sudo mv -f $build_dir/RPMS/aarch64/*.aarch64.rpm $rpm_repo
 sudo createrepo --update $rpm_repo
 
 echo "Finish build. branch: $branch, commit ID: $commit_id"
+echo $commit_id # return commit_id for the script

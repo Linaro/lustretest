@@ -1,30 +1,38 @@
-import paramiko
+from ast import literal_eval
+from datetime import datetime
+from distutils.util import strtobool
+import json
+import logging
+import os
+from os.path import exists
 import random
 import string
-import os
-import json
 import subprocess
-from os.path import exists
-import const
-import time
-from datetime import datetime
-import logging
-import threading
 import sys
+import threading
+import time
+
+import paramiko
+
+import const
 import utils
-from distutils.util import strtobool
 
 
-class Provision(object):
-    def __init__(self, logger, test_suites_num, provision_new):
+def host_name_gen():
+    # Generate 8-bit strings from a-zA-Z0-9
+    return ''.join(random.sample(string.ascii_letters + string.digits, 8))
+
+
+class Provision():
+    def __init__(self, logger, test_group_id, provision_new):
         self.logger = logger
         self.node_map = None
         self.tf_conf_dir = None
         self.node_ip_list = []
         self.ssh_user = const.CLOUD_INIT_CHECK_USER
         self.ssh_clients = {}
-        self.test_suites_num = test_suites_num
-        self.node_conf_dir = utils.find_node_conf_dir(self.test_suites_num)
+        self.test_group_id = test_group_id
+        self.node_conf_dir = utils.find_node_conf_dir(self.test_group_id)
         self.provision_new = provision_new
 
     def _debug(self, msg, *args):
@@ -35,10 +43,6 @@ class Provision(object):
 
     def _error(self, msg, *args):
         self.logger.error(msg, *args)
-
-    def host_name_gen(self):
-        # Generate 8-bit strings from a-zA-Z0-9
-        return ''.join(random.sample(string.ascii_letters + string.digits, 8))
 
     def ssh_connection(self, ip):
         private_key = \
@@ -61,20 +65,15 @@ class Provision(object):
                    ip + " initialization is finished")
         return ssh_client
 
-    def ssh_close(self, ssh_client):
-        ssh_client.close()
-
     def ssh_exec(self, ssh_client, cmd):
-        # Test SSH connection
-        stdin, stdout, stderr = ssh_client.exec_command(cmd)
-        while True:
-            line = stdout.readline()
-            if not line:
-                break
+        # pty make stderr stream into stdout, so we can
+        # print stdout and stderr in realtime
+        _, stdout, _ = ssh_client.exec_command(cmd, get_pty=True)
+        for line in iter(stdout.readline, ""):
             self._info(line.strip())
-        error = stderr.read()
-        if error.strip():
-            self._error(error)
+
+        rc = stdout.channel.recv_exit_status()
+        if rc != 0:
             return False
         return True
 
@@ -89,6 +88,7 @@ class Provision(object):
                 os.mkdir(tf_conf_dir)
             except OSError:
                 self._error("mkdir failed: " + tf_conf_dir)
+                raise
         for f in os.listdir(source_dir):
             if f.endswith("tf") or f == "cloud-init":
                 source_file = os.path.join(source_dir, f)
@@ -97,15 +97,16 @@ class Provision(object):
                         os.path.exists(target_file) and (
                         os.path.getsize(target_file) !=
                         os.path.getsize(source_file))):
-                    open(target_file, "wb").write(open(source_file,
-                                                       "rb").read())
+                    with open(target_file, "wb") as fout:
+                        with open(source_file, "rb") as fin:
+                            fout.write(fin.read())
 
     #
     # Prepare the terraform configuration, all the args are defined at
     # TERRAFORM_VARIABLES_JSON
     #
     def prepare_tf_conf(self):
-        test_hash = self.host_name_gen()
+        test_hash = host_name_gen()
         test_name = const.LUSTRE_CLUSTER_PREFIX + test_hash.lower()
         self.tf_conf_dir = self.node_conf_dir + test_name + "/"
         self.copy_dir(self.node_conf_dir, test_name)
@@ -133,21 +134,20 @@ class Provision(object):
     def terraform_init(self):
         os.chdir(self.tf_conf_dir)
         if os.path.exists(const.TERRAFORM_VARIABLES_JSON):
-            p = subprocess.Popen([const.TERRAFORM_BIN, 'init'],
-                                 stdout=subprocess.PIPE,
-                                 stderr=subprocess.STDOUT)
-            self.realtime_output(p)
-            if p.returncode == 0:
-                self._info('Terraform init success')
-                return True
-            else:
+            with subprocess.Popen([const.TERRAFORM_BIN, 'init'],
+                                  stdout=subprocess.PIPE,
+                                  stderr=subprocess.STDOUT) as p:
+                self.realtime_output(p)
+                if p.returncode == 0:
+                    self._info('Terraform init success')
+                    return True
+
                 self._error('Terraform init failed')
                 return False
 
-        else:
-            self._error("Terraform init failed: terraform args does not exist: "
-                        + const.TERRAFORM_VARIABLES_JSON)
-            return False
+        self._error("Terraform init failed: terraform args does not exist: "
+                    + const.TERRAFORM_VARIABLES_JSON)
+        return False
 
     def realtime_output(self, p):
         while p.poll() is None:
@@ -163,14 +163,13 @@ class Provision(object):
         os.chdir(self.tf_conf_dir)
         self._info(self.tf_conf_dir)
         if self.terraform_init():
-            p = subprocess.Popen([const.TERRAFORM_BIN, 'apply', '-auto-approve'],
-                                 stdout=subprocess.PIPE,
-                                 stderr=subprocess.STDOUT)
-            self.realtime_output(p)
-            if p.returncode == 0:
-                self._info('Terraform apply success')
-                return True
-            else:
+            with subprocess.Popen([const.TERRAFORM_BIN, 'apply', '-auto-approve'],
+                                  stdout=subprocess.PIPE,
+                                  stderr=subprocess.STDOUT) as p:
+                self.realtime_output(p)
+                if p.returncode == 0:
+                    self._info('Terraform apply success')
+                    return True
                 self._error('Terraform apply failed')
                 return False
         else:
@@ -197,42 +196,42 @@ class Provision(object):
             node_info_str = info.decode('utf-8')
             node_info = node_info_str.split(" = ")
             if node_info[0] == const.TERRAFORM_CLIENT01_IP:
-                client01_ip = eval(node_info[1])
+                client01_ip = literal_eval(node_info[1])
                 self.node_ip_list.append(client01_ip)
             elif node_info[0] == const.TERRAFORM_CLIENT02_IP:
-                client02_ip = eval(node_info[1])
+                client02_ip = literal_eval(node_info[1])
                 self.node_ip_list.append(client02_ip)
             elif node_info[0] == const.TERRAFORM_MDS01_IP:
-                mds01_ip = eval(node_info[1])
+                mds01_ip = literal_eval(node_info[1])
                 self.node_ip_list.append(mds01_ip)
             elif node_info[0] == const.TERRAFORM_MDS02_IP:
-                mds02_ip = eval(node_info[1])
+                mds02_ip = literal_eval(node_info[1])
                 self.node_ip_list.append(mds02_ip)
             elif node_info[0] == const.TERRAFORM_OST01_IP:
-                ost01_ip = eval(node_info[1])
+                ost01_ip = literal_eval(node_info[1])
                 self.node_ip_list.append(ost01_ip)
             elif node_info[0] == const.TERRAFORM_CLIENT01_HOSTNAME:
-                client01_hostname = eval(node_info[1])
+                client01_hostname = literal_eval(node_info[1])
                 client01_hostname = client01_hostname.lower()
             elif node_info[0] == const.TERRAFORM_CLIENT02_HOSTNAME:
-                client02_hostname = eval(node_info[1])
+                client02_hostname = literal_eval(node_info[1])
                 client02_hostname = client02_hostname.lower()
             elif node_info[0] == const.TERRAFORM_MDS01_HOSTNAME:
-                mds01_hostname = eval(node_info[1])
+                mds01_hostname = literal_eval(node_info[1])
                 mds01_hostname = mds01_hostname.lower()
             elif node_info[0] == const.TERRAFORM_MDS02_HOSTNAME:
-                mds02_hostname = eval(node_info[1])
+                mds02_hostname = literal_eval(node_info[1])
                 mds02_hostname = mds02_hostname.lower()
             elif node_info[0] == const.TERRAFORM_OST01_HOSTNAME:
-                ost01_hostname = eval(node_info[1])
+                ost01_hostname = literal_eval(node_info[1])
                 ost01_hostname = ost01_hostname.lower()
             else:
-                self._error("The node info is not correct.")
+                sys.exit("The node info is not correct.")
 
         # Generate the NODE_INFO, which will be used in the future process
         with open(self.node_conf_dir + const.NODE_INFO, 'w+') as node_conf:
             node_conf.write(const.TEST_SUITES_PREFIX + ' ' +
-                            self.test_suites_num + '\n')
+                            self.test_group_id + '\n')
             node_conf.write(client01_hostname + ' ' +
                             client01_ip + ' ' + const.CLIENT + '\n')
             node_conf.write(client02_hostname + ' ' +
@@ -259,7 +258,7 @@ class Provision(object):
                             if ssh_client not in self.ssh_clients:
                                 self.ssh_clients[ip] = ssh_client
                         else:
-                            self._error("The node reboot is not finished")
+                            self._info("The node reboot is not finished")
                     except paramiko.ssh_exception.NoValidConnectionsError:
                         self._info("can not connect to the node: " + ip)
                     except paramiko.ssh_exception.SSHException:
@@ -270,22 +269,22 @@ class Provision(object):
                 if ready_clients == 5:
                     self._info("All the clients is ready")
                     break
-                else:
-                    self._info("Ready clients are: " + str(ready_clients))
-                    time.sleep(10)
+                self._info("Ready clients are: " + str(ready_clients))
+                time.sleep(10)
 
             t1 = datetime.now()
             node_status = []
-            self._info("====================check cloud init=======================")
+            self._info(
+                "====================check cloud init=======================")
             while (datetime.now() - t1).seconds <= const.CLOUD_INIT_TIMEOUT:
                 for ip, client in self.ssh_clients.items():
                     if ip in node_status:
                         continue
+                    if self.ssh_exec(client, ssh_check_cmd):
+                        node_status.append(ip)
                     else:
-                        if self.ssh_exec(client, ssh_check_cmd):
-                            node_status.append(ip)
-                        else:
-                            self._info("The cloud-init process is not finished: " + ip)
+                        self._info(
+                            "The cloud-init process is not finished: " + ip)
                 ready_node = len(node_status)
                 self._info("Ready nodes: " + str(node_status))
                 if ready_node == 5:
@@ -294,24 +293,24 @@ class Provision(object):
 
             if len(node_status) == 5:
                 return True
-            else:
-                self._error("The cloud-init processes of nodes are "
-                            "not totally ready, only ready: "
-                            + str(len(node_status)))
-                return False
 
-        else:
-            self._error("Cluster node count is not right")
+            self._error("The cloud-init processes of nodes are "
+                        "not totally ready, only ready: "
+                        + str(len(node_status)))
             return False
 
+        self._error("Cluster node count is not right")
+        return False
+
     def clean_node_info(self):
-        p = subprocess.Popen(['rm', '-rf', self.node_conf_dir + const.NODE_INFO],
-                             stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-        self.realtime_output(p)
-        if p.returncode == 0:
-            self._info('Terraform apply success')
-            return True
-        else:
+        with subprocess.Popen(['rm', '-rf', self.node_conf_dir + const.NODE_INFO],
+                              stdout=subprocess.PIPE,
+                              stderr=subprocess.STDOUT) as p:
+            self.realtime_output(p)
+            if p.returncode == 0:
+                self._info('Terraform apply success')
+                return True
+
             self._error('Terraform apply failed')
             return False
 
@@ -322,7 +321,7 @@ class Provision(object):
     # Note: This will not install all the packages, so we needs to do some
     # procedures which is in cloud-init to another function.
     #
-    def provision(self,exist_tf_dir):
+    def provision(self, exist_tf_dir):
         if self.provision_new:
             self._info("Prepare to provision the new cluster")
             self.prepare_tf_conf()
@@ -347,14 +346,14 @@ class Provision(object):
                     self._info("Does not provision new instances, we "
                                "need to reinstall Lustre from the repo")
                     return self.node_operate()
-                else:
-                    return True
-            else:
-                self._error("The node_check is failed")
-                return False
-        else:
-            self._error("The config file does not exist: " + self.node_conf_dir + const.NODE_INFO)
+                return True
+
+            self._error("The node_check is failed")
             return False
+
+        self._error("The config file does not exist: " +
+                    self.node_conf_dir + const.NODE_INFO)
+        return False
 
     def install_lustre(self, node, client):
         cmd1 = "sudo dnf config-manager --set-enabled ha"
@@ -372,7 +371,7 @@ class Provision(object):
                "e2fsprogs-debuginfo e2fsprogs-static e2fsprogs-libs " \
                "e2fsprogs-libs-debuginfo libcom_err libcom_err-devel " \
                "libcom_err-debuginfo libss libss-devel libss-debuginfo -y"
-        cmd8 = "sudo dnf install lustre lustre-debuginfo lustre-debugsource " \
+        cmd8 = "sudo dnf reinstall lustre lustre-debuginfo lustre-debugsource " \
                "lustre-devel lustre-iokit lustre-osd-ldiskfs-mount " \
                "lustre-osd-ldiskfs-mount-debuginfo lustre-resource-agents " \
                "lustre-tests lustre-tests-debuginfo kmod-lustre " \
@@ -427,7 +426,8 @@ class Provision(object):
     def node_operate(self):
         thread_list = []
         for node, client in self.ssh_clients.items():
-            x = threading.Thread(target=self.install_lustre, args=(node, client,))
+            x = threading.Thread(
+                target=self.install_lustre, args=(node, client,))
             x.start()
             thread_list.append(x)
 
@@ -450,12 +450,11 @@ def main():
     logger = logging.getLogger(__name__)
     args = sys.argv[1:]
     if len(args) < 2 or len(args) > 3:
-        logger.error("no exact args specified")
-        return
-    test_suites_num = args[0]
-    if test_suites_num not in const.LUSTRE_TEST_SUITE_NUM_LIST:
-        logger.error("The test suites: " + args[0] + " is not support")
-        return
+        sys.exit("no exact args specified")
+    test_group_id = args[0]
+    if test_group_id not in const.LUSTRE_TEST_SUITE_NUM_LIST:
+        msg = "The test group: " + args[0] + " is not support"
+        sys.exit(msg)
 
     provision_new = bool(strtobool(args[1]))
     exist_tf_dir = ""
@@ -463,20 +462,19 @@ def main():
         if len(args) == 3:
             exist_tf_dir = args[2]
         else:
-            logger.error("Choose not provision new cluster, "
-                         "please specify the lustre terraform dir")
-            return
+            sys.exit("Choose not provision new cluster, "
+                     "please specify the lustre terraform dir")
 
-    cluster_provision = Provision(logger, test_suites_num, provision_new)
+    cluster_provision = Provision(logger, test_group_id, provision_new)
     result = cluster_provision.provision(exist_tf_dir)
     if result:
         logger.info("The provision process is successful")
-        for node, client in cluster_provision.ssh_clients.items():
-            cluster_provision.ssh_close(client)
+        for _, client in cluster_provision.ssh_clients.items():
+            client.close()
     else:
-        logger.error("The provision process is not successful")
+        sys.exit("The provision process is not successful")
 
-# Args:                   test_suites_num provision_new    lustre-exist-tf-dir
+# Args:                   test_group_id provision_new    lustre-exist-tf-dir
 # E.g 3 args:                    1              False          lustre-abdg1b
 # E.g 2 args if provision new:   2              True
 
