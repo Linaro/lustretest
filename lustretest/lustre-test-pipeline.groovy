@@ -35,126 +35,33 @@ pipeline {
         }
         stage('Test Execution'){
             parallel {
-                stage('Test Suites 1'){
-                    stages{
-                        stage('Provision test cluster 1') {
-                            steps {
-                                dir("lustretest-main/lustretest") {
-                                    sh 'source /home/centos/venv3/bin/activate;python3 provision.py 1 False lustre-wleilf4j'
-                                }
-                            }
-                        }
-                        stage('Cluster nodes init 1') {
-                            steps {
-                                dir("lustretest-main/lustretest") {
-                                    sh 'source /home/centos/venv3/bin/activate;python3 node_init.py 1'
-                                }
-                            }
-                        }
-                        stage('Run test suites 1') {
-                            steps {
-                                dir("lustretest-main/lustretest") {
-                                    sh 'source /home/centos/venv3/bin/activate;python3 auster.py 1 True'
-                                }
-                            }
-                        }
-                        stage('Cluster nodes init 4') {
-                            steps {
-                                dir("lustretest-main/lustretest") {
-                                    sh 'source /home/centos/venv3/bin/activate;python3 node_init.py 4'
-                                }
-                            }
-                        }
-                        stage('Run test suites 4') {
-                            steps {
-                                dir("lustretest-main/lustretest") {
-                                    sh 'source /home/centos/venv3/bin/activate;python3 auster.py 4 True'
-                                }
-                            }
+                /* Usage: test_runner.py <arg1> <arg2> [arg3]
+                 * arg1: <TEST_GROUP_ID> test group id wich is 1-6
+                 * arg2: <PROVISION_NEW_CLUSTER> True or Flase
+                 * arg3: [DESTROY_CLUSTER] True or False for provision new cluster
+                 */
+                stage('Run test group 1') {
+                    steps {
+                        dir("lustretest-main/lustretest") {
+                            sh 'source /home/centos/venv3/bin/activate;python3 test_runner.py 1 False'
                         }
                     }
                 }
-                stage('Test Suites 2'){
-                    stages{
-                        stage('Provision test cluster 2') {
-                            steps {
-                                dir("lustretest-main/lustretest") {
-                                    sh 'source /home/centos/venv3/bin/activate;python3 provision.py 2 False lustre-ghbemii7'
-                                }
-                            }
-                        }
-                        stage('Cluster nodes init 2') {
-                            steps {
-                                dir("lustretest-main/lustretest") {
-                                    sh 'source /home/centos/venv3/bin/activate;python3 node_init.py 2'
-                                }
-                            }
-                        }
-                        stage('Run test suites 2') {
-                            steps {
-                                dir("lustretest-main/lustretest") {
-                                    sh 'source /home/centos/venv3/bin/activate;python3 auster.py 2 True'
-                                }
-                            }
-                        }
-                        stage('Client node init 5') {
-                            steps {
-                                dir("lustretest-main/lustretest") {
-                                    sh 'source /home/centos/venv3/bin/activate;python3 node_init.py 5'
-                                }
-                            }
-                        }
-                        stage('Run test suites 5') {
-                            steps {
-                                dir("lustretest-main/lustretest") {
-                                    sh 'source /home/centos/venv3/bin/activate;python3 auster.py 5 True'
-                                }
-                            }
+                stage('Run test group 2') {
+                    steps {
+                        dir("lustretest-main/lustretest") {
+                            sh 'source /home/centos/venv3/bin/activate;python3 test_runner.py 2 False'
                         }
                     }
                 }
-                stage('Test Suites 3'){
-                    stages{
-                        stage('Provision test cluster 3') {
-                            steps {
-                                dir("lustretest-main/lustretest") {
-                                    sh 'source /home/centos/venv3/bin/activate;python3 provision.py 3 False lustre-wujqyzn6'
-                                }
-                            }
-                        }
-                        stage('Cluster nodes init 3') {
-                            steps {
-                                dir("lustretest-main/lustretest") {
-                                    sh 'source /home/centos/venv3/bin/activate;python3 node_init.py 3'
-                                }
-                            }
-                        }
-                        stage('Run test suites 3') {
-                            steps {
-                                dir("lustretest-main/lustretest") {
-                                    sh 'source /home/centos/venv3/bin/activate;python3 auster.py 3 True'
-                                }
-                            }
-                        }
-                        stage('Client node init 6') {
-                            steps {
-                                dir("lustretest-main/lustretest") {
-                                    sh 'source /home/centos/venv3/bin/activate;python3 node_init.py 6'
-                                }
-                            }
-                        }
-                        stage('Run test suites 6') {
-                            steps {
-                                dir("lustretest-main/lustretest") {
-                                    sh 'source /home/centos/venv3/bin/activate;python3 auster.py 6 True'
-                                }
-                            }
+                stage('Run test group 3') {
+                    steps {
+                        dir("lustretest-main/lustretest") {
+                            sh 'source /home/centos/venv3/bin/activate;python3 test_runner.py 3 False'
                         }
                     }
-
                 }
             }
         }
-
     }
 }

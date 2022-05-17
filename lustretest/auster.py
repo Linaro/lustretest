@@ -1,7 +1,4 @@
-from distutils.util import strtobool
-import logging
 from os import environ as env
-import sys
 import uuid
 
 import paramiko
@@ -14,10 +11,11 @@ import utils
 
 
 class Auster():
-    def __init__(self, logger, test_group_id):
+    def __init__(self, logger, test_group_id, exec_node_ip):
         self.logger = logger
         self.ssh_user = const.DEFAULT_SSH_USER
         self.ssh_client = None
+        self.ip = exec_node_ip
         self.test_info = {}
         self.test_info['group_id'] = test_group_id
         self.test_info['suites'] = utils.get_test_list(test_group_id)
@@ -25,25 +23,6 @@ class Auster():
         self.test_info['logdir'] = '/tmp/test_logs/' + logdir
         self.test_info['local_logdir'] = env['WORKSPACE'] + \
             '/test_logs/' + logdir
-
-        # We transfer the num for which is > 3 to -3,
-        # and use 1-3 clusters already to execute the test
-        # test suite 4: 1
-        # test suite 5: 2
-        # test suite 6: 3
-        test_cluster_num = test_group_id
-        if int(test_group_id) > 3:
-            test_cluster_num = str(int(test_group_id) - 3)
-        node_conf_dir = utils.find_node_conf_dir(test_cluster_num)
-        node_map, _ = utils.read_node_info(node_conf_dir + const.NODE_INFO)
-
-        # Choose the first node as the test exec node.
-        exec_node_ip = ""
-        for _, node_info in node_map.items():
-            if node_info[2] == const.CLIENT:
-                exec_node_ip = node_info[1]
-                break
-        self.ip = exec_node_ip
 
     def _debug(self, msg, *args):
         self.logger.debug(msg, *args)
@@ -161,7 +140,6 @@ class Auster():
                     env['LUSTRE_BRANCH']
                 test_results['triggering_build_number'] = env['BUILD_ID']
                 test_results['total_enforcing_sessions'] = '1'
-                file.seek(0)
                 yaml.safe_dump(test_results, file)
 
         if fail:
@@ -195,34 +173,3 @@ class Auster():
                         else:
                             test_suites_full_args += test_suite + " "
         return test_suites_full_args
-
-
-def main():
-    logging.basicConfig(format='%(message)s',
-                        level=logging.INFO)
-    logger = logging.getLogger(__name__)
-    rc = const.TEST_SUCC
-
-    args = sys.argv[1:]
-    if len(args) != 2:
-        sys.exit("no exact args specified")
-
-    test_group_id = args[0]
-    if test_group_id not in const.LUSTRE_TEST_SUITE_NUM_LIST:
-        msg = "The test group: " + args[0] + " is not support"
-        sys.exit(msg)
-
-    exec_suites = bool(strtobool(args[1]))
-
-    if exec_suites:
-        auster_test = Auster(logger, test_group_id)
-        rc = auster_test.test()
-    else:
-        logger.info("Skip the test suites: %d", test_group_id)
-
-    if rc == const.TEST_FAIL:
-        sys.exit("Test running is not pass")
-
-
-if __name__ == "__main__":
-    main()

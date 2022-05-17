@@ -1,5 +1,5 @@
 from datetime import datetime
-import logging
+from os.path import join as path_join
 import sys
 import time
 
@@ -7,7 +7,6 @@ import paramiko
 from scp import SCPClient
 
 import const
-import utils
 
 
 class Node():
@@ -80,7 +79,7 @@ class Node():
         else:
             self._info("SCP success: " + local_path)
 
-    def init(self, node_conf_dir):
+    def init(self, cluster_dir):
         # Install the Lustre client packages on two machines, and the Lustre server
         # packages on the other four, using the same version of Lustre
         # Follow this guide to install Lustre RPMs and e2fsprogs
@@ -111,7 +110,7 @@ class Node():
             self._info("Error reading SSH protocol banner[Errno 104] "
                        "Connection reset by peer: " + self.ip)
         # please make sure to remove the file first
-        self.ssh_exec("yes | rm -i " + const.SSH_CFG_DIR + "/" + "id_rsa")
+        self.ssh_exec("yes | rm -i " + path_join(const.SSH_CFG_DIR, "id_rsa"))
         self.scp_send(const.SSH_PRIVATE_KEY, const.SSH_CFG_DIR)
 
         # Create an NFS share that is mounted on all the nodes
@@ -130,9 +129,11 @@ class Node():
         if not self.ssh_exec(write_hosts):
             sys.exit("Write the /etc/hosts failed")
 
-        remote_cfg_location = const.LUSTRE_TEST_CFG_DIR + '/' + const.MULTI_NODE_CONFIG
+        remote_cfg_location = path_join(
+            const.LUSTRE_TEST_CFG_DIR, const.MULTI_NODE_CONFIG)
         self.ssh_exec("yes | sudo rm -i " + remote_cfg_location)
-        self.scp_send(node_conf_dir + const.MULTI_NODE_CONFIG, "/home/jenkins")
+        self.scp_send(
+            path_join(cluster_dir, const.MULTI_NODE_CONFIG), "/home/jenkins")
         self.ssh_exec("yes | sudo mv /home/jenkins/" +
                       const.MULTI_NODE_CONFIG + " " + remote_cfg_location)
 
@@ -154,12 +155,12 @@ class Node():
         self.ssh_exec("sudo reboot")
 
 
-def multinode_conf_gen(node_map, node_conf_dir):
+def multinode_conf_gen(node_map, cluster_dir):
     total_client = 0
     total_mds = 0
     total_clients = ""
 
-    with open(node_conf_dir + const.MULTI_NODE_CONFIG, 'w+') as test_conf:
+    with open(path_join(cluster_dir, const.MULTI_NODE_CONFIG), 'w+') as test_conf:
         for _, node_info in node_map.items():
             if node_info[2] == const.CLIENT:
                 if total_client == 0:
@@ -234,7 +235,7 @@ def multinode_conf_gen(node_map, node_conf_dir):
         test_conf.write(ncli_sh_cmd)
 
 
-def node_init(node_map, node_conf_dir, logger):
+def node_init(node_map, cluster_dir, logger):
     total_client = 0
     total_mds = 0
     test_client1 = None
@@ -263,11 +264,11 @@ def node_init(node_map, node_conf_dir, logger):
         if node_info[2] == const.OST:
             test_ost1 = test_node
 
-    test_client1.init(node_conf_dir)
-    test_client2.init(node_conf_dir)
-    test_mds1.init(node_conf_dir)
-    test_mds2.init(node_conf_dir)
-    test_ost1.init(node_conf_dir)
+    test_client1.init(cluster_dir)
+    test_client2.init(cluster_dir)
+    test_mds1.init(cluster_dir)
+    test_mds2.init(cluster_dir)
+    test_ost1.init(cluster_dir)
 
     nodes = [test_client1, test_client2, test_mds1, test_mds2, test_ost1]
     if not reboot_and_check(nodes, logger):
@@ -305,6 +306,8 @@ def reboot_and_check(nodes, logger):
             except paramiko.ssh_exception.SSHException:
                 logger.info("Error reading SSH protocol banner[Errno 104] "
                             "Connection reset by peer: " + node.ip)
+            except TimeoutError:
+                logger.info("Timeout on  connect to the node: " + node.ip)
 
         ready_node = len(node_status)
         logger.info("Ready nodes: " + str(node_status))
@@ -319,39 +322,3 @@ def reboot_and_check(nodes, logger):
                 "not totally ready, only ready: "
                 + str(len(node_status)))
     return False
-
-
-def main():
-    logging.basicConfig(format='%(message)s', level=logging.INFO)
-    logger = logging.getLogger(__name__)
-
-    args = sys.argv[1:]
-    if len(args) == 0:
-        sys.exit("No test group args specified")
-
-    test_group_id = args[0]
-    if test_group_id not in const.LUSTRE_TEST_SUITE_NUM_LIST:
-        msg = "The test group: " + args[0] + " is not support"
-        sys.exit(msg)
-
-    # We transfer the num for which is > 3 to -3, and use 1-3 clusters already
-    # to execute the test
-    # test suite 4: 1
-    # test suite 5: 2
-    # test suite 6: 3
-    test_cluster_num = test_group_id
-    just_reboot_check = False
-    if int(test_group_id) > 3:
-        test_cluster_num = str(int(test_group_id) - 3)
-        just_reboot_check = True
-    node_conf_dir = utils.find_node_conf_dir(test_cluster_num)
-    node_map, _ = utils.read_node_info(node_conf_dir + const.NODE_INFO)
-
-    if not just_reboot_check:
-        multinode_conf_gen(node_map, node_conf_dir)
-
-    node_init(node_map, node_conf_dir, logger)
-
-
-if __name__ == "__main__":
-    main()
