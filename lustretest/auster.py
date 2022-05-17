@@ -2,6 +2,7 @@ from distutils.util import strtobool
 import logging
 from os import environ as env
 import sys
+import uuid
 
 import paramiko
 from paramiko import ssh_exception
@@ -94,7 +95,10 @@ class Auster():
         self.ssh_connection()
         rc = const.TEST_SUCC
         if self.ssh_client:
-            cmd = "/usr/lib64/lustre/tests/auster -f multinode -rv -D " \
+            test_env_vars = "LUSTRE_BRANCH=" + env['LUSTRE_BRANCH'] + \
+                " TEST_GROUP=group-" + self.test_info['group_id']
+            cmd = test_env_vars + \
+                " /usr/lib64/lustre/tests/auster -f multinode -rvk -D " \
                 + self.test_info['logdir'] + " " + self.test_info['suites']
             self._info("Exec the test suites on the node: " + self.ip)
             self._info(cmd)
@@ -120,28 +124,45 @@ class Auster():
         with open(yamlfile, 'r+', encoding='utf8') as file:
             filedata = file.read()
             try:
-                testresults = yaml.safe_load(
+                test_results = yaml.safe_load(
                     myyamlsanitizer.sanitize(filedata))
             except (ImportError, yaml.parser.ParserError, yaml.scanner.ScannerError):
                 self._error("yaml file is invalid, file:" + yamlfile)
                 raise
             else:
-                for test in testresults.get('Tests', {}):
-                    failedsubtests = ""
+                for test in test_results.get('Tests', {}):
+                    failed_subtests = []
                     test_script = test.get('name', '')
                     if test.get('status', '') != 'PASS':
                         fail = True
-                        msg = "Test Fail."
-                        failedsubtests += " FAIL: "
+                        msg = "Test Fail. FAIL: "
                         subtests = test.get('SubTests', {})
                         if subtests is not None:
                             for subtest in subtests:
                                 if subtest.get('status', 'FAIL') == 'FAIL':
-                                    failedsubtests += subtest['name'].replace(
-                                        'test_', '') + ','
+                                    failed_subtests.append(
+                                        subtest['name'].replace('test_', ''))
                     else:
                         msg = "Test Pass."
-                    self._info(test_script + ': ' + msg + failedsubtests)
+                    self._info(test_script + ': ' + msg +
+                               "'".join(failed_subtests))
+
+                # Add missing required fields to results.yml for Maloo DB
+                # upload
+                test_results['test_name'] = self.test_info['suites']
+                test_results['cumulative_result_id'] = env['CUMULATIVE_RESULT_ID']
+                test_results['test_sequence'] = '1'
+                test_results['test_index'] = self.test_info['group_id']
+                test_results['session_group_id'] = str(uuid.uuid4())
+                test_results['enforcing'] = 'false'
+                # Only maloo defined names is can be set now, see:
+                # https://jira.whamcloud.com/browse/LU-15823
+                test_results['triggering_job_name'] = 'linaro-lustre-daily' + \
+                    env['LUSTRE_BRANCH']
+                test_results['triggering_build_number'] = env['BUILD_ID']
+                test_results['total_enforcing_sessions'] = '1'
+                file.seek(0)
+                yaml.safe_dump(test_results, file)
 
         if fail:
             return const.TEST_FAIL
@@ -188,7 +209,7 @@ def main():
 
     test_group_id = args[0]
     if test_group_id not in const.LUSTRE_TEST_SUITE_NUM_LIST:
-        msg = "The test suites: " + args[0] + " is not support"
+        msg = "The test group: " + args[0] + " is not support"
         sys.exit(msg)
 
     exec_suites = bool(strtobool(args[1]))

@@ -29,7 +29,7 @@ MULTI_NODE_CONFIG = "multinode.sh"
 LUSTRE_TEST_CFG_DIR = "/usr/lib64/lustre/tests/cfg"
 
 LUSTRE_TEST_SUITE_NUM_LIST = ["1", "2", "3", "4", "5", "6"]
-LUSTRE_TEST_SUITE_1 = "sanity sanity-pfl"
+LUSTRE_TEST_SUITE_1 = "sanity --only 10-20 sanity-pfl"
 LUSTRE_TEST_SUITE_2 = "ost-pools replay-single conf-sanity"
 LUSTRE_TEST_SUITE_3 = "insanity mmp replay-ost-single sanity-dom sanity-flr sanity-hsm sanity-quota"
 LUSTRE_TEST_SUITE_4 = "lustre-rsync-test recovery-small sanity-scrub sanityn"

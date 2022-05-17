@@ -5,6 +5,7 @@ pipeline {
 
     environment {
         CUMULATIVE_RESULT_ID = UUID.randomUUID().toString()
+        LUSTRE_BRANCH = "master"
     }
 
     stages {
@@ -20,7 +21,8 @@ pipeline {
                 echo 'Building..'
                 /* 
                 build job: 'project-lustre-build-release-master',
-                    parameters: [string(name: 'BRANCH', value: 'master'),
+                    parameters: [
+                    string(name: 'BRANCH', value: ${LUSTRE_BRANCH}),
                     string(name: 'BUILD_LINUX', value: 'yes')]
                 */
             }
