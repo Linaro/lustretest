@@ -1,0 +1,48 @@
+---
+- name: group-01
+  id: 1
+  timeout: -1
+  test_suite:
+    - name: sanity
+      args: "--only 10-20 --except 17n"
+    - name: sanity-pfl
+- name: group-02
+  id: 2
+  timeout: -1
+  test_suite:
+    - name: ost-pools
+    - name: replay-single
+    - name: conf-sanity
+- name: group-03
+  id: 3
+  timeout: -1
+  test_suite:
+    - name: insanity
+    - name: mmp
+    - name: replay-ost-single
+    - name: sanity-dom
+    - name: sanity-flr
+    - name: sanity-hsm
+    - name: sanity-quota
+- name: group-04
+  id: 4
+  test_suite:
+    - name: lustre-rsync-test
+    - name: recovery-small
+    - name: sanity-scrub
+    - name: sanityn
+- name: group-05
+  id: 5
+  test_suite:
+    - name: mds-survey
+    - name: replay-dual
+    - name: runtests
+    - name: sanity-lfsck
+    - name: sanity-sec
+- name: group-06
+  id: 6
+  test_suite:
+    - name: recovery-small
+    - name: sanity-sec
+    - name: sanity-selinux
+    - name: large-scale

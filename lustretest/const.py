@@ -7,7 +7,7 @@ OST = 'OST'
 TEST_WORKSPACE = '/home/centos/workspace/node/'
 NODE_INFO = 'lustre-test-node.conf'
 SSH_PRIVATE_KEY = TEST_WORKSPACE + 'id_rsa'
-TEST_ARGS_CONFIG = './cfg/test-args.yaml'
+TEST_ARGS_CONFIG = os.getcwd() + '/cfg/test-groups.yaml'
 
 TERRAFORM_CONF_TEMPLATE_DIR = os.getcwd() + '/tf'
 TERRAFORM_VARIABLES_JSON = "terraform.tfvars.json"
@@ -27,15 +27,6 @@ LUSTER_TEST_CFG = '/usr/lib64/lustre/tests/cfg/'
 # Lustre Test
 MULTI_NODE_CONFIG = "multinode.sh"
 LUSTRE_TEST_CFG_DIR = "/usr/lib64/lustre/tests/cfg"
-
-LUSTRE_TEST_SUITE_NUM_LIST = ["1", "2", "3", "4", "5", "6"]
-LUSTRE_TEST_SUITE_1 = "sanity --only 10-20 sanity-pfl"
-LUSTRE_TEST_SUITE_2 = "ost-pools replay-single conf-sanity"
-LUSTRE_TEST_SUITE_3 = "insanity mmp replay-ost-single sanity-dom sanity-flr sanity-hsm sanity-quota"
-LUSTRE_TEST_SUITE_4 = "lustre-rsync-test recovery-small sanity-scrub sanityn"
-LUSTRE_TEST_SUITE_5 = "mds-survey replay-dual runtests sanity-lfsck sanity-sec"
-LUSTRE_TEST_SUITE_6 = "recovery-small sanity-sec sanity-selinux large-scale"
-TEST_SUITES_PREFIX = "test-suites"
 
 MDS_DISK1 = "/dev/vdb"
 MDS_DISK2 = "/dev/vdc"

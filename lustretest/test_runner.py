@@ -61,9 +61,7 @@ def main():
     args = sys.argv[1:]
     if len(args) < 2:
         sys.exit("no exact args specified")
-    test_group_id = args[0]
-    if test_group_id not in const.LUSTRE_TEST_SUITE_NUM_LIST:
-        sys.exit("The test group: " + args[0] + " is not support")
+    test_group_id = int(args[0])
     provision_new = bool(strtobool(args[1]))
     if provision_new and len(args) == 3:
         destroy_cluster = bool(strtobool(args[2]))
@@ -122,7 +120,7 @@ def main():
                 exec_node_ip = node_info[1]
                 break
         auster_test = Auster(logger, test_group_id, exec_node_ip)
-        rc = auster_test.test()
+        rc = auster_test.run_test()
 
         if rc != const.TEST_SUCC:
             sys.exit("Test running is not pass")
@@ -135,9 +133,14 @@ def main():
             cluster_provision.terraform_destroy()
 
 
+# Usage: test_runner.py <arg1> <arg2> [arg3]
+# arg1: <test_group_id> test group id wich is 1-6
+# arg2: <provision_new> true or flase
+# arg3: [destroy_cluster] true or false for provision new cluster
+
 # Args:                   test_group_id provision_new destroy_cluster
-# E.g 2 args:                    1              False
-# E.g 2 args:                    1              True
-# E.g 3 args if provision new:   1              True    True
+# E.g 2 args:                    1              false
+# E.g 2 args:                    1              true
+# E.g 3 args if provision new:   1              true    true
 if __name__ == "__main__":
     main()

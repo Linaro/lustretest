@@ -7,7 +7,6 @@ import yaml
 
 import const
 import myyamlsanitizer
-import utils
 
 
 class Auster():
@@ -18,8 +17,8 @@ class Auster():
         self.ip = exec_node_ip
         self.test_info = {}
         self.test_info['group_id'] = test_group_id
-        self.test_info['suites'] = utils.get_test_list(test_group_id)
-        logdir = 'log-' + env['BUILD_ID'] + '/group-' + test_group_id
+        self.test_info['suites'] = self.get_test_suites(test_group_id)
+        logdir = 'log-' + env['BUILD_ID'] + '/group-' + str(test_group_id)
         self.test_info['logdir'] = '/tmp/test_logs/' + logdir
         self.test_info['local_logdir'] = env['WORKSPACE'] + \
             '/test_logs/' + logdir
@@ -61,27 +60,34 @@ class Auster():
     def ssh_close(self):
         self.ssh_client.close()
 
-    def ssh_exec(self, cmd):
-        # pty make stderr stream into stdout, so we can
-        # print stdout and stderr in realtime
-        _, stdout, _ = self.ssh_client.exec_command(cmd, get_pty=True)
-        for line in iter(stdout.readline, ""):
-            self._info(line.strip())
-        return stdout.channel.recv_exit_status()
+    def ssh_exec(self, cmd, timeout=None):
+        if timeout == -1:
+            timeout = None
+        try:
+            # pty make stderr stream into stdout, so we can
+            # print stdout and stderr in realtime
+            _, stdout, _ = self.ssh_client.exec_command(cmd, get_pty=True,
+                                                        timeout=timeout)
+            for line in iter(stdout.readline, ""):
+                self._info(line.strip())
+            return stdout.channel.recv_exit_status()
+        except TimeoutError:
+            self._info("Cmd running timeout, cmd: " + cmd)
+            return const.TEST_FAIL
 
-    def test(self):
-        #full_test_args = self.get_test_args()
+    def run_test(self):
         self.ssh_connection()
         rc = const.TEST_SUCC
         if self.ssh_client:
             test_env_vars = "LUSTRE_BRANCH=" + env['LUSTRE_BRANCH'] + \
-                " TEST_GROUP=group-" + self.test_info['group_id']
+                " TEST_GROUP=" + self.test_info['group_name']
             cmd = test_env_vars + \
-                " /usr/lib64/lustre/tests/auster -f multinode -rvk -D " \
+                " /usr/lib64/lustre/tests/auster -f multinode -rvH -D " \
                 + self.test_info['logdir'] + " " + self.test_info['suites']
             self._info("Exec the test suites on the node: " + self.ip)
-            self._info(cmd)
-            rc = self.ssh_exec(cmd)
+            self._info("Timeout: " + str(self.test_info['timeout']))
+            self._info("Cmd: " + cmd)
+            rc = self.ssh_exec(cmd, self.test_info['timeout'])
             self._info("Auster test finish, rc = %d", rc)
 
             if rc == const.TEST_SUCC:
@@ -100,7 +106,7 @@ class Auster():
         """
         fail = False
         yamlfile = self.test_info['local_logdir'] + '/results.yml'
-        with open(yamlfile, 'r+', encoding='utf8') as file:
+        with open(yamlfile, 'r', encoding='utf8') as file:
             filedata = file.read()
             try:
                 test_results = yaml.safe_load(
@@ -126,50 +132,38 @@ class Auster():
                     self._info(test_script + ': ' + msg +
                                "'".join(failed_subtests))
 
-                # Add missing required fields to results.yml for Maloo DB
-                # upload
-                test_results['test_name'] = self.test_info['suites']
-                test_results['cumulative_result_id'] = env['CUMULATIVE_RESULT_ID']
-                test_results['test_sequence'] = '1'
-                test_results['test_index'] = self.test_info['group_id']
-                test_results['session_group_id'] = str(uuid.uuid4())
-                test_results['enforcing'] = 'false'
-                # Only maloo defined names is can be set now, see:
-                # https://jira.whamcloud.com/browse/LU-15823
-                test_results['triggering_job_name'] = 'linaro-lustre-daily' + \
-                    env['LUSTRE_BRANCH']
-                test_results['triggering_build_number'] = env['BUILD_ID']
-                test_results['total_enforcing_sessions'] = '1'
-                yaml.safe_dump(test_results, file)
+        # Add missing required fields to results.yml for Maloo DB upload
+        with open(yamlfile, 'w', encoding='utf8') as file:
+            test_results['test_name'] = self.test_info['suites'].strip()
+            test_results['cumulative_result_id'] = env['CUMULATIVE_RESULT_ID']
+            test_results['test_sequence'] = '1'
+            test_results['test_index'] = self.test_info['group_id']
+            test_results['session_group_id'] = str(uuid.uuid4())
+            test_results['enforcing'] = 'false'
+            # Only maloo defined names is can be set now, see:
+            # https://jira.whamcloud.com/browse/LU-15823
+            test_results['triggering_job_name'] = 'linaro-lustre-daily-' + \
+                env['LUSTRE_BRANCH']
+            test_results['triggering_build_number'] = env['BUILD_ID']
+            test_results['total_enforcing_sessions'] = '1'
+            yaml.safe_dump(test_results, file)
 
         if fail:
             return const.TEST_FAIL
 
         return const.TEST_SUCC
 
-    def get_test_args(self):
-        test_suites_full_args = ""
+    def get_test_suites(self, test_group_id):
+        test_suites_with_args = ""
         with open(const.TEST_ARGS_CONFIG, "r") as test_args:
-            full_test_args = yaml.load(test_args, Loader=yaml.FullLoader)
-            testargs_list = full_test_args['testargs']
-            print(testargs_list)
-            test_suite_list = self.test_info['suites'].split(" ")
-            for test_suite in test_suite_list:
-                for _, testargs in enumerate(testargs_list):
-                    test_suite_name = testargs.get('test')
-                    if test_suite == test_suite_name:
-                        args = testargs.get('args')
-                        if args is not None:
-                            skip_list = args.get('skip')
-                            if skip_list and len(skip_list) != 0:
-                                skip_cases = ""
-                                for _, skip_case in enumerate(skip_list):
-                                    skip_cases += str(skip_case) + ","
-                                skip_cases = skip_cases[:-1]
-                                test_suites_full_args += test_suite \
-                                    + " --except \'" + skip_cases + "\' "
-                            else:
-                                test_suites_full_args += test_suite + " "
-                        else:
-                            test_suites_full_args += test_suite + " "
-        return test_suites_full_args
+            test_groups = yaml.load(test_args, Loader=yaml.FullLoader)
+            for group in test_groups:
+                if group['id'] == test_group_id:
+                    self.test_info['group_name'] = group['name']
+                    self.test_info['timeout'] = group.get('timeout', -1)
+                    for test_suite in group['test_suite']:
+                        name = test_suite['name']
+                        args = test_suite.get('args', "")
+                        test_suites_with_args += " " + name + " " + args
+                    break
+        return test_suites_with_args
