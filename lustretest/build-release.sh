@@ -6,6 +6,7 @@ branch=${BRANCH:-'master'}
 build_id=${BUILD_ID:-'001'}
 build_type=${BUILD_TYPE:-'release'}
 build_linux=${BUILD_LINUX:-'no'}
+extra_patches=${EXTRA_PATCHES}
 
 build_dir=${WORKSPACE}/build-$build_id
 kernel_src_dir="/home/jenkins/src/kernel"
@@ -24,6 +25,15 @@ cd $build_dir
 git clone --branch $branch --reference $local_repo $remote_repo
 cd lustre-release
 commit_id=$(git rev-parse --short HEAD)
+
+# Apply extra patches that haven't been merged into the branch.
+if [[ -n ${extra_patches} ]]; then
+    echo ${extra_patches} | sed -n 1'p' | tr ',' '\n' | while read patch; do
+        curl \
+            "https://review.whamcloud.com/changes/${patch}/revisions/current/patch" \
+            | base64 -d | git apply -v
+    done
+fi
 
 # (TODO): download config from github
 cp $kernel_src_dir/kernel-4.18.0-4.18-rhel8.5-aarch64.config-debug \
@@ -55,7 +65,7 @@ cd $build_dir
 $build_dir/lustre-release/contrib/lbuild/lbuild \
 	--lustre=$build_dir/lustre-release/$code_base  \
 	--target=4.18-rhel8.5 --distro=rhel8.5 \
-	--ccache --extraversion=$commit_id $build_opts
+	--ccache --extraversion=$build_id $build_opts
 
 echo "Re-generate rpm repo..."
 if [[ "$build_linux" == "yes" ]]; then
