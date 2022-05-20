@@ -19,9 +19,10 @@ class Auster():
         self.test_info['group_id'] = test_group_id
         self.test_info['suites'] = self.get_test_suites(test_group_id)
         logdir = 'log-' + env['BUILD_ID'] + '/group-' + str(test_group_id)
-        self.test_info['logdir'] = '/tmp/test_logs/' + logdir
+        self.test_info['logdir'] = const.SHARED_NFS_DIR + '/' + logdir
         self.test_info['local_logdir'] = env['WORKSPACE'] + \
             '/test_logs/' + logdir
+        self.test_info['shared_dir'] = const.SHARED_NFS_DIR
 
     def _debug(self, msg, *args):
         self.logger.debug(msg, *args)
@@ -80,7 +81,8 @@ class Auster():
         rc = const.TEST_SUCC
         if self.ssh_client:
             test_env_vars = "LUSTRE_BRANCH=" + env['LUSTRE_BRANCH'] + \
-                " TEST_GROUP=" + self.test_info['group_name']
+                " TEST_GROUP=" + self.test_info['group_name'] + \
+                " SHARED_DIRECTORY=" + self.test_info['shared_dir']
             cmd = test_env_vars + \
                 " /usr/lib64/lustre/tests/auster -f multinode -rvH -D " \
                 + self.test_info['logdir'] + " " + self.test_info['suites']

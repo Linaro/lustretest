@@ -86,3 +86,4 @@ TERRAFORM_OST01_HOSTNAME = "ost01_hostname"
 
 TEST_FAIL = -1
 TEST_SUCC = 0
+SHARED_NFS_DIR = "/tmp/test_logs/"
