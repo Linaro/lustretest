@@ -19,7 +19,7 @@ class Auster():
         self.test_info['env_vars'] = ""
         self.test_info['group_id'] = test_group_id
         self.test_info['suites'] = self.get_test_suites(test_group_id)
-        logdir = 'log-' + env['BUILD_ID'] + '/group-' + str(test_group_id)
+        logdir = 'log-' + env['BUILD_ID'] + '/' + self.test_info['group_name']
         self.test_info['logdir'] = nfs_dir + '/' + logdir
         self.test_info['local_logdir'] = env['WORKSPACE'] + \
             '/test_logs/' + logdir
@@ -91,7 +91,7 @@ class Auster():
             self.test_info['env_vars'] += "MDSSIZE=0 OSTSIZE=0 MGSSIZE=0 "
 
             cmd = self.test_info['env_vars'] + \
-                "/usr/lib64/lustre/tests/auster -f multinode -rvH -D " \
+                "/usr/lib64/lustre/tests/auster -f multinode -rvsk -D " \
                 + self.test_info['logdir'] + " " + self.test_info['suites']
 
             self._info("Exec the test suites on the node: " + self.ip)
@@ -127,35 +127,76 @@ class Auster():
             else:
                 for test in test_results.get('Tests', {}):
                     failed_subtests = []
+                    skipped_subtests = []
                     test_script = test.get('name', '')
-                    if test.get('status', '') != 'PASS':
+                    test_duration = test.get('duration', -1)
+                    test_status = test.get('status', '')
+                    subtests = test.get('SubTests', {})
+                    if subtests is not None:
+                        test_count = len(subtests)
+                    else:
+                        test_count = 0
+
+                    if test_status not in ['PASS', 'SKIP']:
                         fail = True
-                        msg = "Test Fail. FAIL: "
-                        subtests = test.get('SubTests', {})
+                        msg = "Test fail"
                         if subtests is not None:
                             for subtest in subtests:
-                                if subtest.get('status', 'FAIL') == 'FAIL':
-                                    failed_subtests.append(
-                                        subtest['name'].replace('test_', ''))
+                                subtest_num = subtest['name'].replace(
+                                    'test_', '')
+                                subtest_status = subtest.get('status', '')
+                                if subtest_status not in ['PASS', 'SKIP']:
+                                    failed_subtests.append(subtest_num)
+                                if subtest_status == 'SKIP':
+                                    skipped_subtests.append(subtest_num)
                     else:
-                        msg = "Test Pass."
-                    self._info(test_script + ': ' + msg +
-                               "'".join(failed_subtests))
+                        if test_status == 'SKIP':
+                            msg = "Test skip"
+                        else:
+                            msg = "Test pass"
+
+                    msg = test_script + ': ' + msg + \
+                        ", total tests: " + str(test_count) + \
+                        ", take " + str(test_duration) + " s"
+                    self._info(msg)
+                    test['total'] = test_count
+                    if failed_subtests:
+                        failed_count = len(failed_subtests)
+                        percent = f", {failed_count/test_count:.0%}."
+                        test['failed_total'] = failed_count
+                        test['failed_percent'] = percent
+                        msg = "    Failed total: " + str(failed_count) + \
+                            "/" + str(test_count) + percent + \
+                            " Failed tests: " + ",".join(failed_subtests)
+                        self._info(msg)
+                    if skipped_subtests:
+                        skipped_count = len(skipped_subtests)
+                        percent = f", {skipped_count/test_count:.0%}."
+                        test['skipped_total'] = skipped_count
+                        test['skipped_percent'] = percent
+                        msg = "    Skipped total: " + str(skipped_count) + \
+                            "/" + str(test_count) + percent + \
+                            " Skipped tests: " + ",".join(skipped_subtests)
+                        self._info(msg)
 
         # Add missing required fields to results.yml for Maloo DB upload
         with open(yamlfile, 'w', encoding='utf8') as file:
-            test_results['test_name'] = self.test_info['suites'].strip()
             test_results['cumulative_result_id'] = env['CUMULATIVE_RESULT_ID']
-            test_results['test_sequence'] = '1'
-            test_results['test_index'] = self.test_info['group_id']
+            test_results['test_sequence'] = "1"
+            test_results['test_index'] = str(self.test_info['group_id'])
             test_results['session_group_id'] = str(uuid.uuid4())
             test_results['enforcing'] = 'false'
             # Only maloo defined names is can be set now, see:
             # https://jira.whamcloud.com/browse/LU-15823
-            test_results['triggering_job_name'] = 'linaro-lustre-daily-' + \
+            test_results['triggering_job_name'] = 'lustre-' + \
                 env['LUSTRE_BRANCH']
             test_results['triggering_build_number'] = env['BUILD_ID']
             test_results['total_enforcing_sessions'] = '1'
+            # lustre-master-el8.5-x86_64--full-dne-part-1--1.10
+            test_results['test_name'] = test_results['triggering_job_name'] + \
+                "-el8.5-aarch64--" + self.test_info['group_name'] + "--" + \
+                test_results['test_sequence'] + \
+                "." + test_results['test_index']
             yaml.safe_dump(test_results, file)
 
         if fail:

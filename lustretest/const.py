@@ -20,8 +20,8 @@ SSH_CFG_DIR = TEST_NODE_ROOT + '/.ssh'
 REMOTE_SSH_CONFIG = SSH_CFG_DIR + '/config'
 DEFAULT_SSH_USER = 'root'
 CLOUD_INIT_CHECK_USER = 'centos'
-REBOOT_TIMEOUT = 300
-CLOUD_INIT_TIMEOUT = 900
+REBOOT_TIMEOUT = 1200
+CLOUD_INIT_TIMEOUT = 3600
 CLOUD_INIT_FINISH = "/var/lib/cloud/instance/boot-finished"
 LUSTER_TEST_CFG = '/usr/lib64/lustre/tests/cfg/'
 # Lustre Test

@@ -26,17 +26,6 @@ resource "openstack_networking_port_v2" "mds02_port" {
   }
 }
 
-# Create floating ip
-resource "openstack_networking_floatingip_v2" "mds02_floating" {
-  pool = var.ext_net
-}
-
-# Attach floating ip to instance
-resource "openstack_compute_floatingip_associate_v2" "mds02_floating_attach" {
-  floating_ip = openstack_networking_floatingip_v2.mds02_floating.address
-  instance_id = openstack_compute_instance_v2.mds02.id
-}
-
 # Create volume
 resource "openstack_blockstorage_volume_v2" "mds02_volume01" {
   name = var.mds_volume03

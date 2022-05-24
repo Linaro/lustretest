@@ -25,14 +25,3 @@ resource "openstack_networking_port_v2" "client02_port" {
     subnet_id = var.lustre_subnet
   }
 }
-
-# Create floating ip
-resource "openstack_networking_floatingip_v2" "client02_floating" {
-  pool = var.ext_net
-}
-
-# Attach floating ip to instance
-resource "openstack_compute_floatingip_associate_v2" "client02_floating_attach" {
-  floating_ip = openstack_networking_floatingip_v2.client02_floating.address
-  instance_id = openstack_compute_instance_v2.client02.id
-}

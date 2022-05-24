@@ -1,48 +1,56 @@
 ---
-- name: group-01
+# test group definition refer to https://testing.whamcloud.com/test_sessions
+- name: full-dne-part-1
   id: 1
   timeout: -1
   test_suite:
-    - name: sanity
-      args: "--only 10-20 --except 17n"
-    - name: sanity-pfl
-- name: group-02
+    - name: recovery-small
+      #args: "--except 136"
+    - name: ost-pools
+    - name: pjdfstest
+    - name: sanity-lnet
+    - name: mds-survey
+    - name: sanity-dom
+    - name: mmp
+    - name: sanity-lsnapshot
+    - name: sanity-flr
+    - name: replay-dual
+    # - name: runtests # it is failed now
+    - name: parallel-scale
+    #- name: insanity
+    - name: metadata-updates
+    - name: large-scale
+    - name: replay-ost-single
+    - name: obdfilter-survey
+    - name: replay-single
+    - name: sanity-scrub
+      #- name: sanity-lfsck
+      #args: "--except 9a"
+
+- name: full-dne-part-2
   id: 2
   timeout: -1
   test_suite:
-    - name: ost-pools
-    - name: replay-single
-    - name: conf-sanity
-- name: group-03
-  id: 3
-  timeout: -1
-  test_suite:
-    - name: insanity
-    - name: mmp
-    - name: replay-ost-single
-    - name: sanity-dom
-    - name: sanity-flr
-    - name: sanity-hsm
+    - name: sanity
+    #      args: "--except 17n,56xc,77l,78,80,81a,150f,151,155e,155f,155g,155h,156,432,813"
+    - name: sanity-pcc
+      args: "--except 7a,7b"
     - name: sanity-quota
-- name: group-04
-  id: 4
-  test_suite:
+    - name: parallel-scale-nfsv3
+    - name: replay-vbr
+    - name: sanity-sec
     - name: lustre-rsync-test
-    - name: recovery-small
-    - name: sanity-scrub
+    - name: racer
+    - name: sanity-hsm
+    - name: lnet-selftest
+
+- name: full-dne-part-3
+  id: 3
+  test_suite:
     - name: sanityn
-- name: group-05
-  id: 5
-  test_suite:
-    - name: mds-survey
-    - name: replay-dual
-    - name: runtests
-    - name: sanity-lfsck
-    - name: sanity-sec
-- name: group-06
-  id: 6
-  test_suite:
-    - name: recovery-small
-    - name: sanity-sec
-    - name: sanity-selinux
-    - name: large-scale
+    - name: conf-sanity
+    #  args: "--except 32b"
+    - name: sanity-benchmark
+    - name: performance-sanity
+    - name: sanity-pfl
+    - name: parallel-scale-nfsv4

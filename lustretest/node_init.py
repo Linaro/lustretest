@@ -174,7 +174,7 @@ def multinode_conf_gen(node_map, cluster_dir):
                     test_conf.write(rclient_write)
             if node_info[2] == const.MDS:
                 if total_mds == 0:
-                    mds_count = "MDSCOUNT=1\n"
+                    mds_count = "\nMDSCOUNT=1\n"
                     test_conf.write(mds_count)
                     mds_host = "mds_HOST=\"" + node_info[0] + "\"\n"
                     mds_dev1 = "MDSDEV1=\"" + const.MDS_DISK1 + "\"\n"
@@ -196,7 +196,7 @@ def multinode_conf_gen(node_map, cluster_dir):
                     test_conf.write(mds_dev4)
                     total_mds += 1
             if node_info[2] == const.OST:
-                ost_count = "OSTCOUNT=7\n"
+                ost_count = "\nOSTCOUNT=7\n"
                 ost1_host = "ost_HOST=\"" + node_info[0] + "\"\n"
                 ost_dev1 = "OSTDEV1=\"" + const.OST_DISK1 + "\"\n"
                 test_conf.write(ost_count)
@@ -225,7 +225,7 @@ def multinode_conf_gen(node_map, cluster_dir):
                     test_conf.write(ost_host)
                     test_conf.write(ost_dev)
 
-        pdsh_cmd = "PDSH=\"/usr/bin/pdsh -S -Rssh -w\"\n"
+        pdsh_cmd = "\nPDSH=\"/usr/bin/pdsh -S -Rssh -w\"\n"
         test_conf.write(pdsh_cmd)
 
         share_dir = "SHARED_DIRECTORY=${SHARED_DIRECTORY:-/opt/testing/shared}\n"

@@ -103,8 +103,7 @@ def main():
         node_map = utils.read_node_info(path_join(cluster_dir,
                                                   const.NODE_INFO))
 
-        if provision_new:
-            multinode_conf_gen(node_map, cluster_dir)
+        multinode_conf_gen(node_map, cluster_dir)
         node_init(node_map, cluster_dir, logger)
         logger.info("Node init stage is successful")
 
