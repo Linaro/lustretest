@@ -10,19 +10,20 @@ import myyamlsanitizer
 
 
 class Auster():
-    def __init__(self, logger, test_group_id, exec_node_ip):
+    def __init__(self, logger, test_group_id, exec_node_ip, nfs_dir):
         self.logger = logger
         self.ssh_user = const.DEFAULT_SSH_USER
         self.ssh_client = None
         self.ip = exec_node_ip
         self.test_info = {}
+        self.test_info['env_vars'] = ""
         self.test_info['group_id'] = test_group_id
         self.test_info['suites'] = self.get_test_suites(test_group_id)
         logdir = 'log-' + env['BUILD_ID'] + '/group-' + str(test_group_id)
-        self.test_info['logdir'] = const.SHARED_NFS_DIR + '/' + logdir
+        self.test_info['logdir'] = nfs_dir + '/' + logdir
         self.test_info['local_logdir'] = env['WORKSPACE'] + \
             '/test_logs/' + logdir
-        self.test_info['shared_dir'] = const.SHARED_NFS_DIR
+        self.test_info['shared_dir'] = nfs_dir
 
     def _debug(self, msg, *args):
         self.logger.debug(msg, *args)
@@ -80,12 +81,19 @@ class Auster():
         self.ssh_connection()
         rc = const.TEST_SUCC
         if self.ssh_client:
-            test_env_vars = "LUSTRE_BRANCH=" + env['LUSTRE_BRANCH'] + \
-                " TEST_GROUP=" + self.test_info['group_name'] + \
-                " SHARED_DIRECTORY=" + self.test_info['shared_dir']
-            cmd = test_env_vars + \
-                " /usr/lib64/lustre/tests/auster -f multinode -rvH -D " \
+            self.test_info['env_vars'] += \
+                "LUSTRE_BRANCH=" + env['LUSTRE_BRANCH'] + " "
+            self.test_info['env_vars'] += \
+                "TEST_GROUP=" + self.test_info['group_name'] + " "
+            self.test_info['env_vars'] += \
+                "SHARED_DIRECTORY=" + self.test_info['shared_dir'] + " "
+            self.test_info['env_vars'] += "LOAD_MODULES_REMOTE=true "
+            self.test_info['env_vars'] += "MDSSIZE=0 OSTSIZE=0 MGSSIZE=0 "
+
+            cmd = self.test_info['env_vars'] + \
+                "/usr/lib64/lustre/tests/auster -f multinode -rvH -D " \
                 + self.test_info['logdir'] + " " + self.test_info['suites']
+
             self._info("Exec the test suites on the node: " + self.ip)
             self._info("Timeout: " + str(self.test_info['timeout']))
             self._info("Cmd: " + cmd)

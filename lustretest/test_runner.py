@@ -119,7 +119,8 @@ def main():
             if node_info[2] == const.CLIENT:
                 exec_node_ip = node_info[1]
                 break
-        auster_test = Auster(logger, test_group_id, exec_node_ip)
+        auster_test = Auster(logger, test_group_id, exec_node_ip,
+                             const.SHARED_NFS_DIR)
         rc = auster_test.run_test()
 
         if rc != const.TEST_SUCC:

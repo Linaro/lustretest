@@ -158,10 +158,10 @@ variable "ost_volume08" {
 
 variable "mds_size" {
   type    = number
-  default = 50
+  default = 5
 }
 
 variable "ost_size" {
   type    = number
-  default = 60
+  default = 10
 }
