@@ -174,6 +174,8 @@ def multinode_conf_gen(node_map, cluster_dir):
                     test_conf.write(rclient_write)
             if node_info[2] == const.MDS:
                 if total_mds == 0:
+                    mds_count = "MDSCOUNT=1\n"
+                    test_conf.write(mds_count)
                     mds_host = "mds_HOST=\"" + node_info[0] + "\"\n"
                     mds_dev1 = "MDSDEV1=\"" + const.MDS_DISK1 + "\"\n"
                     mds3_host = "mds3_HOST=\"" + node_info[0] + "\"\n"
@@ -193,8 +195,6 @@ def multinode_conf_gen(node_map, cluster_dir):
                     test_conf.write(mds4_host)
                     test_conf.write(mds_dev4)
                     total_mds += 1
-                    mds_count = "MDSCOUNT=4\n"
-                    test_conf.write(mds_count)
             if node_info[2] == const.OST:
                 ost_count = "OSTCOUNT=7\n"
                 ost1_host = "ost_HOST=\"" + node_info[0] + "\"\n"
