@@ -4,8 +4,7 @@ pipeline {
     }
 
     triggers {
-          cron '''TZ=Asia/Shanghai
-              0 18 * * *'''
+          cron('TZ=Asia/Shanghai\n 0 18 * * *')
     }
 
     environment {
@@ -26,7 +25,7 @@ pipeline {
             steps {
                 echo 'Building..'
                 build job: 'project-lustre-build-release-master',
-                      parameters: [string(name: 'BRANCH', value: '${LUSTRE_BRANCH}'),
+                      parameters: [string(name: 'BRANCH', value: 'master'),
                       string(name: 'BUILD_LINUX', value: 'yes'),
                       string(name: 'EXTRA_PATCHES', value: '47004')]
             }
@@ -62,6 +61,15 @@ pipeline {
                         }
                     }
                 }
+            }
+        }
+    }
+
+    post {
+        always {
+            dir("lustretest-main/lustretest") {
+                sh 'source /home/centos/venv3/bin/activate;python3 upload_results.py'
+                echo 'See test results here: https://testing.whamcloud.com/test_sessions?jobs=lustre-master&user_id=b8340029-197d-4ce0-a8f1-40f76d3bb8c7&builds={BUILD_ID}#redirect'
             }
         }
     }

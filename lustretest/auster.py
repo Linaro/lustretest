@@ -182,7 +182,7 @@ class Auster():
         # Add missing required fields to results.yml for Maloo DB upload
         with open(yamlfile, 'w', encoding='utf8') as file:
             test_results['cumulative_result_id'] = env['CUMULATIVE_RESULT_ID']
-            test_results['test_sequence'] = "1"
+            test_results['test_sequence'] = '1'
             test_results['test_index'] = str(self.test_info['group_id'])
             test_results['session_group_id'] = str(uuid.uuid4())
             test_results['enforcing'] = 'false'
@@ -197,6 +197,7 @@ class Auster():
                 "-el8.5-aarch64--" + self.test_info['group_name'] + "--" + \
                 test_results['test_sequence'] + \
                 "." + test_results['test_index']
+            test_results['test_suites'] = self.test_info['suites']
             yaml.safe_dump(test_results, file)
 
         if fail:
