@@ -162,21 +162,21 @@ class Auster():
                     test['total'] = test_count
                     if failed_subtests:
                         failed_count = len(failed_subtests)
-                        percent = f", {failed_count/test_count:.0%}."
+                        percent = f"{failed_count/test_count:.0%}"
                         test['failed_total'] = failed_count
                         test['failed_percent'] = percent
                         msg = "    Failed total: " + str(failed_count) + \
-                            "/" + str(test_count) + percent + \
-                            " Failed tests: " + ",".join(failed_subtests)
+                            "/" + str(test_count) + ", " + percent + \
+                            ". Failed tests: " + ",".join(failed_subtests)
                         self._info(msg)
                     if skipped_subtests:
                         skipped_count = len(skipped_subtests)
-                        percent = f", {skipped_count/test_count:.0%}."
+                        percent = f"{skipped_count/test_count:.0%}"
                         test['skipped_total'] = skipped_count
                         test['skipped_percent'] = percent
                         msg = "    Skipped total: " + str(skipped_count) + \
-                            "/" + str(test_count) + percent + \
-                            " Skipped tests: " + ",".join(skipped_subtests)
+                            "/" + str(test_count) + ", " + percent + \
+                            ". Skipped tests: " + ",".join(skipped_subtests)
                         self._info(msg)
 
         # Add missing required fields to results.yml for Maloo DB upload
