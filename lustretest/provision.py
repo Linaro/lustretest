@@ -371,7 +371,7 @@ class Provision():
 
     def install_lustre(self, node, client):
         cmd1 = "sudo dnf config-manager --set-enabled ha"
-        cmd2 = "sudo dnf config-manager --set-enabled powertools"
+        cmd2 = "sudo dnf config-manager --set-enabled powertools; sudo dnf makecache"
         cmd3 = "sudo dnf update libmodulemd -y"
         cmd4 = "sudo dnf install epel-release -y"
         cmd5 = "sudo dnf install pdsh pdsh-rcmd-ssh net-tools dbench fio linux-firmware -y"
