@@ -1,6 +1,6 @@
 ---
 # test group definition refer to https://testing.whamcloud.com/test_sessions
-- name: full-dne-part-1
+- name: linaro-full-part-1
   id: 1
   timeout: -1
   test_suite:
@@ -27,7 +27,7 @@
       #- name: sanity-lfsck
       #args: "--except 9a"
 
-- name: full-dne-part-2
+- name: linaro-full-part-2
   id: 2
   timeout: -1
   test_suite:
@@ -44,10 +44,11 @@
     - name: sanity-hsm
     - name: lnet-selftest
 
-- name: full-dne-part-3
+- name: linaro-full-part-3
   id: 3
   test_suite:
     - name: sanityn
+      args: "--except 109"
     - name: conf-sanity
     #  args: "--except 32b"
     - name: sanity-benchmark

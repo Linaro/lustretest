@@ -197,7 +197,7 @@ class Auster():
                 "-el8.5-aarch64--" + self.test_info['group_name'] + "--" + \
                 test_results['test_sequence'] + \
                 "." + test_results['test_index']
-            test_results['test_suites'] = self.test_info['suites']
+            test_results['test_suites'] = self.test_info['suites'].strip()
             yaml.safe_dump(test_results, file)
 
         if fail:
