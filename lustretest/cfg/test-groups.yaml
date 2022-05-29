@@ -22,7 +22,7 @@
     - name: large-scale
     - name: replay-ost-single
     - name: obdfilter-survey
-    - name: replay-single
+    #- name: replay-single
     - name: sanity-scrub
       #- name: sanity-lfsck
       #args: "--except 9a"

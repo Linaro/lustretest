@@ -4,7 +4,8 @@ pipeline {
     }
 
     triggers {
-          cron('TZ=Asia/Shanghai\n 0 18 * * *')
+        /* UTC 10:00 a.k.a China time 18:00 */
+        cron '0 10 * * *'
     }
 
     environment {
