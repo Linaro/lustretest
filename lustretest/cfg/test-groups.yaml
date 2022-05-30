@@ -11,6 +11,7 @@
     - name: sanity-lnet
     - name: mds-survey
     - name: sanity-dom
+      args: "--except fsx"
     - name: mmp
     - name: sanity-lsnapshot
     - name: sanity-flr
@@ -48,10 +49,11 @@
   id: 3
   test_suite:
     - name: sanityn
-      args: "--except 109"
+      args: "--except 16a,16b,16c,109"
     - name: conf-sanity
     #  args: "--except 32b"
     - name: sanity-benchmark
+      args: "--except fsx,fsx_partial_punch"
     - name: performance-sanity
     - name: sanity-pfl
     - name: parallel-scale-nfsv4
