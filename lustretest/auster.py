@@ -91,7 +91,7 @@ class Auster():
             self.test_info['env_vars'] += "MDSSIZE=0 OSTSIZE=0 MGSSIZE=0 "
 
             cmd = self.test_info['env_vars'] + \
-                "/usr/lib64/lustre/tests/auster -f multinode -rvsk -D " \
+                "/usr/lib64/lustre/tests/auster -f multinode -rvs -D " \
                 + self.test_info['logdir'] + " " + self.test_info['suites']
 
             self._info("Exec the test suites on the node: " + self.ip)
