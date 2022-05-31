@@ -1,3 +1,4 @@
+---
 - project:
     name: 'project-lustre-build-release'
     branch:
@@ -24,10 +25,15 @@
           description: 'build linux kernel: yes or no'
       - string:
           name: 'EXTRA_PATCHES'
-          default: '47004'
+          default: ''
           description: "comma separated list of patch numeric ids. Which haven't been merged yet.
             E.g.: For change https://review.whamcloud.com/#/c/47004/, the patch number id is 47004"
 
     builders:
       - shell:
           !include-raw-escape: scripts/build-release.sh
+    publishers:
+      - groovy-postbuild:
+          script: |
+            def summary = manager.createSummary("package.gif")
+            summary.appendText("See <a href=https://uk.linaro.cloud/repo/lustre/>RPM release repo.</a>", false)

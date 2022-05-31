@@ -1,5 +1,10 @@
+---
 - job:
     name: project-lustre-periodical-test
     project-type: pipeline
+    triggers:
+      - timed: |
+          TZ=Asia/Shanghai
+          0 18 * * *
     dsl:
       !include-raw: scripts/lustre-test-pipeline.groovy

@@ -83,4 +83,3 @@ sudo mv -f $build_dir/RPMS/aarch64/*.aarch64.rpm $rpm_repo
 sudo createrepo --update $rpm_repo
 
 echo "Finish build. branch: $branch, commit ID: $commit_id"
-echo $commit_id # return commit_id for the script
