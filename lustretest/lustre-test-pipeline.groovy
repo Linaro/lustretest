@@ -71,9 +71,11 @@ pipeline {
 
     post {
         always {
+            /*
             dir("lustretest-main/lustretest") {
                 sh 'source /home/centos/venv3/bin/activate;python3 upload_results.py'
             }
+            */
             script {
                 def summary = manager.createSummary("package.gif")
                 summary.appendText("See <a href=${buildlink}>build job.</a>", false)
