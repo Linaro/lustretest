@@ -116,6 +116,10 @@ class Auster():
         """
         fail = False
         yamlfile = self.test_info['local_logdir'] + '/results.yml'
+        total_sum = 0
+        fail_sum = 0
+        skip_sum = 0
+        duration_sum = 0
         with open(yamlfile, 'r', encoding='utf8') as file:
             filedata = file.read()
             try:
@@ -130,12 +134,14 @@ class Auster():
                     skipped_subtests = []
                     test_script = test.get('name', '')
                     test_duration = test.get('duration', -1)
+                    duration_sum += test_duration
                     test_status = test.get('status', '')
                     subtests = test.get('SubTests', {})
                     if subtests is not None:
                         test_count = len(subtests)
                     else:
                         test_count = 0
+                    total_sum += test_count
 
                     if test_status not in ['PASS', 'SKIP']:
                         fail = True
@@ -157,11 +163,12 @@ class Auster():
 
                     msg = test_script + ': ' + msg + \
                         ", total tests: " + str(test_count) + \
-                        ", take " + str(test_duration) + " s"
+                        ", take " + str(test_duration) + " s."
                     self._info(msg)
                     test['total'] = test_count
                     if failed_subtests:
                         failed_count = len(failed_subtests)
+                        fail_sum += failed_count
                         percent = f"{failed_count/test_count:.0%}"
                         test['failed_total'] = failed_count
                         test['failed_percent'] = percent
@@ -171,6 +178,7 @@ class Auster():
                         self._info(msg)
                     if skipped_subtests:
                         skipped_count = len(skipped_subtests)
+                        skip_sum += skipped_count
                         percent = f"{skipped_count/test_count:.0%}"
                         test['skipped_total'] = skipped_count
                         test['skipped_percent'] = percent
@@ -179,6 +187,25 @@ class Auster():
                             ". Skipped tests: " + ",".join(skipped_subtests)
                         self._info(msg)
 
+        duration_sum /= 60 * 60  # hours
+        test_results['duration_hours'] = duration_sum
+        msg = self.test_info['group_name'] + " total tests: " + \
+            str(total_sum) + ", take " + str(duration_sum) + " hours."
+        self._info(msg)
+        if fail_sum > 0:
+            percent = f"{fail_sum/total_sum:.0%}"
+            test_results['failed_total'] = total_sum
+            test_results['failed_percent'] = percent
+            msg = "    Failed total: " + str(fail_sum) + \
+                "/" + str(total_sum) + ", " + percent + "."
+            self._info(msg)
+        if skip_sum > 0:
+            percent = f"{skip_sum/total_sum:.0%}"
+            test_results['skipped_total'] = skip_sum
+            test_results['skipped_percent'] = percent
+            msg = "    Skipped total: " + str(skip_sum) + \
+                "/" + str(total_sum) + ", " + percent + "."
+            self._info(msg)
         # Add missing required fields to results.yml for Maloo DB upload
         with open(yamlfile, 'w', encoding='utf8') as file:
             test_results['cumulative_result_id'] = env['CUMULATIVE_RESULT_ID']
