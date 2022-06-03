@@ -169,7 +169,7 @@ class Auster():
                     if failed_subtests:
                         failed_count = len(failed_subtests)
                         fail_sum += failed_count
-                        percent = f"{failed_count/test_count:.0%}"
+                        percent = f"{failed_count/test_count:.1%}"
                         test['failed_total'] = failed_count
                         test['failed_percent'] = percent
                         msg = "    Failed total: " + str(failed_count) + \
@@ -179,7 +179,7 @@ class Auster():
                     if skipped_subtests:
                         skipped_count = len(skipped_subtests)
                         skip_sum += skipped_count
-                        percent = f"{skipped_count/test_count:.0%}"
+                        percent = f"{skipped_count/test_count:.1%}"
                         test['skipped_total'] = skipped_count
                         test['skipped_percent'] = percent
                         msg = "    Skipped total: " + str(skipped_count) + \
@@ -187,20 +187,20 @@ class Auster():
                             ". Skipped tests: " + ",".join(skipped_subtests)
                         self._info(msg)
 
-        duration_sum /= 60 * 60  # hours
+        duration_sum = f'{duration_sum/60/60:.1f}'  # hours
         test_results['duration_hours'] = duration_sum
         msg = self.test_info['group_name'] + " total tests: " + \
             str(total_sum) + ", take " + str(duration_sum) + " hours."
         self._info(msg)
         if fail_sum > 0:
-            percent = f"{fail_sum/total_sum:.0%}"
+            percent = f"{fail_sum/total_sum:.1%}"
             test_results['failed_total'] = total_sum
             test_results['failed_percent'] = percent
             msg = "    Failed total: " + str(fail_sum) + \
                 "/" + str(total_sum) + ", " + percent + "."
             self._info(msg)
         if skip_sum > 0:
-            percent = f"{skip_sum/total_sum:.0%}"
+            percent = f"{skip_sum/total_sum:.1%}"
             test_results['skipped_total'] = skip_sum
             test_results['skipped_percent'] = percent
             msg = "    Skipped total: " + str(skip_sum) + \
@@ -215,12 +215,11 @@ class Auster():
             test_results['enforcing'] = 'false'
             # Only maloo defined names is can be set now, see:
             # https://jira.whamcloud.com/browse/LU-15823
-            test_results['triggering_job_name'] = 'lustre-' + \
-                env['LUSTRE_BRANCH']
+            test_results['triggering_job_name'] = 'custom'
             test_results['triggering_build_number'] = env['BUILD_ID']
             test_results['total_enforcing_sessions'] = '1'
-            # lustre-master-el8.5-x86_64--full-dne-part-1--1.10
-            test_results['test_name'] = test_results['triggering_job_name'] + \
+            # lustre-master-el8.5-x86_64--linaro-full-part-1--1.10
+            test_results['test_name'] = 'lustre-' + env['LUSTRE_BRANCH'] + \
                 "-el8.5-aarch64--" + self.test_info['group_name'] + "--" + \
                 test_results['test_sequence'] + \
                 "." + test_results['test_index']

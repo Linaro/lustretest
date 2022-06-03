@@ -1,4 +1,4 @@
-def maloolink="https://testing.whamcloud.com/test_sessions?jobs=lustre-master&user_id=b8340029-197d-4ce0-a8f1-40f76d3bb8c7&builds=${BUILD_ID}#redirect"
+def maloolink="https://testing.whamcloud.com/test_sessions?jobs=custom&user_id=b8340029-197d-4ce0-a8f1-40f76d3bb8c7&builds=${BUILD_ID}#redirect"
 def buildlink="http://213.146.155.72:8080/job/project-lustre-build-release-master/lastBuild/"
 def testlogslink="https://uk.linaro.cloud/test-logs/log-${BUILD_ID}/"
 
@@ -71,11 +71,9 @@ pipeline {
 
     post {
         always {
-            /*
             dir("lustretest-main/lustretest") {
                 sh 'source /home/centos/venv3/bin/activate;python3 upload_results.py'
             }
-            */
             script {
                 def summary = manager.createSummary("package.gif")
                 summary.appendText("See <a href=${buildlink}>build job.</a>", false)
