@@ -44,10 +44,10 @@ sh autogen.sh
 ./configure -C --enable-dist
 make dist
 code_base=$(find . -name "lustre*tar.gz")
-code_base=${code_base: 2}
+code_base=$(basename $code_base)
 
 echo "Build options prepare..."
-build_opts=""
+build_opts="--disable-zfs "
 if [[ "$build_type" == "debug" ]]; then
 	build_opts+="--enable-kernel-debug "
 fi

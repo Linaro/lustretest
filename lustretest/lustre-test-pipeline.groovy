@@ -29,9 +29,7 @@ pipeline {
             steps {
                 echo 'Building..'
                 build job: 'project-lustre-build-release-master',
-                      parameters: [string(name: 'BRANCH', value: "${LUSTRE_BRANCH}"),
-                      string(name: 'BUILD_LINUX', value: 'yes'),
-                      string(name: 'EXTRA_PATCHES', value: '')]
+                      parameters: [string(name: 'BRANCH', value: "${LUSTRE_BRANCH}")]
             }
         }
 
