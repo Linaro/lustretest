@@ -47,9 +47,10 @@ code_base=$(find . -name "lustre*tar.gz")
 code_base=$(basename $code_base)
 
 echo "Build options prepare..."
-build_opts="--disable-zfs "
+build_opts=""
 if [[ "$build_type" == "debug" ]]; then
 	build_opts+="--enable-kernel-debug "
+	build_opts+="--disable-zfs "
 fi
 
 if [[ "$build_linux" == "yes" ]]; then
@@ -58,6 +59,7 @@ if [[ "$build_linux" == "yes" ]]; then
 else
     # Build with exist Linux kernel
 	build_opts+="--with-linux=$linux_dir "
+	build_opts+="--disable-zfs "
 fi
 
 echo "Build rpms..."
