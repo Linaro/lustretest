@@ -5,28 +5,23 @@
   timeout: -1
   test_suite:
     - name: recovery-small
-      #args: "--except 136"
+    #args: "--except 136"
     - name: ost-pools
     - name: pjdfstest
     - name: sanity-lnet
     - name: mds-survey
     - name: sanity-dom
-      args: "--except fsx"
     - name: mmp
     - name: sanity-lsnapshot
     - name: sanity-flr
     - name: replay-dual
-    # - name: runtests # it is failed now
+    - name: runtests
     - name: parallel-scale
-    #- name: insanity
     - name: metadata-updates
     - name: large-scale
     - name: replay-ost-single
     - name: obdfilter-survey
-    #- name: replay-single
     - name: sanity-scrub
-      #- name: sanity-lfsck
-      #args: "--except 9a"
 
 - name: linaro-full-part-2
   id: 2
@@ -49,11 +44,13 @@
   id: 3
   test_suite:
     - name: sanityn
-      args: "--except 16a,16b,16c,109"
+    - name: insanity
+    - name: replay-single
     - name: conf-sanity
     #  args: "--except 32b"
     - name: sanity-benchmark
-      args: "--except fsx,fsx_partial_punch"
     - name: performance-sanity
     - name: sanity-pfl
+    - name: sanity-lfsck
+    #args: "--except 9a"
     - name: parallel-scale-nfsv4
