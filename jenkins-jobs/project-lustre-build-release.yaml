@@ -25,7 +25,7 @@
           description: 'build linux kernel: yes or no'
       - string:
           name: 'EXTRA_PATCHES'
-          default: ''
+          default: '47563'
           description: "comma separated list of patch numeric ids. Which haven't been merged yet.
             E.g.: For change https://review.whamcloud.com/#/c/47004/, the patch number id is 47004"
 
