@@ -82,14 +82,9 @@ class Auster():
         rc = const.TEST_SUCC
         if self.ssh_client:
             self.test_info['env_vars'] += \
-                "LUSTRE_BRANCH=" + env['LUSTRE_BRANCH'] + " "
-            self.test_info['env_vars'] += \
                 "TEST_GROUP=" + self.test_info['group_name'] + " "
             self.test_info['env_vars'] += \
                 "SHARED_DIRECTORY=" + self.test_info['shared_dir'] + " "
-            self.test_info['env_vars'] += "LOAD_MODULES_REMOTE=true "
-            self.test_info['env_vars'] += "MDSSIZE=0 OSTSIZE=0 MGSSIZE=0 "
-
             cmd = self.test_info['env_vars'] + \
                 "/usr/lib64/lustre/tests/auster -f multinode -rvs -D " \
                 + self.test_info['logdir'] + " " + self.test_info['suites']

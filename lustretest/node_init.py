@@ -1,4 +1,5 @@
 from datetime import datetime
+from os import environ as env
 from os.path import join as path_join
 import sys
 import time
@@ -159,8 +160,9 @@ def multinode_conf_gen(node_map, cluster_dir):
     total_client = 0
     total_mds = 0
     total_clients = ""
+    lines = ""
 
-    with open(path_join(cluster_dir, const.MULTI_NODE_CONFIG), 'w+') as test_conf:
+    with open(path_join(cluster_dir, const.MULTI_NODE_CONFIG), 'w') as test_conf:
         for _, node_info in node_map.items():
             if node_info[2] == const.CLIENT:
                 if total_client == 0:
@@ -169,39 +171,26 @@ def multinode_conf_gen(node_map, cluster_dir):
                 elif total_client == 1:
                     total_client += 1
                     total_clients += ' ' + node_info[0]
-                    rclient_write = "RCLIENTS=\"" + total_clients + "\"\n"
-                    test_conf.write("CLIENTCOUNT=2\n")
-                    test_conf.write(rclient_write)
+                    lines += "CLIENTCOUNT=2\n"
+                    lines += "RCLIENTS=\"" + total_clients + "\"\n"
             if node_info[2] == const.MDS:
                 if total_mds == 0:
-                    mds_count = "\nMDSCOUNT=1\n"
-                    test_conf.write(mds_count)
-                    mds_host = "mds_HOST=\"" + node_info[0] + "\"\n"
-                    mds_dev1 = "MDSDEV1=\"" + const.MDS_DISK1 + "\"\n"
-                    mds3_host = "mds3_HOST=\"" + node_info[0] + "\"\n"
-                    mds_dev3 = "MDSDEV3=\"" + const.MDS_DISK2 + "\"\n"
-                    test_conf.write(mds_host)
-                    test_conf.write(mds_dev1)
-                    test_conf.write(mds3_host)
-                    test_conf.write(mds_dev3)
+                    lines += "\nMDSCOUNT=1\n"
+                    lines += "mds_HOST=\"" + node_info[0] + "\"\n"
+                    lines += "MDSDEV1=\"" + const.MDS_DISK1 + "\"\n"
+                    lines += "mds3_HOST=\"" + node_info[0] + "\"\n"
+                    lines += "MDSDEV3=\"" + const.MDS_DISK2 + "\"\n"
                     total_mds += 1
                 elif total_mds == 1:
-                    mds2_host = "mds2_HOST=\"" + node_info[0] + "\"\n"
-                    mds_dev2 = "MDSDEV2=\"" + const.MDS_DISK1 + "\"\n"
-                    mds4_host = "mds4_HOST=\"" + node_info[0] + "\"\n"
-                    mds_dev4 = "MDSDEV4=\"" + const.MDS_DISK2 + "\"\n"
-                    test_conf.write(mds2_host)
-                    test_conf.write(mds_dev2)
-                    test_conf.write(mds4_host)
-                    test_conf.write(mds_dev4)
+                    lines += "mds2_HOST=\"" + node_info[0] + "\"\n"
+                    lines += "MDSDEV2=\"" + const.MDS_DISK1 + "\"\n"
+                    lines += "mds4_HOST=\"" + node_info[0] + "\"\n"
+                    lines += "MDSDEV4=\"" + const.MDS_DISK2 + "\"\n"
                     total_mds += 1
             if node_info[2] == const.OST:
-                ost_count = "\nOSTCOUNT=7\n"
-                ost1_host = "ost_HOST=\"" + node_info[0] + "\"\n"
-                ost_dev1 = "OSTDEV1=\"" + const.OST_DISK1 + "\"\n"
-                test_conf.write(ost_count)
-                test_conf.write(ost1_host)
-                test_conf.write(ost_dev1)
+                lines += "\nOSTCOUNT=7\n"
+                lines += "ost_HOST=\"" + node_info[0] + "\"\n"
+                lines += "OSTDEV1=\"" + const.OST_DISK1 + "\"\n"
                 for num in range(2, 8):
                     ost_disk = None
                     if num == 2:
@@ -219,20 +208,19 @@ def multinode_conf_gen(node_map, cluster_dir):
                     # elif num == 8:
                     #     ost_disk = const.OST_DISK8
 
-                    ost_host = "ost" + str(num) + \
+                    lines += "ost" + str(num) + \
                         "_HOST=\"" + node_info[0] + "\"\n"
-                    ost_dev = "OSTDEV" + str(num) + "=\"" + ost_disk + "\"\n"
-                    test_conf.write(ost_host)
-                    test_conf.write(ost_dev)
+                    lines += "OSTDEV" + str(num) + "=\"" + ost_disk + "\"\n"
 
-        pdsh_cmd = "\nPDSH=\"/usr/bin/pdsh -S -Rssh -w\"\n"
-        test_conf.write(pdsh_cmd)
-
-        share_dir = "SHARED_DIRECTORY=${SHARED_DIRECTORY:-/opt/testing/shared}\n"
-        test_conf.write(share_dir)
-
-        ncli_sh_cmd = ". /usr/lib64/lustre/tests/cfg/ncli.sh\n"
-        test_conf.write(ncli_sh_cmd)
+        lines += "\nPDSH=\"/usr/bin/pdsh -S -Rssh -w\"\n"
+        lines += "SHARED_DIRECTORY=${SHARED_DIRECTORY:-/opt/testing/shared}\n"
+        lines += "LUSTRE_BRANCH=" + env['LUSTRE_BRANCH'] + "\n"
+        lines += "LOAD_MODULES_REMOTE=true\n"
+        lines += "MDSSIZE=0\n"
+        lines += "OSTSIZE=0\n"
+        lines += "MGSSIZE=0\n"
+        lines += ". $LUSTRE/tests/cfg/ncli.sh\n"
+        test_conf.write(lines)
 
 
 def node_init(node_map, cluster_dir, logger):
