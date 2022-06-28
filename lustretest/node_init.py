@@ -175,7 +175,7 @@ def multinode_conf_gen(node_map, cluster_dir):
                     lines += "RCLIENTS=\"" + total_clients + "\"\n"
             if node_info[2] == const.MDS:
                 if total_mds == 0:
-                    lines += "\nMDSCOUNT=1\n"
+                    lines += "\nMDSCOUNT=4\n"
                     lines += "mds_HOST=\"" + node_info[0] + "\"\n"
                     lines += "MDSDEV1=\"" + const.MDS_DISK1 + "\"\n"
                     lines += "mds3_HOST=\"" + node_info[0] + "\"\n"

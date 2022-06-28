@@ -1,6 +1,5 @@
 def maloolink="https://testing.whamcloud.com/test_sessions?jobs=custom&user_id=b8340029-197d-4ce0-a8f1-40f76d3bb8c7&builds=${BUILD_ID}#redirect"
 def buildlink="http://213.146.155.72:8080/job/project-lustre-build-release-master/lastBuild/"
-def testlogslink="https://uk.linaro.cloud/test-logs/log-${BUILD_ID}/"
 
 pipeline {
     agent {
@@ -12,9 +11,11 @@ pipeline {
         LUSTRE_BRANCH = "master"
     }
 
+    /*
     options {
         timeout(time: 15, unit: 'HOURS')
     }
+    */
 
     stages {
         stage('Cleanup workspace') {
@@ -75,8 +76,7 @@ pipeline {
             script {
                 def summary = manager.createSummary("package.gif")
                 summary.appendText("See <a href=${buildlink}>build job.</a>", false)
-                summary.appendText("<br>See <a href=${maloolink}>Maloo test results.</a>", false)
-                summary.appendText("<br>See <a href=${testlogslink}>test logs.</a>", false)
+                summary.appendText("<br>See <a href=${maloolink}>Maloo test results and logs.</a>", false)
             }
         }
     }
