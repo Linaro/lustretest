@@ -385,12 +385,18 @@ class Provision():
                "e2fsprogs-debuginfo e2fsprogs-static e2fsprogs-libs " \
                "e2fsprogs-libs-debuginfo libcom_err libcom_err-devel " \
                "libcom_err-debuginfo libss libss-devel libss-debuginfo -y"
-        cmd8 = "sudo dnf install lustre lustre-debuginfo lustre-debugsource " \
+        cmd8 = "sudo dnf remove -y lustre lustre-debuginfo lustre-debugsource " \
                "lustre-devel lustre-iokit lustre-osd-ldiskfs-mount " \
                "lustre-osd-ldiskfs-mount-debuginfo lustre-resource-agents " \
                "lustre-tests lustre-tests-debuginfo kmod-lustre " \
                "kmod-lustre-debuginfo kmod-lustre-osd-ldiskfs " \
-               "kmod-lustre-tests -y"
+               "kmod-lustre-tests"
+        cmd9 = "sudo dnf install -y lustre lustre-debuginfo lustre-debugsource " \
+               "lustre-devel lustre-iokit lustre-osd-ldiskfs-mount " \
+               "lustre-osd-ldiskfs-mount-debuginfo lustre-resource-agents " \
+               "lustre-tests lustre-tests-debuginfo kmod-lustre " \
+               "kmod-lustre-debuginfo kmod-lustre-osd-ldiskfs " \
+               "kmod-lustre-tests"
 
         cmd_result = {}
         if self.ssh_exec(client, cmd1):
@@ -432,6 +438,11 @@ class Provision():
             cmd_result["8"] = "Success"
         else:
             cmd_result["8"] = "Failed"
+
+        if self.ssh_exec(client, cmd9):
+            cmd_result["9"] = "Success"
+        else:
+            cmd_result["9"] = "Failed"
 
         for key, value in cmd_result.items():
             result = node + " Install Lustre: procedure: " + key + " " + value
