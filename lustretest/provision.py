@@ -370,83 +370,62 @@ class Provision():
         return False
 
     def install_lustre(self, node, client):
-        cmd1 = "sudo dnf config-manager --set-enabled ha"
-        cmd2 = "sudo dnf config-manager --set-enabled powertools; sudo dnf makecache"
-        cmd3 = "sudo dnf update libmodulemd -y"
-        cmd4 = "sudo dnf install epel-release -y"
-        cmd5 = "sudo dnf install pdsh pdsh-rcmd-ssh net-tools dbench fio linux-firmware -y"
-        cmd6 = "sudo dnf --disablerepo=* --enablerepo=lustre " \
-               "install kernel kernel-debuginfo " \
-               "kernel-debuginfo-common-aarch64 kernel-devel kernel-core " \
-               "kernel-headers kernel-modules kernel-modules-extra " \
-               "kernel-tools kernel-tools-libs kernel-tools-libs-devel " \
-               "kernel-tools-debuginfo -y"
-        cmd7 = "sudo dnf install e2fsprogs e2fsprogs-devel " \
-               "e2fsprogs-debuginfo e2fsprogs-static e2fsprogs-libs " \
-               "e2fsprogs-libs-debuginfo libcom_err libcom_err-devel " \
-               "libcom_err-debuginfo libss libss-devel libss-debuginfo -y"
-        cmd8 = "sudo dnf remove -y lustre lustre-debuginfo lustre-debugsource " \
-               "lustre-devel lustre-iokit lustre-osd-ldiskfs-mount " \
-               "lustre-osd-ldiskfs-mount-debuginfo lustre-resource-agents " \
-               "lustre-tests lustre-tests-debuginfo kmod-lustre " \
-               "kmod-lustre-debuginfo kmod-lustre-osd-ldiskfs " \
-               "kmod-lustre-tests"
-        cmd9 = "sudo dnf install -y lustre lustre-debuginfo lustre-debugsource " \
-               "lustre-devel lustre-iokit lustre-osd-ldiskfs-mount " \
-               "lustre-osd-ldiskfs-mount-debuginfo lustre-resource-agents " \
-               "lustre-tests lustre-tests-debuginfo kmod-lustre " \
-               "kmod-lustre-debuginfo kmod-lustre-osd-ldiskfs " \
-               "kmod-lustre-tests"
+        tool_pkgs = "pdsh pdsh-rcmd-ssh net-tools dbench fio linux-firmware"
+        kernel_pkgs = "kernel kernel-debuginfo " \
+            "kernel-debuginfo-common-aarch64 kernel-devel kernel-core " \
+            "kernel-headers kernel-modules kernel-modules-extra " \
+            "kernel-tools kernel-tools-libs kernel-tools-libs-devel " \
+            "kernel-tools-debuginfo"
+        e2fsprogs_pkgs = "e2fsprogs e2fsprogs-devel " \
+            "e2fsprogs-debuginfo e2fsprogs-static e2fsprogs-libs " \
+            "e2fsprogs-libs-debuginfo libcom_err libcom_err-devel " \
+            "libcom_err-debuginfo libss libss-devel libss-debuginfo"
+        lustre_pkgs = "lustre lustre-debuginfo lustre-debugsource " \
+            "lustre-devel lustre-iokit lustre-osd-ldiskfs-mount " \
+            "lustre-osd-ldiskfs-mount-debuginfo lustre-resource-agents " \
+            "lustre-tests lustre-tests-debuginfo kmod-lustre " \
+            "kmod-lustre-debuginfo kmod-lustre-osd-ldiskfs " \
+            "kmod-lustre-tests"
+        cmds = []
 
-        cmd_result = {}
-        if self.ssh_exec(client, cmd1):
-            cmd_result["1"] = "Success"
-        else:
-            cmd_result["1"] = "Failed"
+        cmd = "sudo dnf config-manager --set-enabled ha"
+        cmds.append(cmd)
 
-        if self.ssh_exec(client, cmd2):
-            cmd_result["2"] = "Success"
-        else:
-            cmd_result["2"] = "Failed"
+        cmd = "sudo dnf config-manager --set-enabled powertools"
+        cmds.append(cmd)
 
-        if self.ssh_exec(client, cmd3):
-            cmd_result["3"] = "Success"
-        else:
-            cmd_result["3"] = "Failed"
+        cmd = "sudo dnf update libmodulemd -y"
+        cmds.append(cmd)
 
-        if self.ssh_exec(client, cmd4):
-            cmd_result["4"] = "Success"
-        else:
-            cmd_result["4"] = "Failed"
+        cmd = "sudo dnf install epel-release -y; " \
+            "sudo dnf makecache --refresh"
+        cmds.append(cmd)
 
-        if self.ssh_exec(client, cmd5):
-            cmd_result["5"] = "Success"
-        else:
-            cmd_result["5"] = "Failed"
+        cmd = f"sudo dnf install -y {tool_pkgs}"
+        cmds.append(cmd)
 
-        if self.ssh_exec(client, cmd6):
-            cmd_result["6"] = "Success"
-        else:
-            cmd_result["6"] = "Failed"
+        cmd = "sudo dnf --disablerepo=* --enablerepo=lustre " \
+            f"install -y {kernel_pkgs}"
+        cmds.append(cmd)
 
-        if self.ssh_exec(client, cmd7):
-            cmd_result["7"] = "Success"
-        else:
-            cmd_result["7"] = "Failed"
+        cmd = f"sudo dnf install -y {e2fsprogs_pkgs}"
+        cmds.append(cmd)
 
-        if self.ssh_exec(client, cmd8):
-            cmd_result["8"] = "Success"
-        else:
-            cmd_result["8"] = "Failed"
+        cmd = f"sudo dnf remove -y --noautoremove {lustre_pkgs}"
+        cmds.append(cmd)
 
-        if self.ssh_exec(client, cmd9):
-            cmd_result["9"] = "Success"
-        else:
-            cmd_result["9"] = "Failed"
+        cmd = f"sudo dnf install -y {lustre_pkgs}"
+        cmds.append(cmd)
 
-        for key, value in cmd_result.items():
-            result = node + " Install Lustre: procedure: " + key + " " + value
-            self._info(result)
+        cmd = "sudo dnf autoremove -y"
+        cmds.append(cmd)
+
+        for cmd in cmds:
+            self._info(node + ":  " + cmd)
+            if self.ssh_exec(client, cmd):
+                self._info(node + ":  Success run cmd: " + cmd)
+            else:
+                sys.exit(node + ":  Failed run cmd: " + cmd)
 
     def node_operate(self):
         thread_list = []
