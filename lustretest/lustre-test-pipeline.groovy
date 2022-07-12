@@ -11,11 +11,9 @@ pipeline {
         LUSTRE_BRANCH = "master"
     }
 
-    /*
     options {
-        timeout(time: 15, unit: 'HOURS')
+        timeout(time: 24, unit: 'HOURS')
     }
-    */
 
     stages {
         stage('Cleanup workspace') {
