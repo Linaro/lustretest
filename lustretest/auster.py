@@ -70,7 +70,9 @@ class Auster():
             # print stdout and stderr in realtime
             _, stdout, _ = self.ssh_client.exec_command(cmd, get_pty=True,
                                                         timeout=timeout)
-            for line in iter(stdout.readline, ""):
+            stdout._set_mode('b')
+            for line in iter(stdout.readline, b""):
+                line = line.decode('utf-8', 'ignore')
                 self._info(line.strip())
             return stdout.channel.recv_exit_status()
         except TimeoutError:
