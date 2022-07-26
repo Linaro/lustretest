@@ -39,6 +39,7 @@ runcmd:
  - [ sudo, dnf, --disablerepo="*", --enablerepo="lustre", install, kernel, kernel-debuginfo, kernel-debuginfo-common-aarch64, kernel-devel, kernel-core, kernel-headers, kernel-modules, kernel-modules-extra, kernel-tools, kernel-tools-libs, kernel-tools-libs-devel, kernel-tools-debuginfo, -y ]
  - [ sudo, dnf, install, e2fsprogs, e2fsprogs-devel, e2fsprogs-debuginfo, e2fsprogs-static,  e2fsprogs-libs, e2fsprogs-libs-debuginfo, libcom_err, libcom_err-devel, libcom_err-debuginfo, libss, libss-devel, libss-debuginfo, -y ]
  - [ sudo, dnf, install, lustre, lustre-debuginfo, lustre-debugsource, lustre-devel, lustre-iokit, lustre-osd-ldiskfs-mount, lustre-osd-ldiskfs-mount-debuginfo, lustre-resource-agents, lustre-tests, lustre-tests-debuginfo, kmod-lustre, kmod-lustre-debuginfo, kmod-lustre-osd-ldiskfs, kmod-lustre-tests, -y ]
+ - [ sudo, dnf, install, bc, attr, -y ]
  - [ sudo, mkdir, -p, /tmp/test_logs/ ]
 
 mounts:
