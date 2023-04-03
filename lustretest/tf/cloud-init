@@ -21,6 +21,11 @@ yum_repos:
         name: e2fsprogs
         enabled: true
         gpgcheck: false
+    other_tools:
+	baseurl: https://uk.linaro.cloud/repo/devel/tools
+        name: other-tools
+        enabled: true
+        gpgcheck: false
 runcmd:
  - [ sudo, dnf, config-manager, --set-enabled, ha ]
  - [ sudo, dnf, config-manager, --set-enabled, powertools ]
@@ -40,6 +45,7 @@ runcmd:
  - [ sudo, dnf, install, e2fsprogs, e2fsprogs-devel, e2fsprogs-debuginfo, e2fsprogs-static,  e2fsprogs-libs, e2fsprogs-libs-debuginfo, libcom_err, libcom_err-devel, libcom_err-debuginfo, libss, libss-devel, libss-debuginfo, -y ]
  - [ sudo, dnf, install, lustre, lustre-debuginfo, lustre-debugsource, lustre-devel, lustre-iokit, lustre-osd-ldiskfs-mount, lustre-osd-ldiskfs-mount-debuginfo, lustre-resource-agents, lustre-tests, lustre-tests-debuginfo, kmod-lustre, kmod-lustre-debuginfo, kmod-lustre-osd-ldiskfs, kmod-lustre-tests, -y ]
  - [ sudo, dnf, install, bc, attr, -y ]
+ - [ sudo, dnf, install, gcc, iozone, -y ]
  - [ sudo, mkdir, -p, /tmp/test_logs/ ]
 
 mounts:
