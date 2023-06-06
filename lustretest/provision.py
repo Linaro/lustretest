@@ -356,11 +356,8 @@ class Provision():
         # check the file is there
         if path_exists(path_join(self.cluster_dir, const.NODE_INFO)):
             if self.node_check():
-                if not self.provision_new:
-                    self._info("Does not provision new instances, we "
-                               "need to reinstall Lustre from the repo")
-                    return self.node_operate()
-                return True
+                self._info("Install Lustre from the repo...")
+                return self.node_operate()
 
             self._error("The node_check is failed")
             return False
@@ -370,7 +367,8 @@ class Provision():
         return False
 
     def install_lustre(self, node, client):
-        tool_pkgs = "pdsh pdsh-rcmd-ssh net-tools dbench fio linux-firmware"
+        tool_pkgs = "pdsh pdsh-rcmd-ssh net-tools dbench fio linux-firmware
+            bc attr gcc iozone\"
         kernel_pkgs = "kernel kernel-debuginfo " \
             "kernel-debuginfo-common-aarch64 kernel-devel kernel-core " \
             "kernel-headers kernel-modules kernel-modules-extra " \
