@@ -39,7 +39,7 @@
 
     builders:
       - shell:
-          !include-raw-escape: scripts/build-release.sh
+          !include-raw-escape: scripts/build-lustre-release.sh
     publishers:
       - groovy-postbuild:
           script: |
