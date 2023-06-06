@@ -7,6 +7,8 @@ build_id=${BUILD_ID:-'001'}
 build_type=${BUILD_TYPE:-'release'}
 build_linux=${BUILD_LINUX:-'no'}
 extra_patches=${EXTRA_PATCHES}
+target=${TARGET:-'4.18-rhel8.8'}
+distro=${TARGET##*-}
 
 build_dir=${WORKSPACE}/build-$build_id
 kernel_src_dir="/home/jenkins/src/kernel"
@@ -66,7 +68,7 @@ echo "Build rpms..."
 cd $build_dir
 $build_dir/lustre-release/contrib/lbuild/lbuild \
 	--lustre=$build_dir/lustre-release/$code_base  \
-	--target=4.18-rhel8.5 --distro=rhel8.5 \
+	--target=$target --distro=$distro \
 	--ccache --extraversion=$build_id $build_opts
 
 echo "Re-generate rpm repo..."

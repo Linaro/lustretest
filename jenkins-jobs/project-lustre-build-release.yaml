@@ -3,16 +3,19 @@
     name: 'project-lustre-build-release'
     branch:
       - 'master'
+    distro:
+      - 'rhel8.8':
+          kernel_version: 4.18
     jobs:
-      - '{name}-{branch}'
+      - '{name}-{distro}-{branch}'
 
 - job-template:
     # default var values
     branch: 'master'
     build_linux: 'yes'
 
-    name: '{name}-{branch}'
-    node: 'build'
+    name: '{name}-{distro}-{branch}'
+    node: 'build-agent-{distro}'
 
     parameters:
       - string:
@@ -28,6 +31,11 @@
           default: '47563, 47812'
           description: "comma separated list of patch numeric ids. Which haven't been merged yet.
             E.g.: For change https://review.whamcloud.com/#/c/47004/, the patch number id is 47004"
+      - string:
+          name: 'TARGET'
+          default: '{kernel_version}-{distro}'
+          description: 'Target to build, e.g.: 4.18-rhel8.8, 5.10-oe2203sp1
+            See https://github.com/lustre/lustre-release/tree/master/lustre/kernel_patches/targets'
 
     builders:
       - shell:
