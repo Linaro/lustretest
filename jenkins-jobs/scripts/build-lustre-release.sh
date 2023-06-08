@@ -2,31 +2,80 @@
 
 set -xe
 
+kernel_version=${KERNEL_VERSION:-'4.18.0-477.10.1.el8_4k'}
+kernel_release=${kernel_version##*-}
+kernel_main_version=${kernel_version%%.0-*}
+workspace=${WORKSPACE:-"/home/jenkins/agent/build"}
 branch=${BRANCH:-'master'}
 build_id=${BUILD_ID:-'001'}
-build_type=${BUILD_TYPE:-'release'}
-build_linux=${BUILD_LINUX:-'no'}
 extra_patches=${EXTRA_PATCHES}
-target=${TARGET:-'4.18-rhel8.8'}
-distro=${TARGET##*-}
+distro=${DISTRO:-'rhel8.8'}
+target="${kernel_main_version}-${distro}"
+dist=${distro}
 
-build_dir=${WORKSPACE}/build-$build_id
-kernel_src_dir="/home/jenkins/src/kernel"
-linux_dir=$(find  $kernel_src_dir/reused/ -name .config|xargs dirname)
-remote_repo="git://git.whamcloud.com/fs/lustre-release.git"
-local_repo="/home/jenkins/git/lustre-release.git"
-# RPM repo for Lustre and e2fsprogs, Lustre repo also include kernel packages
-rpm_repo=/usr/share/nginx/html/repo/lustre
+if [[ $dist =~ rhel8 ]]; then
+	dist="el8"
+fi
+
+arch=$(arch)
+build_what="lustre"
+cache_dir="/home/jenkins/agent/cache"
+last_build_file="${cache_dir}/build/lastbuild-${build_what}"
+build_cache_dir=$(dirname $last_build_file)
+build_dir=${workspace}/build-${build_what}-$build_id
+kernel_src_dir="${cache_dir}/src/kernel"
+rpm_repo="/home/jenkins/agent/rpm-repo/${build_what}/${branch}/${dist}/${arch}"
+
+local_patch_dir="${cache_dir}/src/patches/${build_what}"
+git_remote_repo="git://git.whamcloud.com/fs/lustre-release.git"
+git_local_repo="${cache_dir}/git/lustre-release.git"
+kernel_rpm_repo="https://uk.linaro.cloud/repo/kernel/${dist}/${arch}/"
 
 echo "Cleanup workspace dir"
-rm -rf ${WORKSPACE}/*
+rm -rf ${workspace}/build-${build_what}-*
 
+
+# Install dependant pkgs for build
+sudo dnf install -y dnf-plugins-core
+pkgs=()
+if [[ $distro =~ rhel ]]; then
+	sudo dnf config-manager --set-enabled ha
+	sudo dnf config-manager --set-enabled powertools
+	sudo dnf config-manager --add-repo $kernel_rpm_repo
+	sudo dnf install -y epel-release
+	pkgs+=(distcc redhat-lsb-core)
+fi
+sudo dnf update -y
+pkgs+=(git ccache gcc make autoconf automake libtool rpm-build wget createrepo)
+pkgs+=(audit-libs-devel binutils-devel elfutils-devel kabi-dw ncurses-devel newt-devel numactl-devel \
+	openssl-devel pciutils-devel perl perl-devel python3-docutils xmlto xz-devel elfutils-libelf-devel \
+	libcap-devel libcap-ng-devel libyaml libyaml-devel kernel-rpm-macros libblkid-devel libtirpc-devel \
+	libnl3-devel mpich libmount-devel llvm-devel clang)
+pkgs+=(libtirpc-devel libblkid-devel libuuid-devel libudev-devel openssl-devel zlib-devel libaio-devel \
+	libattr-devel elfutils-libelf-devel python3 python3-devel python3-setuptools \
+	python3-cffi libffi-devel git ncompress libcurl-devel keyutils-libs-devel)
+pkgs+=(python3-packaging dkms bash-completion openmpi-devel texinfo e2fsprogs-devel bison yum-utils)
+sudo dnf install -y ${pkgs[@]}
+sudo ln -s $(which ccache) /usr/local/bin/gcc &&
+sudo ln -s $(which ccache) /usr/local/bin/g++ &&
+sudo ln -s $(which ccache) /usr/local/bin/cc &&
+sudo ln -s $(which ccache) /usr/local/bin/c++
+
+# Prepare
 echo "Generate the release tar bz..."
 mkdir -p $build_dir
 cd $build_dir
-git clone --branch $branch --reference $local_repo $remote_repo
+git clone --branch $branch --reference $git_local_repo $git_remote_repo
 cd lustre-release
 commit_id=$(git rev-parse --short HEAD)
+
+# Check if need to build
+sudo mkdir -p $build_cache_dir
+sudo chown jenkins:jenkins -R $build_cache_dir
+if [[ -f $last_build_file ]] && [[ "$commit_id" == "$(cat $last_build_file)" ]]; then
+	echo "The same build commit $commit_id skip build."
+	exit 0
+fi
 
 # Apply extra patches that haven't been merged into the branch.
 if [[ -n ${extra_patches} ]]; then
@@ -37,9 +86,14 @@ if [[ -n ${extra_patches} ]]; then
     done
 fi
 
-# (TODO): download config from github
-cp $kernel_src_dir/kernel-4.18.0-4.18-rhel8.5-aarch64.config-debug \
-		$build_dir/lustre-release/lustre/kernel_patches/kernel_configs/
+# Apply more extra patches from local cache dir which are only for build not for upstream
+mkdir -p tmp-patches
+cp -rv $local_patch_dir/*.patch tmp-patches
+cp -rv $local_patch_dir/${distro}/*.patch tmp-patches || true
+if [[ $distro =~ rhel8 ]]; then
+    sed -i "s/KRELEASE/${kernel_release}/" tmp-patches/*.patch
+fi
+git apply -v tmp-patches/*.patch
 
 # Generate the source tar file
 sh autogen.sh
@@ -48,42 +102,25 @@ make dist
 code_base=$(find . -name "lustre*tar.gz")
 code_base=$(basename $code_base)
 
-echo "Build options prepare..."
-build_opts=""
-if [[ "$build_type" == "debug" ]]; then
-	build_opts+="--enable-kernel-debug "
-	build_opts+="--disable-zfs "
-fi
+sudo dnf builddep -y lustre.spec
 
-if [[ "$build_linux" == "yes" ]]; then
-    # Build along with Linux kernel
-	build_opts+="--kerneldir=$kernel_src_dir "
-else
-    # Build with exist Linux kernel
-	build_opts+="--with-linux=$linux_dir "
-	build_opts+="--disable-zfs "
-fi
-
+# Build
 echo "Build rpms..."
+sudo chown jenkins:jenkins -R $kernel_src_dir
 cd $build_dir
 $build_dir/lustre-release/contrib/lbuild/lbuild \
 	--lustre=$build_dir/lustre-release/$code_base  \
 	--target=$target --distro=$distro \
-	--ccache --extraversion=$build_id $build_opts
+	--kerneldir=$kernel_src_dir --kernelrpm=$kernel_src_dir \
+	--ccache --disable-zfs --patchless-server
 
+# Release
 echo "Re-generate rpm repo..."
-if [[ "$build_linux" == "yes" ]]; then
-	# copy linux src for reused building.
-	rm -rf $kernel_src_dir/reused
-	mv -f $build_dir/reused $kernel_src_dir
-    # Remove all the Lustre packages and Linux packages
-    sudo rm -rfv $rpm_repo/*.rpm
-else
-    # Remove all the Lustre packages
-    sudo rm -rfv $rpm_repo/*.el8.aarch64.rpm
-fi
-
-sudo mv -f $build_dir/RPMS/aarch64/*.aarch64.rpm $rpm_repo
+sudo mkdir -p $rpm_repo
+sudo rm -rfv $rpm_repo/*.rpm
+sudo mv -fv $build_dir/RPMS/aarch64/*.aarch64.rpm $rpm_repo
+sudo mv -fv $build_dir/SRPMS/*src.rpm $rpm_repo
 sudo createrepo --update $rpm_repo
 
-echo "Finish build. branch: $branch, commit ID: $commit_id"
+echo $commit_id > $last_build_file
+echo "Finish build $build_id. branch: $branch, commit ID: $commit_id"
