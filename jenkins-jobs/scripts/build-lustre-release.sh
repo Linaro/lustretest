@@ -9,6 +9,7 @@ workspace=${WORKSPACE:-"/home/jenkins/agent/build"}
 branch=${BRANCH:-'master'}
 build_id=${BUILD_ID:-'001'}
 extra_patches=${EXTRA_PATCHES}
+git_remote_repo=${GIT_REPO:-'git://git.whamcloud.com/fs/lustre-release.git'}
 distro=${DISTRO:-'rhel8.8'}
 target="${kernel_main_version}-${distro}"
 dist=${distro}
@@ -20,19 +21,18 @@ fi
 arch=$(arch)
 build_what="lustre"
 cache_dir="/home/jenkins/agent/cache"
-last_build_file="${cache_dir}/build/lastbuild-${build_what}"
+last_build_file="${cache_dir}/lastbuild-${build_what}-${branch}"
 build_cache_dir=$(dirname $last_build_file)
-build_dir=${workspace}/build-${build_what}-$build_id
+build_dir=${workspace}/build-${build_what}-${branch}-$build_id
 kernel_src_dir="${cache_dir}/src/kernel"
 rpm_repo="/home/jenkins/agent/rpm-repo/${build_what}/${branch}/${dist}/${arch}"
 
 local_patch_dir="${cache_dir}/src/patches/${build_what}"
-git_remote_repo="git://git.whamcloud.com/fs/lustre-release.git"
 git_local_repo="${cache_dir}/git/lustre-release.git"
 kernel_rpm_repo="https://uk.linaro.cloud/repo/kernel/${dist}/${arch}/"
 
 echo "Cleanup workspace dir"
-rm -rf ${workspace}/build-${build_what}-*
+rm -rf ${workspace}/build-${build_what}-${branch}-*
 
 
 # Install dependant pkgs for build
@@ -87,9 +87,11 @@ if [[ -n ${extra_patches} ]]; then
 fi
 
 # Apply more extra patches from local cache dir which are only for build not for upstream
+# TODO: download such patches from git repo
 mkdir -p tmp-patches
 cp -rv $local_patch_dir/*.patch tmp-patches
 cp -rv $local_patch_dir/${distro}/*.patch tmp-patches || true
+cp -rv $local_patch_dir/${branch}/*.patch tmp-patches || true
 if [[ $distro =~ rhel8 ]]; then
     sed -i "s/KRELEASE/${kernel_release}/" tmp-patches/*.patch
 fi
@@ -109,7 +111,7 @@ echo "Build rpms..."
 sudo chown jenkins:jenkins -R $kernel_src_dir
 cd $build_dir
 $build_dir/lustre-release/contrib/lbuild/lbuild \
-	--lustre=$build_dir/lustre-release/$code_base  \
+	--lustre=$build_dir/lustre-release/$code_base \
 	--target=$target --distro=$distro \
 	--kerneldir=$kernel_src_dir --kernelrpm=$kernel_src_dir \
 	--ccache --disable-zfs --patchless-server

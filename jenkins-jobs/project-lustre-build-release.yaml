@@ -1,18 +1,26 @@
 ---
 - project:
     name: 'project-lustre-build-release'
-    branch:
-      - 'master'
-    distro:
-      - 'rhel8.8':
+    distro_branch:
+      - 'rhel8.8-master':
+          distro: 'rhel8.8'
+          branch: 'master'
+          kernel_version: '4.18.0-477.10.1.el8_4k'
+          extra_patches: '47563, 47812'
+      - 'rhel8.8-b2_15':
+          distro: 'rhel8.8'
+          branch: 'b2_15'
           kernel_version: '4.18.0-477.10.1.el8_4k'
     jobs:
-      - '{name}-{distro}-{branch}'
+      - '{name}-{distro_branch}'
 
 - job-template:
-    # default var values
+    name: '{name}-{distro_branch}'
 
-    name: '{name}-{distro}-{branch}'
+    # default var values
+    extra_patches: ''
+    git_repo: 'git://git.whamcloud.com/fs/lustre-release.git'
+
     node: 'build-agent-{distro}'
 
     parameters:
@@ -30,9 +38,15 @@
           description: 'branch to build'
       - string:
           name: 'EXTRA_PATCHES'
-          default: '47563, 47812'
-          description: "comma separated list of patch numeric ids. Which haven't been merged yet.
-            E.g.: For change https://review.whamcloud.com/#/c/47004/, the patch number id is 47004"
+          default: '{extra_patches}'
+          description: "comma separated list of patch numeric ids. Which
+            haven't been merged yet. E.g.: For change
+            https://review.whamcloud.com/#/c/47004/, the patch number id is
+            47004"
+      - string:
+          name: 'GIT_REPO'
+          default: '{git_repo}'
+          description: 'Src git repo.'
 
     builders:
       - shell:
