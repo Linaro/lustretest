@@ -21,7 +21,7 @@ fi
 arch=$(arch)
 build_what="lustre"
 cache_dir="/home/jenkins/agent/cache"
-last_build_file="${cache_dir}/lastbuild-${build_what}-${branch}"
+last_build_file="${cache_dir}/build/lastbuild-${build_what}-${branch}"
 build_cache_dir=$(dirname $last_build_file)
 build_dir=${workspace}/build-${build_what}-${branch}-$build_id
 kernel_src_dir="${cache_dir}/src/kernel"
