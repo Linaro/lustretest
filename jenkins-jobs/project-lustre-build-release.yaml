@@ -7,21 +7,25 @@
           branch: 'master'
           kernel_version: '4.18.0-477.10.1.el8_4k'
           extra_patches: '47563, 47812'
+          dist: 'el8'
       - 'rhel8.8-b2_15':
           distro: 'rhel8.8'
           branch: 'b2_15'
           kernel_version: '4.18.0-477.10.1.el8_4k'
+          dist: 'el8'
     jobs:
       - '{name}-{distro_branch}'
 
 - job-template:
     name: '{name}-{distro_branch}'
+    node: 'build-agent-{distro}'
 
     # default var values
+    build_what: 'lustre'
+    arch: 'aarch64'
+    dist: '{distro}'
     extra_patches: ''
     git_repo: 'git://git.whamcloud.com/fs/lustre-release.git'
-
-    node: 'build-agent-{distro}'
 
     parameters:
       - string:
@@ -55,4 +59,4 @@
       - groovy-postbuild:
           script: |
             def summary = manager.createSummary("package.gif")
-            summary.appendText("See <a href=https://uk.linaro.cloud/repo/lustre/>RPM release repo.</a>", false)
+            summary.appendText("See <a href=https://uk.linaro.cloud/repo/{build_what}/{branch}/{dist}/{arch}/>RPM release repo.</a>", false)
