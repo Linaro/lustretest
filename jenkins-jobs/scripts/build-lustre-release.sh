@@ -13,6 +13,7 @@ git_remote_repo=${GIT_REPO:-'git://git.whamcloud.com/fs/lustre-release.git'}
 distro=${DISTRO:-'rhel8.8'}
 target="${kernel_main_version}-${distro}"
 dist=${distro}
+e2fsprogs_branch=${E2FSPROGS_BRANCH:-'v1.46.6.wc1-lustre'}
 
 if [[ $dist =~ rhel8 ]]; then
 	dist="el8"
@@ -30,6 +31,7 @@ rpm_repo="/home/jenkins/agent/rpm-repo/${build_what}/${branch}/${dist}/${arch}"
 local_patch_dir="${cache_dir}/src/patches/${build_what}"
 git_local_repo="${cache_dir}/git/lustre-release.git"
 kernel_rpm_repo="https://uk.linaro.cloud/repo/kernel/${dist}/${arch}/"
+e2fsprogs_rpm_repo="https://uk.linaro.cloud/repo/e2fsprogs/${e2fsprogs_branch}/${dist}/${arch}"
 
 echo "Cleanup workspace dir"
 rm -rf ${workspace}/build-${build_what}-${branch}-*
@@ -45,6 +47,8 @@ if [[ $distro =~ rhel ]]; then
 	sudo dnf install -y epel-release
 	pkgs+=(distcc redhat-lsb-core)
 fi
+sudo dnf config-manager --add-repo $e2fsprogs_rpm_repo
+sudo dnf config-manager --save --setopt="uk.linaro.cloud_*.gpgcheck=0"
 sudo dnf update -y
 pkgs+=(git ccache gcc make autoconf automake libtool rpm-build wget createrepo)
 pkgs+=(audit-libs-devel binutils-devel elfutils-devel kabi-dw ncurses-devel newt-devel numactl-devel \
