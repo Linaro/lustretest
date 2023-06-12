@@ -1,0 +1,44 @@
+---
+- project:
+    name: 'project-e2fsprogs-build-release'
+    distro_branch:
+      - 'rhel8.8-v1.46':
+          distro: 'rhel8.8'
+          branch: 'v1.46.6.wc1-lustre'
+          dist: 'el8'
+    jobs:
+      - '{name}-{distro_branch}'
+
+- job-template:
+    name: '{name}-{distro_branch}'
+    node: 'build-agent-{distro}'
+
+    # default var values
+    build_what: 'e2fsprogs'
+    arch: 'aarch64'
+    dist: '{distro}'
+    git_repo: 'git://git.whamcloud.com/tools/e2fsprogs.git'
+
+
+    parameters:
+      - string:
+          name: 'DISTRO'
+          default: '{distro}'
+          description: 'Distro version to build, e.g.: rhel8.8'
+      - string:
+          name: 'BRANCH'
+          default: '{branch}'
+          description: 'branch to build'
+      - string:
+          name: 'GIT_REPO'
+          default: '{git_repo}'
+          description: 'Src git repo.'
+
+    builders:
+      - shell:
+          !include-raw-escape: scripts/build-e2fsprogs-release.sh
+    publishers:
+      - groovy-postbuild:
+          script: |
+            def summary = manager.createSummary("package.gif")
+            summary.appendText("See <a href=https://uk.linaro.cloud/repo/{build_what}/{branch}/{dist}/{arch}/>RPM release repo.</a>", false)
