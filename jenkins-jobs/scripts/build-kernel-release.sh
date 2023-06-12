@@ -19,7 +19,11 @@ last_build_file="${cache_dir}/build/lastbuild-${build_what}"
 build_cache_dir=$(dirname $last_build_file)
 build_dir=${workspace}/build-${build_what}-$build_id
 kernel_src_dir="${cache_dir}/src/kernel"
-rpm_repo="/home/jenkins/agent/rpm-repo/${build_what}/${dist}/${arch}"
+rpm_repo_dir="${build_what}/${dist}/${arch}"
+rpm_repo="/home/jenkins/agent/rpm-repo/${rpm_repo_dir}"
+rpm_repo_base_url="https://uk.linaro.cloud/repo"
+rpm_repo_url="${rpm_repo_base_url}/${rpm_repo_dir}"
+rpm_repo_file="${rpm_repo}/${build_what}.repo"
 
 srpm_download_url="https://repo.almalinux.org/vault/8/BaseOS/Source/Packages/"
 top_dir="${build_dir}/rpmbuild"
@@ -85,6 +89,14 @@ sudo rm -rfv $rpm_repo/*.rpm
 sudo mv -fv $top_dir/RPMS/aarch64/*.aarch64.rpm $rpm_repo
 sudo mv -fv $top_dir/SRPMS/*.src.rpm $rpm_repo
 sudo createrepo --update $rpm_repo
+
+cat <<EOF | sudo tee ${rpm_repo_file}
+[${build_what}]
+name=${build_what}
+baseurl=${rpm_repo_url}
+enabled=1
+gpgcheck=0
+EOF
 
 echo $kernel_version > $last_build_file
 echo "Finish build $build_id. original kernel_version: $kernel_version, new version: $kernel_version$append_vesion"

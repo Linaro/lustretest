@@ -20,9 +20,12 @@ cache_dir="/home/jenkins/agent/cache"
 last_build_file="${cache_dir}/build/lastbuild-${build_what}-${branch}"
 build_cache_dir=$(dirname $last_build_file)
 build_dir=${workspace}/build-${build_what}-${branch}-$build_id
-rpm_repo="/home/jenkins/agent/rpm-repo/${build_what}/${branch}/${dist}/${arch}"
+rpm_repo_dir="${build_what}/${branch}/${dist}/${arch}"
+rpm_repo="/home/jenkins/agent/rpm-repo/${rpm_repo_dir}"
+rpm_repo_base_url="https://uk.linaro.cloud/repo"
+rpm_repo_url="${rpm_repo_base_url}/${rpm_repo_dir}"
+rpm_repo_file="${rpm_repo}/${build_what}.repo"
 
-local_patch_dir="${cache_dir}/src/patches/${build_what}"
 git_local_repo="${cache_dir}/git/e2fsprogs.git"
 
 echo "Cleanup workspace dir"
@@ -77,6 +80,14 @@ sudo rm -rfv $rpm_repo/*.rpm
 sudo mv -fv $build_dir/RPMS/aarch64/*.aarch64.rpm $rpm_repo
 sudo mv -fv $build_dir/SRPMS/*src.rpm $rpm_repo
 sudo createrepo --update $rpm_repo
+
+cat <<EOF | sudo tee ${rpm_repo_file}
+[${build_what}]
+name=${build_what}
+baseurl=${rpm_repo_url}
+enabled=1
+gpgcheck=0
+EOF
 
 echo $commit_id > $last_build_file
 echo "Finish build $build_id. branch: $branch, commit ID: $commit_id"

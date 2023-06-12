@@ -25,12 +25,19 @@ build_dir=${workspace}/build-${build_what}-${branch}-$build_id
 kernel_src_dir="${cache_dir}/src/kernel"
 rpm_repo_dir="${build_what}/${branch}/${dist}/${arch}"
 rpm_repo="/home/jenkins/agent/rpm-repo/${rpm_repo_dir}"
+rpm_repo_base_url="https://uk.linaro.cloud/repo"
+rpm_repo_url="${rpm_repo_base_url}/${rpm_repo_dir}"
+rpm_repo_file="${rpm_repo}/${build_what}.repo"
+repoid_base="uk.linaro.cloud_repo"
 
 local_patch_dir="${cache_dir}/src/patches/${build_what}"
 git_local_repo="${cache_dir}/git/lustre-release.git"
-kernel_rpm_repo_url="https://uk.linaro.cloud/repo/kernel/${dist}/${arch}"
-e2fsprogs_rpm_repo_url="https://uk.linaro.cloud/repo/e2fsprogs/${e2fsprogs_branch}/${dist}/${arch}"
-lustre_rpm_repo_url="https://uk.linaro.cloud/repo/${rpm_repo_dir}"
+kernel_rpm_repo_dir="kernel/${dist}/${arch}"
+e2fsprogs_rpm_repo_dir="e2fsprogs/${e2fsprogs_branch}/${dist}/${arch}"
+kernel_rpm_repo_url="${rpm_repo_base_url}/${kernel_rpm_repo_dir}"
+e2fsprogs_rpm_repo_url="${rpm_repo_base_url}/${e2fsprogs_rpm_repo_dir}"
+lustre_repoid="${repoid_base}_${rpm_repo_dir//\//_}"
+kernel_repoid="${repoid_base}_${kernel_rpm_repo_dir//\//_}"
 release_num=""
 
 echo "Cleanup workspace dir"
@@ -48,7 +55,7 @@ if [[ $distro =~ rhel ]]; then
 	pkgs+=(distcc redhat-lsb-core)
 fi
 sudo dnf config-manager --add-repo $e2fsprogs_rpm_repo_url
-sudo dnf config-manager --add-repo $lustre_rpm_repo_url
+sudo dnf config-manager --add-repo $rpm_repo_url
 sudo dnf config-manager --save --setopt="uk.linaro.cloud_*.gpgcheck=0"
 sudo dnf update -y
 pkgs+=(git ccache gcc make autoconf automake libtool rpm-build wget createrepo)
@@ -98,14 +105,14 @@ cp -rv $local_patch_dir/*.patch tmp-patches
 cp -rv $local_patch_dir/${distro}/*.patch tmp-patches || true
 cp -rv $local_patch_dir/${branch}/*.patch tmp-patches || true
 if [[ $distro =~ rhel8 ]]; then
-	kernel_release=$(sudo dnf repoquery --repo uk.linaro.cloud_repo_kernel_${dist}_${arch} \
+	kernel_release=$(sudo dnf repoquery --repo ${kernel_repoid} \
 	--latest-limit=1  --qf '%{RELEASE}' kernel.${arch})
     sed -i "s/KRELEASE/${kernel_release}/" tmp-patches/*.patch
 fi
 git apply -v tmp-patches/*.patch
 
 # releae number +1
-version=$(sudo dnf repoquery --repo uk.linaro.cloud_repo_${rpm_repo_dir//\//_} \
+version=$(sudo dnf repoquery --repo ${lustre_repoid} \
 	--latest-limit=1  --qf '%{VERSION}-%{RELEASE}' lustre.${arch})
 version_num=${version%%-*}
 release_num=${version##*-}
@@ -145,6 +152,14 @@ sudo rm -rfv $rpm_repo/*.rpm
 sudo mv -fv $build_dir/RPMS/aarch64/*.aarch64.rpm $rpm_repo
 sudo mv -fv $build_dir/SRPMS/*src.rpm $rpm_repo
 sudo createrepo --update $rpm_repo
+
+cat <<EOF | sudo tee ${rpm_repo_file}
+[${build_what}]
+name=${build_what}
+baseurl=${rpm_repo_url}
+enabled=1
+gpgcheck=0
+EOF
 
 echo $commit_id > $last_build_file
 echo "Finish build $build_id. branch: $branch, commit ID: $commit_id"
