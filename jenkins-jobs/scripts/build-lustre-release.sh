@@ -2,20 +2,17 @@
 
 set -xe
 
-kernel_version=${KERNEL_VERSION:-'4.18.0-477.10.1.el8_4k'}
-kernel_release=${kernel_version##*-}
-kernel_main_version=${kernel_version%%.0-*}
 workspace=${WORKSPACE:-"/home/jenkins/agent/build"}
 branch=${BRANCH:-'master'}
 build_id=${BUILD_ID:-'001'}
 extra_patches=${EXTRA_PATCHES}
 git_remote_repo=${GIT_REPO:-'git://git.whamcloud.com/fs/lustre-release.git'}
 distro=${DISTRO:-'rhel8.8'}
-target="${kernel_main_version}-${distro}"
 dist=${distro}
 e2fsprogs_branch=${E2FSPROGS_BRANCH:-'v1.46.6.wc1-lustre'}
 
-if [[ $dist =~ rhel8 ]]; then
+if [[ $distro =~ rhel8 ]]; then
+	target="4.18-${distro}"
 	dist="el8"
 fi
 
@@ -101,6 +98,8 @@ cp -rv $local_patch_dir/*.patch tmp-patches
 cp -rv $local_patch_dir/${distro}/*.patch tmp-patches || true
 cp -rv $local_patch_dir/${branch}/*.patch tmp-patches || true
 if [[ $distro =~ rhel8 ]]; then
+	kernel_release=$(sudo dnf repoquery --repo uk.linaro.cloud_repo_kernel_${dist}_${arch} \
+	--latest-limit=1  --qf '%{RELEASE}' kernel.${arch})
     sed -i "s/KRELEASE/${kernel_release}/" tmp-patches/*.patch
 fi
 git apply -v tmp-patches/*.patch

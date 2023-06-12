@@ -5,13 +5,11 @@
       - 'rhel8.8-master':
           distro: 'rhel8.8'
           branch: 'master'
-          kernel_version: '4.18.0-477.10.1.el8_4k'
           extra_patches: '47563, 47812'
           dist: 'el8'
       - 'rhel8.8-b2_15':
           distro: 'rhel8.8'
           branch: 'b2_15'
-          kernel_version: '4.18.0-477.10.1.el8_4k'
           dist: 'el8'
     jobs:
       - '{name}-{distro_branch}'
@@ -33,10 +31,6 @@
           name: 'DISTRO'
           default: '{distro}'
           description: 'Distro version to build, e.g.: rhel8.8'
-      - string:
-          name: 'KERNEL_VERSION'
-          default: '{kernel_version}'
-          description: 'kernel version to build, e.g.: 4.18.0-477.10.1.el8_8'
       - string:
           name: 'BRANCH'
           default: '{branch}'
