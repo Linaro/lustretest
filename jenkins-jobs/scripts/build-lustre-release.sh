@@ -26,12 +26,15 @@ last_build_file="${cache_dir}/build/lastbuild-${build_what}-${branch}"
 build_cache_dir=$(dirname $last_build_file)
 build_dir=${workspace}/build-${build_what}-${branch}-$build_id
 kernel_src_dir="${cache_dir}/src/kernel"
-rpm_repo="/home/jenkins/agent/rpm-repo/${build_what}/${branch}/${dist}/${arch}"
+rpm_repo_dir="${build_what}/${branch}/${dist}/${arch}"
+rpm_repo="/home/jenkins/agent/rpm-repo/${rpm_repo_dir}"
 
 local_patch_dir="${cache_dir}/src/patches/${build_what}"
 git_local_repo="${cache_dir}/git/lustre-release.git"
-kernel_rpm_repo="https://uk.linaro.cloud/repo/kernel/${dist}/${arch}/"
-e2fsprogs_rpm_repo="https://uk.linaro.cloud/repo/e2fsprogs/${e2fsprogs_branch}/${dist}/${arch}"
+kernel_rpm_repo_url="https://uk.linaro.cloud/repo/kernel/${dist}/${arch}"
+e2fsprogs_rpm_repo_url="https://uk.linaro.cloud/repo/e2fsprogs/${e2fsprogs_branch}/${dist}/${arch}"
+lustre_rpm_repo_url="https://uk.linaro.cloud/repo/${rpm_repo_dir}"
+release_num=""
 
 echo "Cleanup workspace dir"
 rm -rf ${workspace}/build-${build_what}-${branch}-*
@@ -43,11 +46,12 @@ pkgs=()
 if [[ $distro =~ rhel ]]; then
 	sudo dnf config-manager --set-enabled ha
 	sudo dnf config-manager --set-enabled powertools
-	sudo dnf config-manager --add-repo $kernel_rpm_repo
+	sudo dnf config-manager --add-repo $kernel_rpm_repo_url
 	sudo dnf install -y epel-release
 	pkgs+=(distcc redhat-lsb-core)
 fi
-sudo dnf config-manager --add-repo $e2fsprogs_rpm_repo
+sudo dnf config-manager --add-repo $e2fsprogs_rpm_repo_url
+sudo dnf config-manager --add-repo $lustre_rpm_repo_url
 sudo dnf config-manager --save --setopt="uk.linaro.cloud_*.gpgcheck=0"
 sudo dnf update -y
 pkgs+=(git ccache gcc make autoconf automake libtool rpm-build wget createrepo)
@@ -100,6 +104,21 @@ if [[ $distro =~ rhel8 ]]; then
     sed -i "s/KRELEASE/${kernel_release}/" tmp-patches/*.patch
 fi
 git apply -v tmp-patches/*.patch
+
+# releae number +1
+version=$(sudo dnf repoquery --repo uk.linaro.cloud_repo_${rpm_repo_dir//\//_} \
+	--latest-limit=1  --qf '%{VERSION}-%{RELEASE}' lustre.${arch})
+version_num=${version%%-*}
+release_num=${version##*-}
+release_num=${release_num%%.*}
+cur_version_num=$(bash LUSTRE-VERSION-GEN)
+if [[ "$version_num" != "$cur_version_num" ]]; then
+	release_num="" # reset
+fi
+if [[ -n "${release_num}" ]];then
+	(( release_num++ ))
+	sed -i "s/Release: 1/Release: ${release_num}/" lustre.spec.in
+fi
 
 # Generate the source tar file
 sh autogen.sh
