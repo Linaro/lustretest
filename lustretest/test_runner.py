@@ -1,10 +1,11 @@
-from distutils.util import strtobool
 import logging
 from os import listdir
 from os.path import basename, isdir, join as path_join
 import sys
 
 from filelock import Timeout, FileLock
+import typer
+from typing_extensions import Annotated
 
 from auster import Auster
 import const
@@ -49,24 +50,52 @@ def get_cluster_dir(logger, provision_new, cluster_provision):
     return "", None
 
 
-def main():
+def main(
+    test_group_id:
+        Annotated[int,
+                  typer.Option(
+                      help="Test group to test, valid value are 1-4.")
+                  ] = None,
+    test_suites:
+        Annotated[str,
+                  typer.Option(
+                      help="Test suites to test.")
+                  ] = None,
+    provision_new:
+        Annotated[bool,
+                  typer.Option(
+                      help="Provision a new VM cluster to run test.")
+                  ] = False,
+    destroy_cluster:
+        Annotated[bool,
+                  typer.Option(
+                      help="Destroy the VM cluster after finish running the test.")
+                  ] = False
+):
+    """
+    Run a Lustre test group or test suites on a VM cluster.
+
+    At least a test groupt or test suites is given.
+
+    E.g.
+    test_runner.py --test-group-id 1
+
+    test_runner.py --test-suites sanity
+
+    test_runner.py --test-suites "sanity --only 1-100 sanityn --only 20-30"
+    """
+
     logging.basicConfig(format='%(message)s',
                         level=logging.INFO)
     logger = logging.getLogger(__name__)
     rc = const.TEST_SUCC
 
-    #
-    # parse args
-    #
-    args = sys.argv[1:]
-    if len(args) < 2:
-        sys.exit("no exact args specified")
-    test_group_id = int(args[0])
-    provision_new = bool(strtobool(args[1]))
-    if provision_new and len(args) == 3:
-        destroy_cluster = bool(strtobool(args[2]))
-    else:
-        destroy_cluster = False
+    if test_group_id is None and test_suites is None:
+        raise typer.Exit(
+            "At least a test groupt or test suites is given. Aborted!!!")
+
+    msg = f"options are: [{test_group_id}, {test_suites}, {provision_new}, {destroy_cluster}]"
+    logger.info(msg)
 
     #
     # get cluster_dir and lock
@@ -118,7 +147,8 @@ def main():
             if node_info[2] == const.CLIENT:
                 exec_node_ip = node_info[1]
                 break
-        auster_test = Auster(logger, test_group_id, exec_node_ip,
+        auster_test = Auster(logger, test_group_id,
+                             test_suites, exec_node_ip,
                              const.SHARED_NFS_DIR)
         rc = auster_test.run_test()
 
@@ -133,14 +163,5 @@ def main():
             cluster_provision.terraform_destroy()
 
 
-# Usage: test_runner.py <arg1> <arg2> [arg3]
-# arg1: <test_group_id> test group id wich is 1-6
-# arg2: <provision_new> true or flase
-# arg3: [destroy_cluster] true or false for provision new cluster
-
-# Args:                   test_group_id provision_new destroy_cluster
-# E.g 2 args:                    1              false
-# E.g 2 args:                    1              true
-# E.g 3 args if provision new:   1              true    true
 if __name__ == "__main__":
-    main()
+    typer.run(main)

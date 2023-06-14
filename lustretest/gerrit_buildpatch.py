@@ -41,10 +41,11 @@ import fnmatch
 import logging
 import json
 import os
-import requests
 import subprocess
 import time
 import urllib
+
+import requests
 
 
 def _getenv_list(key, default=None, sep=':'):

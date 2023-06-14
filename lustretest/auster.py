@@ -10,15 +10,19 @@ import myyamlsanitizer
 
 
 class Auster():
-    def __init__(self, logger, test_group_id, exec_node_ip, nfs_dir):
+    def __init__(self, logger, test_group_id, test_suites, exec_node_ip, nfs_dir):
         self.logger = logger
         self.ssh_user = const.DEFAULT_SSH_USER
         self.ssh_client = None
         self.ip = exec_node_ip
         self.test_info = {}
         self.test_info['env_vars'] = ""
-        self.test_info['group_id'] = test_group_id
-        self.test_info['suites'] = self.get_test_suites(test_group_id)
+        if test_group_id is None:
+            self.test_info['group_id'] = 0
+            self.test_info['suites'] = test_suites
+        else:
+            self.test_info['group_id'] = test_group_id
+            self.test_info['suites'] = self.get_test_suites(test_group_id)
         logdir = 'log-' + env['BUILD_ID'] + '/' + self.test_info['group_name']
         self.test_info['logdir'] = nfs_dir + '/' + logdir
         self.test_info['local_logdir'] = env['WORKSPACE'] + \
@@ -125,64 +129,64 @@ class Auster():
             except (ImportError, yaml.parser.ParserError, yaml.scanner.ScannerError):
                 self._error("yaml file is invalid, file:" + yamlfile)
                 raise
-            else:
-                for test in test_results.get('Tests', {}):
-                    failed_subtests = []
-                    skipped_subtests = []
-                    test_script = test.get('name', '')
-                    test_duration = test.get('duration', -1)
-                    duration_sum += test_duration
-                    test_status = test.get('status', '')
-                    subtests = test.get('SubTests', {})
+
+            for test in test_results.get('Tests', {}):
+                failed_subtests = []
+                skipped_subtests = []
+                test_script = test.get('name', '')
+                test_duration = test.get('duration', -1)
+                duration_sum += test_duration
+                test_status = test.get('status', '')
+                subtests = test.get('SubTests', {})
+                if subtests is not None:
+                    test_count = len(subtests)
+                else:
+                    test_count = 0
+                total_sum += test_count
+
+                if test_status not in ['PASS', 'SKIP']:
+                    fail = True
+                    msg = "Test fail"
                     if subtests is not None:
-                        test_count = len(subtests)
+                        for subtest in subtests:
+                            subtest_num = subtest['name'].replace(
+                                'test_', '')
+                            subtest_status = subtest.get('status', '')
+                            if subtest_status not in ['PASS', 'SKIP']:
+                                failed_subtests.append(subtest_num)
+                            if subtest_status == 'SKIP':
+                                skipped_subtests.append(subtest_num)
+                else:
+                    if test_status == 'SKIP':
+                        msg = "Test skip"
                     else:
-                        test_count = 0
-                    total_sum += test_count
+                        msg = "Test pass"
 
-                    if test_status not in ['PASS', 'SKIP']:
-                        fail = True
-                        msg = "Test fail"
-                        if subtests is not None:
-                            for subtest in subtests:
-                                subtest_num = subtest['name'].replace(
-                                    'test_', '')
-                                subtest_status = subtest.get('status', '')
-                                if subtest_status not in ['PASS', 'SKIP']:
-                                    failed_subtests.append(subtest_num)
-                                if subtest_status == 'SKIP':
-                                    skipped_subtests.append(subtest_num)
-                    else:
-                        if test_status == 'SKIP':
-                            msg = "Test skip"
-                        else:
-                            msg = "Test pass"
-
-                    msg = test_script + ': ' + msg + \
-                        ", total tests: " + str(test_count) + \
-                        ", take " + str(test_duration) + " s."
+                msg = test_script + ': ' + msg + \
+                    ", total tests: " + str(test_count) + \
+                    ", take " + str(test_duration) + " s."
+                self._info(msg)
+                test['total'] = test_count
+                if failed_subtests:
+                    failed_count = len(failed_subtests)
+                    fail_sum += failed_count
+                    percent = f"{failed_count/test_count:.1%}"
+                    test['failed_total'] = failed_count
+                    test['failed_percent'] = percent
+                    msg = "    Failed total: " + str(failed_count) + \
+                        "/" + str(test_count) + ", " + percent + \
+                        ". Failed tests: " + ",".join(failed_subtests)
                     self._info(msg)
-                    test['total'] = test_count
-                    if failed_subtests:
-                        failed_count = len(failed_subtests)
-                        fail_sum += failed_count
-                        percent = f"{failed_count/test_count:.1%}"
-                        test['failed_total'] = failed_count
-                        test['failed_percent'] = percent
-                        msg = "    Failed total: " + str(failed_count) + \
-                            "/" + str(test_count) + ", " + percent + \
-                            ". Failed tests: " + ",".join(failed_subtests)
-                        self._info(msg)
-                    if skipped_subtests:
-                        skipped_count = len(skipped_subtests)
-                        skip_sum += skipped_count
-                        percent = f"{skipped_count/test_count:.1%}"
-                        test['skipped_total'] = skipped_count
-                        test['skipped_percent'] = percent
-                        msg = "    Skipped total: " + str(skipped_count) + \
-                            "/" + str(test_count) + ", " + percent + \
-                            ". Skipped tests: " + ",".join(skipped_subtests)
-                        self._info(msg)
+                if skipped_subtests:
+                    skipped_count = len(skipped_subtests)
+                    skip_sum += skipped_count
+                    percent = f"{skipped_count/test_count:.1%}"
+                    test['skipped_total'] = skipped_count
+                    test['skipped_percent'] = percent
+                    msg = "    Skipped total: " + str(skipped_count) + \
+                        "/" + str(test_count) + ", " + percent + \
+                        ". Skipped tests: " + ",".join(skipped_subtests)
+                    self._info(msg)
 
         duration_sum = f'{duration_sum/60/60:.1f}'  # hours
         test_results['duration_hours'] = duration_sum

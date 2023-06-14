@@ -367,8 +367,8 @@ class Provision():
         return False
 
     def install_lustre(self, node, client):
-        tool_pkgs = "pdsh pdsh-rcmd-ssh net-tools dbench fio linux-firmware
-            bc attr gcc iozone\"
+        tool_pkgs = "pdsh pdsh-rcmd-ssh net-tools dbench fio " \
+            "linux-firmware bc attr gcc iozone"
         kernel_pkgs = "kernel kernel-debuginfo " \
             "kernel-debuginfo-common-aarch64 kernel-devel kernel-core " \
             "kernel-headers kernel-modules kernel-modules-extra " \
