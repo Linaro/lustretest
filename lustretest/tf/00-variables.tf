@@ -3,7 +3,7 @@
 #### GLANCE
 variable "image" {
   type    = string
-  default = "vm-centos-8-stream"
+  default = "vm-almalinux-8"
 }
 
 #### NEUTRON

@@ -366,14 +366,51 @@ class Provision():
                     path_join(self.cluster_dir, const.NODE_INFO))
         return False
 
+    def run_cmd(self, node, client, cmd):
+        self._info(node + ":  " + cmd)
+        if self.ssh_exec(client, cmd):
+            self._info(node + ":  Success run cmd: " + cmd)
+        else:
+            sys.exit(node + ":  Failed run cmd: " + cmd)
+
+    def run_cmds(self, node, client, cmds):
+        for cmd in cmds:
+            self.run_cmd(node, client, cmd)
+
+    def get_add_rpm_repo_cmds(self):
+        e2fsprogs_rpm_repo = "https://uk.linaro.cloud/repo/e2fsprogs/v1.46.6.wc1-lustre/el8/aarch64/e2fsprogs.repo"
+        lustre_rpm_repo = "https://uk.linaro.cloud/repo/lustre/master/el8/aarch64/lustre.repo"
+        iozone_rpm_repo = "https://uk.linaro.cloud/repo/iozone/el8/aarch64/iozone.repo"
+
+        cmds = []
+        cmd = f"sudo dnf config-manager --add-repo {e2fsprogs_rpm_repo}"
+        cmds.append(cmd)
+
+        cmd = f"sudo dnf config-manager --add-repo {lustre_rpm_repo}"
+        cmds.append(cmd)
+
+        cmd = f"sudo dnf config-manager --add-repo {iozone_rpm_repo}"
+        cmds.append(cmd)
+
+        return cmds
+
+    def install_kernel(self, node, client, version="4.18.0-477.10.1.el8_4k"):
+        rpm_repo = "https://uk.linaro.cloud/repo/kernel/el8/aarch64/kernel.repo"
+        pkgs = f"kernel-{version} kernel-debuginfo-{version} " \
+            f"kernel-debuginfo-common-aarch64-{version} kernel-devel-{version} kernel-core-{version} " \
+            f"kernel-headers-{version} kernel-modules kernel-modules-extra-{version} " \
+            f"kernel-tools-{version} kernel-tools-libs kernel-tools-libs-devel-{version} " \
+            f"kernel-tools-debuginfo-{version}"
+
+        cmd = f"sudo dnf config-manager --add-repo {rpm_repo}"
+        self.run_cmd(node, client, cmd)
+
+        cmd = f"sudo dnf install -y {pkgs}"
+        self.run_cmd(node, client, cmd)
+
     def install_lustre(self, node, client):
         tool_pkgs = "pdsh pdsh-rcmd-ssh net-tools dbench fio " \
             "linux-firmware bc attr gcc iozone"
-        kernel_pkgs = "kernel kernel-debuginfo " \
-            "kernel-debuginfo-common-aarch64 kernel-devel kernel-core " \
-            "kernel-headers kernel-modules kernel-modules-extra " \
-            "kernel-tools kernel-tools-libs kernel-tools-libs-devel " \
-            "kernel-tools-debuginfo"
         e2fsprogs_pkgs = "e2fsprogs e2fsprogs-devel " \
             "e2fsprogs-debuginfo e2fsprogs-static e2fsprogs-libs " \
             "e2fsprogs-libs-debuginfo libcom_err libcom_err-devel " \
@@ -384,46 +421,46 @@ class Provision():
             "lustre-tests lustre-tests-debuginfo kmod-lustre " \
             "kmod-lustre-debuginfo kmod-lustre-osd-ldiskfs " \
             "kmod-lustre-tests"
-        cmds = []
 
+        cmd = "sudo dnf install -y dnf-plugins-core"
+        self.run_cmd(node, client, cmd)
+
+        cmds = self.get_add_rpm_repo_cmds()
+        self.run_cmds(node, client, cmds)
+
+        cmds = []
         cmd = "sudo dnf config-manager --set-enabled ha"
         cmds.append(cmd)
-
         cmd = "sudo dnf config-manager --set-enabled powertools"
         cmds.append(cmd)
-
         cmd = "sudo dnf update libmodulemd -y"
         cmds.append(cmd)
-
         cmd = "sudo dnf install epel-release -y; " \
             "sudo dnf makecache --refresh"
         cmds.append(cmd)
+        self.run_cmds(node, client, cmds)
 
+        self.install_kernel(node, client)
+
+        cmds = []
         cmd = f"sudo dnf install -y {tool_pkgs}"
         cmds.append(cmd)
-
-        cmd = "sudo dnf --disablerepo=* --enablerepo=lustre " \
-            f"install -y {kernel_pkgs}"
+        cmd = f"sudo dnf update -y {tool_pkgs}"
         cmds.append(cmd)
 
         cmd = f"sudo dnf install -y {e2fsprogs_pkgs}"
         cmds.append(cmd)
-
-        cmd = f"sudo dnf remove -y --noautoremove {lustre_pkgs}"
+        cmd = f"sudo dnf update -y {e2fsprogs_pkgs}"
         cmds.append(cmd)
 
         cmd = f"sudo dnf install -y {lustre_pkgs}"
         cmds.append(cmd)
+        cmd = f"sudo dnf update -y {lustre_pkgs}"
+        cmds.append(cmd)
 
         cmd = "sudo dnf autoremove -y"
         cmds.append(cmd)
-
-        for cmd in cmds:
-            self._info(node + ":  " + cmd)
-            if self.ssh_exec(client, cmd):
-                self._info(node + ":  Success run cmd: " + cmd)
-            else:
-                sys.exit(node + ":  Failed run cmd: " + cmd)
+        self.run_cmds(node, client, cmds)
 
     def node_operate(self):
         thread_list = []
