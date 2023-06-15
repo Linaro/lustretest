@@ -23,4 +23,4 @@ runcmd:
  - [ sudo, mkdir, -p, /tmp/test_logs/ ]
 
 mounts:
- - [ "192.168.1.68:/home/centos/workspace/nfs/test_logs", "/tmp/test_logs/", "nfs", "defaults", "0", "0" ]
+ - [ "192.168.1.206:/home/centos/workspace/nfs/test_logs", "/tmp/test_logs/", "nfs", "defaults", "0", "0" ]
