@@ -410,7 +410,7 @@ class Provision():
 
     def install_lustre(self, node, client):
         tool_pkgs = "pdsh pdsh-rcmd-ssh net-tools dbench fio " \
-            "linux-firmware bc attr gcc iozone"
+            "linux-firmware bc attr gcc iozone rsync"
         e2fsprogs_pkgs = "e2fsprogs e2fsprogs-devel " \
             "e2fsprogs-debuginfo e2fsprogs-static e2fsprogs-libs " \
             "e2fsprogs-libs-debuginfo libcom_err libcom_err-devel " \
