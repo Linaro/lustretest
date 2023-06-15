@@ -398,8 +398,8 @@ class Provision():
         rpm_repo = "https://uk.linaro.cloud/repo/kernel/el8/aarch64/kernel.repo"
         pkgs = f"kernel-{version} kernel-debuginfo-{version} " \
             f"kernel-debuginfo-common-aarch64-{version} kernel-devel-{version} kernel-core-{version} " \
-            f"kernel-headers-{version} kernel-modules kernel-modules-extra-{version} " \
-            f"kernel-tools-{version} kernel-tools-libs kernel-tools-libs-devel-{version} " \
+            f"kernel-headers-{version} kernel-modules-{version} kernel-modules-extra-{version} " \
+            f"kernel-tools-{version} kernel-tools-libs-{version} kernel-tools-libs-devel-{version} " \
             f"kernel-tools-debuginfo-{version}"
 
         cmd = f"sudo dnf config-manager --add-repo {rpm_repo}"

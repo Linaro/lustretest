@@ -17,12 +17,14 @@ class Auster():
         self.ip = exec_node_ip
         self.test_info = {}
         self.test_info['env_vars'] = ""
-        if test_group_id is None:
-            self.test_info['group_id'] = 0
-            self.test_info['suites'] = test_suites
-        else:
+        if test_group_id is not None:
             self.test_info['group_id'] = test_group_id
             self.test_info['suites'] = self.get_test_suites(test_group_id)
+        else:
+            self.test_info['group_id'] = 0
+            self.test_info['suites'] = test_suites
+            self.test_info['group_name'] = 'custom'
+            self.test_info['timeout'] = -1
         logdir = 'log-' + env['BUILD_ID'] + '/' + self.test_info['group_name']
         self.test_info['logdir'] = nfs_dir + '/' + logdir
         self.test_info['local_logdir'] = env['WORKSPACE'] + \
