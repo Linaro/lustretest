@@ -161,14 +161,19 @@ class Provision():
     def terraform_apply(self):
         os.chdir(self.cluster_dir)
         if self.terraform_init():
-            with subprocess.Popen([const.TERRAFORM_BIN, 'apply', '-auto-approve'],
-                                  stdout=subprocess.PIPE,
-                                  stderr=subprocess.STDOUT) as p:
-                self.realtime_output(p)
-                if p.returncode == 0:
-                    self._info('Terraform apply success')
-                    return True
-                self._error('Terraform apply failed')
+            n = 0  # muliple tries
+            while n < 5:
+                with subprocess.Popen([const.TERRAFORM_BIN, 'apply', '-auto-approve'],
+                                      stdout=subprocess.PIPE,
+                                      stderr=subprocess.STDOUT) as p:
+                    self.realtime_output(p)
+                    if p.returncode == 0:
+                        self._info('Terraform apply success')
+                        return True
+                    n += 1
+            else:
+                msg = f"Terraform apply failed, try {n} times"
+                self._error(msg)
                 return False
         else:
             return False
