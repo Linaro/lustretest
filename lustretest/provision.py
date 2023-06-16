@@ -167,10 +167,11 @@ class Provision():
                                       stdout=subprocess.PIPE,
                                       stderr=subprocess.STDOUT) as p:
                     self.realtime_output(p)
-                    if p.returncode == 0:
-                        self._info('Terraform apply success')
-                        return True
                     n += 1
+                    if p.returncode == 0:
+                        msg = f"Terraform apply success, try {n} times"
+                        self._info(msg)
+                        return True
             else:
                 msg = f"Terraform apply failed, try {n} times"
                 self._error(msg)
