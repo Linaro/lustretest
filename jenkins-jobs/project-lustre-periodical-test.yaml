@@ -1,10 +1,22 @@
 ---
-- job:
-    name: project-lustre-periodical-test
+- project:
+    name: 'project-lustre-periodical-test'
+    distro_branch:
+      - 'rhel8.8-master':
+          distro: 'rhel8.8'
+          branch: 'master'
+          trigger_time: |
+            TZ=Asia/Shanghai
+            0 18 * * *
+    jobs:
+      - '{name}-{distro_branch}'
+
+- job-template:
+    name: '{name}-{distro_branch}'
     project-type: pipeline
     triggers:
       - timed: |
-          TZ=Asia/Shanghai
-          0 18 * * *
+          {trigger_time}
+
     dsl:
       !include-raw: scripts/lustre-test-pipeline.groovy
