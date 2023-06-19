@@ -5,19 +5,14 @@ set -xe
 version=${VERSION:-'3.494-1.fc38'}
 workspace=${WORKSPACE:-"/home/jenkins/agent/build"}
 build_id=${BUILD_ID:-'001'}
-distro=${DISTRO:-'rhel8.8'}
-dist=${distro}
-
-if [[ $dist =~ rhel8 ]]; then
-	dist="el8"
-fi
+dist=${DIST:-'el8'}
 
 arch=$(arch)
 build_what="iozone"
 cache_dir="/home/jenkins/agent/cache"
-last_build_file="${cache_dir}/build/lastbuild-${build_what}"
+last_build_file="${cache_dir}/build/lastbuild-${build_what}-${dist}"
 build_cache_dir=$(dirname $last_build_file)
-build_dir=${workspace}/build-${build_what}-$build_id
+build_dir=${workspace}/build-${build_what}-${dist}-$build_id
 srpm_cache_dir="${cache_dir}/src/${build_what}"
 rpm_repo_dir="${build_what}/${dist}/${arch}"
 rpm_repo="/home/jenkins/agent/rpm-repo/${rpm_repo_dir}"
@@ -30,6 +25,12 @@ srpm="${build_what}-${version}.src.rpm"
 top_dir="${build_dir}/rpmbuild"
 spec_file="${build_what}.spec"
 
+# check dist rpm macro existence
+dist_macro=$(rpm -E %{?dist})
+if [[ -z "$dist_macro" ]]; then
+	echo "%dist .$dist" >> ~/.rpmmacros
+fi
+
 # Check if need to build
 sudo mkdir -p $build_cache_dir
 sudo chown jenkins:jenkins -R $build_cache_dir
@@ -41,12 +42,12 @@ fi
 
 
 echo "Cleanup workspace dir"
-rm -rf ${workspace}/build-${build_what}-*
+rm -rf ${workspace}/build-${build_what}-${dist}-*
 
 # Install dependant pkgs for build
 sudo dnf install -y dnf-plugins-core
 pkgs=()
-if [[ $distro =~ rhel ]]; then
+if [[ $dist =~ el8 ]]; then
 	sudo dnf config-manager --set-enabled ha
 	sudo dnf config-manager --set-enabled powertools
 	sudo dnf install -y epel-release

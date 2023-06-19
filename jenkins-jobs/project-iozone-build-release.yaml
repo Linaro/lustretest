@@ -1,27 +1,26 @@
 ---
 - project:
-    build_what: 'iozone'
     name: 'project-build-release'
-    distro:
-      - 'rhel8.8':
-          version: '3.494-1.fc38'
-          dist: 'el8'
+    dist:
+      - 'el8'
+      - 'oe2203sp1'
     jobs:
-      - '{name}-{build_what}-{distro}'
+      - '{name}-{build_what}-{dist}'
 
 - job-template:
-    name: '{name}-{build_what}-{distro}'
-    node: 'build-agent-{distro}'
+    name: '{name}-{build_what}-{dist}'
+    node: 'build-agent-{dist}'
 
     # default var values
+    build_what: 'iozone'
+    version: '3.494-1.fc38'
     arch: 'aarch64'
-    dist: '{distro}'
 
     parameters:
       - string:
-          name: 'DISTRO'
-          default: '{distro}'
-          description: 'Distro version to build, e.g.: rhel8.8'
+          name: 'DIST'
+          default: '{dist}'
+          description: 'Distro version to build, e.g.: el8, oe2203sp1'
       - string:
           name: 'VERSION'
           default: '{version}'
