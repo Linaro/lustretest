@@ -5,12 +5,7 @@ set -xe
 kernel_version=${KERNEL_VERSION:-'4.18.0-477.10.1.el8_8'}
 workspace=${WORKSPACE:-"/home/jenkins/agent/build"}
 build_id=${BUILD_ID:-'001'}
-distro=${DISTRO:-'rhel8.8'}
-dist=${distro}
-
-if [[ $dist =~ rhel8 ]]; then
-	dist="el8"
-fi
+dist=${DIST:-'el8'}
 
 arch=$(arch)
 build_what="kernel"
@@ -45,7 +40,7 @@ rm -rf ${workspace}/build-${build_what}-*
 # Install dependant pkgs for build
 sudo dnf install -y dnf-plugins-core
 pkgs=()
-if [[ $distro =~ rhel ]]; then
+if [[ $dist =~ el8 ]]; then
 	sudo dnf config-manager --set-enabled ha
 	sudo dnf config-manager --set-enabled powertools
 	sudo dnf install -y epel-release
@@ -69,7 +64,7 @@ rpm -ivh --define "_topdir $top_dir" ${kernel_src_dir}/$srpm
 cd $top_dir
 sudo dnf builddep -y SPECS/kernel.spec
 # (TODO): download config from github
-if [[ $distro =~ rhel ]]; then
+if [[ $dist =~ el8 ]]; then
     cp -vf $kernel_src_dir/kernel-4.18-rhel8.8-aarch64-4k.config \
   	$top_dir/SOURCES/kernel-aarch64.config
 fi

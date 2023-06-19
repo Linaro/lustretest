@@ -8,22 +8,25 @@ build_id=${BUILD_ID:-'001'}
 extra_patches=${EXTRA_PATCHES}
 git_remote_repo=${GIT_REPO:-'git://git.whamcloud.com/fs/lustre-release.git'}
 distro=${DISTRO:-'rhel8.8'}
-dist=${distro}
 e2fsprogs_branch=${E2FSPROGS_BRANCH:-'v1.46.6.wc1-lustre'}
 
 if [[ $distro =~ rhel8 ]]; then
 	target="4.18-${distro}"
 	dist="el8"
+elif [[ $distro =~ oe2203 ]]; then
+	target="5.10-${distro}"
+	dist=${distro}
 fi
 
 arch=$(arch)
 build_what="lustre"
 cache_dir="/home/jenkins/agent/cache"
-last_build_file="${cache_dir}/build/lastbuild-${build_what}-${branch}"
-build_cache_dir=$(dirname $last_build_file)
-build_dir=${workspace}/build-${build_what}-${branch}-$build_id
-kernel_src_dir="${cache_dir}/src/kernel"
+subname="${build_what}-${branch}-${dist}"
 rpm_repo_dir="${build_what}/${branch}/${dist}/${arch}"
+last_build_file="${cache_dir}/build/lastbuild-${subname}"
+build_cache_dir=$(dirname $last_build_file)
+build_dir="${workspace}/build-${subname}-${build_id}"
+kernel_src_dir="${cache_dir}/src/kernel"
 rpm_repo="/home/jenkins/agent/rpm-repo/${rpm_repo_dir}"
 rpm_repo_base_url="https://uk.linaro.cloud/repo"
 rpm_repo_url="${rpm_repo_base_url}/${rpm_repo_dir}"
@@ -40,8 +43,14 @@ lustre_repoid="${repoid_base}_${rpm_repo_dir//\//_}"
 kernel_repoid="${repoid_base}_${kernel_rpm_repo_dir//\//_}"
 release_num=""
 
+# check dist rpm macro existence
+dist_macro=$(rpm -E %{?dist})
+if [[ -z "$dist_macro" ]]; then
+	echo "%dist .$dist" >> ~/.rpmmacros
+fi
+
 echo "Cleanup workspace dir"
-rm -rf ${workspace}/build-${build_what}-${branch}-*
+rm -rf ${workspace}/build-${subname}-*
 
 
 # Install dependant pkgs for build
@@ -52,12 +61,14 @@ if [[ $distro =~ rhel ]]; then
 	sudo dnf config-manager --set-enabled powertools
 	sudo dnf config-manager --add-repo $kernel_rpm_repo_url
 	sudo dnf install -y epel-release
-	pkgs+=(distcc redhat-lsb-core)
+	pkgs+=(distcc redhat-lsb-core yum-utils)
+	sudo dnf update -y
+elif [[ $distro =~ oe ]]; then
+	sudo dnf install -y openeuler-lsb
 fi
 sudo dnf config-manager --add-repo $e2fsprogs_rpm_repo_url
 sudo dnf config-manager --add-repo $rpm_repo_url
 sudo dnf config-manager --save --setopt="uk.linaro.cloud_*.gpgcheck=0"
-sudo dnf update -y
 pkgs+=(git ccache gcc make autoconf automake libtool rpm-build wget createrepo)
 pkgs+=(audit-libs-devel binutils-devel elfutils-devel kabi-dw ncurses-devel newt-devel numactl-devel \
 	openssl-devel pciutils-devel perl perl-devel python3-docutils xmlto xz-devel elfutils-libelf-devel \
@@ -66,7 +77,7 @@ pkgs+=(audit-libs-devel binutils-devel elfutils-devel kabi-dw ncurses-devel newt
 pkgs+=(libtirpc-devel libblkid-devel libuuid-devel libudev-devel openssl-devel zlib-devel libaio-devel \
 	libattr-devel elfutils-libelf-devel python3 python3-devel python3-setuptools \
 	python3-cffi libffi-devel git ncompress libcurl-devel keyutils-libs-devel)
-pkgs+=(python3-packaging dkms bash-completion openmpi-devel texinfo e2fsprogs-devel bison yum-utils)
+pkgs+=(python3-packaging dkms bash-completion openmpi-devel texinfo e2fsprogs-devel bison)
 sudo dnf install -y ${pkgs[@]}
 sudo ln -s $(which ccache) /usr/local/bin/gcc &&
 sudo ln -s $(which ccache) /usr/local/bin/g++ &&
@@ -104,16 +115,18 @@ mkdir -p tmp-patches
 cp -rv $local_patch_dir/*.patch tmp-patches
 cp -rv $local_patch_dir/${distro}/*.patch tmp-patches || true
 cp -rv $local_patch_dir/${branch}/*.patch tmp-patches || true
+repo_option=""
 if [[ $distro =~ rhel8 ]]; then
-	kernel_release=$(sudo dnf repoquery --repo ${kernel_repoid} \
-	--latest-limit=1  --qf '%{RELEASE}' kernel.${arch})
-    sed -i "s/KRELEASE/${kernel_release}/" tmp-patches/*.patch
+	repo_option="--repo ${kernel_repoid}"
 fi
+kernel_release=$(sudo dnf repoquery  ${repo_option} \
+	--latest-limit=1  --qf '%{RELEASE}' kernel.${arch})
+sed -i "s/KRELEASE/${kernel_release}/" tmp-patches/*.patch
 git apply -v tmp-patches/*.patch
 
 # releae number +1
 version=$(sudo dnf repoquery --repo ${lustre_repoid} \
-	--latest-limit=1  --qf '%{VERSION}-%{RELEASE}' lustre.${arch})
+	--latest-limit=1  --qf '%{VERSION}-%{RELEASE}' lustre.${arch}) || true
 version_num=${version%%-*}
 release_num=${version##*-}
 release_num=${release_num%%.*}

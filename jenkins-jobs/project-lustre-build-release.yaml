@@ -1,22 +1,29 @@
 ---
 - project:
-    name: 'project-lustre-build-release'
-    distro_branch:
-      - 'rhel8.8-master':
+    name: 'project-build-release'
+    branch_distro:
+      - 'master-rhel8':
           distro: 'rhel8.8'
           branch: 'master'
-          extra_patches: '47563, 47812'
           dist: 'el8'
-      - 'rhel8.8-b2_15':
+      - 'master-oe2203':
+          distro: 'oe2203sp1'
+          branch: 'master'
+          extra_patches: '50978'
+      - 'b2_15-rhel8':
           distro: 'rhel8.8'
           branch: 'b2_15'
           dist: 'el8'
+      - 'b2_15-oe2203':
+          distro: 'oe2203sp1'
+          git_repo: 'https://github.com/xin3liang/lustre-release.git'
+          branch: 'b2_15-openeuler-22.03'
     jobs:
-      - '{name}-{distro_branch}'
+      - '{name}-{build_what}-{branch_distro}'
 
 - job-template:
-    name: '{name}-{distro_branch}'
-    node: 'build-agent-{distro}'
+    name: '{name}-{build_what}-{branch_distro}'
+    node: 'build-agent-{dist}'
 
     # default var values
     build_what: 'lustre'
@@ -53,7 +60,7 @@
 
     builders:
       - shell:
-          !include-raw-escape: scripts/build-lustre-release.sh
+          !include-raw-escape: scripts/build-{build_what}-release.sh
     publishers:
       - groovy-postbuild:
           script: |

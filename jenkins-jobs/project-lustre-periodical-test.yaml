@@ -1,18 +1,18 @@
 ---
 - project:
-    name: 'project-lustre-periodical-test'
-    distro_branch:
-      - 'rhel8.8-master':
+    name: 'project-periodical-test-lustre'
+    branch_distro:
+      - 'master-rhel8':
           distro: 'rhel8.8'
           branch: 'master'
           trigger_time: |
             TZ=Asia/Shanghai
             0 18 * * *
     jobs:
-      - '{name}-{distro_branch}'
+      - '{name}-{branch_distro}'
 
 - job-template:
-    name: '{name}-{distro_branch}'
+    name: '{name}-{branch_distro}'
     project-type: pipeline
     triggers:
       - timed: |
