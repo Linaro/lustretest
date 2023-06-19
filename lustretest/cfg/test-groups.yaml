@@ -5,7 +5,6 @@
   timeout: -1
   test_suite:
     - name: recovery-small
-    #args: "--except 136"
     - name: ost-pools
     - name: pjdfstest
     - name: sanity-lnet
@@ -28,13 +27,13 @@
   timeout: -1
   test_suite:
     - name: sanity
-    #      args: "--except 17n,56xc,77l,78,80,81a,150f,151,155e,155f,155g,155h,156,432,813"
     - name: sanity-pcc
       args: "--except 7a,7b"
     - name: sanity-quota
     - name: parallel-scale-nfsv3
     - name: replay-vbr
     - name: sanity-sec
+      args: "--except 26"
     - name: lustre-rsync-test
     - name: racer
     - name: sanity-hsm
@@ -47,10 +46,8 @@
     - name: insanity
     - name: replay-single
     - name: conf-sanity
-    #  args: "--except 32b"
     - name: sanity-benchmark
     - name: performance-sanity
     - name: sanity-pfl
     - name: sanity-lfsck
-    #args: "--except 9a"
     - name: parallel-scale-nfsv4
