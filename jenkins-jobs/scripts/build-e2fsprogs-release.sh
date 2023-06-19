@@ -5,22 +5,17 @@ set -xe
 workspace=${WORKSPACE:-"/home/jenkins/agent/build"}
 branch=${BRANCH:-'v1.46.6.wc1-lustre'}
 build_id=${BUILD_ID:-'001'}
-extra_patches=${EXTRA_PATCHES}
 git_remote_repo=${GIT_REPO:-'git://git.whamcloud.com/tools/e2fsprogs.git'}
-distro=${DISTRO:-'rhel8.8'}
-dist=${distro}
-
-if [[ $dist =~ rhel8 ]]; then
-	dist="el8"
-fi
+dist=${DIST:-'el8'}
 
 arch=$(arch)
 build_what="e2fsprogs"
 cache_dir="/home/jenkins/agent/cache"
-last_build_file="${cache_dir}/build/lastbuild-${build_what}-${branch}"
-build_cache_dir=$(dirname $last_build_file)
-build_dir=${workspace}/build-${build_what}-${branch}-$build_id
+subname="${build_what}-${branch}-${dist}"
 rpm_repo_dir="${build_what}/${branch}/${dist}/${arch}"
+last_build_file="${cache_dir}/build/lastbuild-${subname}"
+build_cache_dir=$(dirname $last_build_file)
+build_dir="${workspace}/build-${subname}-${build_id}"
 rpm_repo="/home/jenkins/agent/rpm-repo/${rpm_repo_dir}"
 rpm_repo_base_url="https://uk.linaro.cloud/repo"
 rpm_repo_url="${rpm_repo_base_url}/${rpm_repo_dir}"
@@ -28,18 +23,26 @@ rpm_repo_file="${rpm_repo}/${build_what}.repo"
 
 git_local_repo="${cache_dir}/git/e2fsprogs.git"
 
+# check dist rpm macro existence
+dist_macro=$(rpm -E %{?dist})
+if [[ -z "$dist_macro" ]]; then
+	echo "%dist .$dist" >> ~/.rpmmacros
+fi
+
 echo "Cleanup workspace dir"
-rm -rf ${workspace}/build-${build_what}-${branch}-*
+rm -rf ${workspace}/build-${subname}-*
 
 
 # Install dependant pkgs for build
 sudo dnf install -y dnf-plugins-core
 pkgs=()
-if [[ $distro =~ rhel ]]; then
+if [[ $dist =~ el8 ]]; then
 	sudo dnf config-manager --set-enabled ha
 	sudo dnf config-manager --set-enabled powertools
 	sudo dnf install -y epel-release
 	pkgs+=(distcc redhat-lsb-core)
+elif [[ $dist =~ oe ]]; then
+	sudo dnf install -y openeuler-lsb
 fi
 sudo dnf update -y
 pkgs+=(git ccache gcc make autoconf automake libtool rpm-build wget createrepo)

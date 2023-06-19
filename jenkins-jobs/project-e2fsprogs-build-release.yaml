@@ -1,30 +1,28 @@
 ---
 - project:
-    name: 'project-e2fsprogs-build-release'
-    distro_branch:
-      - 'rhel8.8-v1.46':
-          distro: 'rhel8.8'
-          branch: 'v1.46.6.wc1-lustre'
-          dist: 'el8'
+    name: 'project-build-release'
+    dist:
+      - 'el8'
+      - 'oe2203sp1'
     jobs:
-      - '{name}-{distro_branch}'
+      - '{name}-{build_what}-{branch}-{dist}'
 
 - job-template:
-    name: '{name}-{distro_branch}'
-    node: 'build-agent-{distro}'
+    name: '{name}-{build_what}-{branch}-{dist}'
+    node: 'build-agent-{dist}'
 
     # default var values
     build_what: 'e2fsprogs'
+    branch: 'v1.46.6.wc1-lustre'
     arch: 'aarch64'
-    dist: '{distro}'
     git_repo: 'git://git.whamcloud.com/tools/e2fsprogs.git'
 
 
     parameters:
       - string:
-          name: 'DISTRO'
-          default: '{distro}'
-          description: 'Distro version to build, e.g.: rhel8.8'
+          name: 'DIST'
+          default: '{dist}'
+          description: 'Distro version to build, e.g.: el8, oe2203spq'
       - string:
           name: 'BRANCH'
           default: '{branch}'
@@ -36,7 +34,7 @@
 
     builders:
       - shell:
-          !include-raw-escape: scripts/build-e2fsprogs-release.sh
+          !include-raw-escape: scripts/build-{build_what}-release.sh
     publishers:
       - groovy-postbuild:
           script: |
