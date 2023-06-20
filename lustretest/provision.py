@@ -22,7 +22,9 @@ def host_name_gen():
 
 
 class Provision():
-    def __init__(self, logger, provision_new):
+    def __init__(self, logger, provision_new, dist='el8',
+                 arch='aarch64', lustre_branch='master',
+                 rpm_repo_host="https://uk.linaro.cloud/repo"):
         self.logger = logger
         self.node_map = None
         self.cluster_dir = None
@@ -34,6 +36,10 @@ class Provision():
         if provision_new:
             self._info("Prepare to provision the new cluster")
             self.prepare_tf_conf()
+        self.dist = dist
+        self.arch = arch
+        self.lustre_branch = lustre_branch
+        self.rpm_repo_host = rpm_repo_host
 
     def _debug(self, msg, *args):
         self.logger.debug(msg, *args)
@@ -76,6 +82,12 @@ class Provision():
         if rc != 0:
             return False
         return True
+
+    def ssh_exec_ret_std(self, ssh_client, cmd):
+        _, stdout, _ = ssh_client.exec_command(cmd)
+        lines = stdout.readlines()
+        output = "\n".join(lines)
+        return output.strip()
 
     #
     # Copy the terraform template from the source file to another destination
@@ -172,12 +184,9 @@ class Provision():
                         msg = f"Terraform apply success, try {n} times"
                         self._info(msg)
                         return True
-            else:
-                msg = f"Terraform apply failed, try {n} times"
-                self._error(msg)
-                return False
-        else:
-            return False
+            msg = f"Terraform apply failed, try {n} times"
+            self._error(msg)
+        return False
 
     #
     # Terraform destroy command
@@ -379,14 +388,18 @@ class Provision():
         else:
             sys.exit(node + ":  Failed run cmd: " + cmd)
 
+    def run_cmd_ret_std(self, node, client, cmd):
+        self._info(node + ":  " + cmd)
+        return self.ssh_exec_ret_std(client, cmd)
+
     def run_cmds(self, node, client, cmds):
         for cmd in cmds:
             self.run_cmd(node, client, cmd)
 
     def get_add_rpm_repo_cmds(self):
-        e2fsprogs_rpm_repo = "https://uk.linaro.cloud/repo/e2fsprogs/v1.46.6.wc1-lustre/el8/aarch64/e2fsprogs.repo"
-        lustre_rpm_repo = "https://uk.linaro.cloud/repo/lustre/master/el8/aarch64/lustre.repo"
-        iozone_rpm_repo = "https://uk.linaro.cloud/repo/iozone/el8/aarch64/iozone.repo"
+        e2fsprogs_rpm_repo = f"{self.rpm_repo_host}/e2fsprogs/v1.46.6.wc1-lustre/{self.dist}/{self.arch}/e2fsprogs.repo"
+        lustre_rpm_repo = f"{self.rpm_repo_host}/lustre/{self.lustre_branch}/{self.dist}/{self.arch}/lustre.repo"
+        iozone_rpm_repo = f"{self.rpm_repo_host}/iozone/{self.dist}/{self.arch}/iozone.repo"
 
         cmds = []
         cmd = f"sudo dnf config-manager --add-repo {e2fsprogs_rpm_repo}"
@@ -398,25 +411,38 @@ class Provision():
         cmd = f"sudo dnf config-manager --add-repo {iozone_rpm_repo}"
         cmds.append(cmd)
 
+        if self.dist.startswith("oe2203"):
+            pdsh_rpm_repo = f"{self.rpm_repo_host}/pdsh/{self.dist}/{self.arch}/pdsh.repo"
+            cmd = f"sudo dnf config-manager --add-repo {pdsh_rpm_repo}"
+            cmds.append(cmd)
+
         return cmds
 
-    def install_kernel(self, node, client, version="4.18.0-477.10.1.el8_4k"):
-        rpm_repo = "https://uk.linaro.cloud/repo/kernel/el8/aarch64/kernel.repo"
+    def install_kernel(self, node, client):
+        repo_option = ''
+        if self.dist == 'el8':
+            rpm_repo = f"{self.rpm_repo_host}/kernel/{self.dist}/{self.arch}/kernel.repo"
+            cmd = f"sudo dnf config-manager --add-repo {rpm_repo}"
+            self.run_cmd(node, client, cmd)
+            repo_option = "--repo kernel"
+        cmd = f"sudo dnf repoquery {repo_option} --latest-limit=1  \
+                --qf '%{{VERSION}}-%{{RELEASE}}' kernel.{self.arch}"
+        version = self.run_cmd_ret_std(node, client, cmd)
+        if not version:
+            sys.exit(node + ":  Kernel version is empty! Failed run cmd: " + cmd)
+
         pkgs = f"kernel-{version} kernel-debuginfo-{version} " \
             f"kernel-debuginfo-common-aarch64-{version} kernel-devel-{version} kernel-core-{version} " \
             f"kernel-headers-{version} kernel-modules-{version} kernel-modules-extra-{version} " \
             f"kernel-tools-{version} kernel-tools-libs-{version} kernel-tools-libs-devel-{version} " \
             f"kernel-tools-debuginfo-{version}"
 
-        cmd = f"sudo dnf config-manager --add-repo {rpm_repo}"
-        self.run_cmd(node, client, cmd)
-
         cmd = f"sudo dnf install -y {pkgs}"
         self.run_cmd(node, client, cmd)
 
     def install_lustre(self, node, client):
         tool_pkgs = "pdsh pdsh-rcmd-ssh net-tools dbench fio " \
-            "linux-firmware bc attr gcc iozone rsync"
+            "bc attr gcc iozone rsync"
         e2fsprogs_pkgs = "e2fsprogs e2fsprogs-devel " \
             "e2fsprogs-debuginfo e2fsprogs-static e2fsprogs-libs " \
             "e2fsprogs-libs-debuginfo libcom_err libcom_err-devel " \
