@@ -10,11 +10,12 @@ dist=${DIST:-'el8'}
 arch=$(arch)
 build_what="kernel"
 cache_dir="/home/jenkins/agent/cache"
-last_build_file="${cache_dir}/build/lastbuild-${build_what}"
-build_cache_dir=$(dirname $last_build_file)
-build_dir=${workspace}/build-${build_what}-$build_id
-kernel_src_dir="${cache_dir}/src/kernel"
+subname="${build_what}"
 rpm_repo_dir="${build_what}/${dist}/${arch}"
+last_build_file="${cache_dir}/build/lastbuild-${subname}"
+build_cache_dir=$(dirname $last_build_file)
+build_dir="${workspace}/build-${subname}-${build_id}"
+kernel_src_dir="${cache_dir}/src/kernel"
 rpm_repo="/home/jenkins/agent/rpm-repo/${rpm_repo_dir}"
 rpm_repo_base_url="https://uk.linaro.cloud/repo"
 rpm_repo_url="${rpm_repo_base_url}/${rpm_repo_dir}"
@@ -35,7 +36,7 @@ fi
 
 
 echo "Cleanup workspace dir"
-rm -rf ${workspace}/build-${build_what}-*
+rm -rf ${workspace}/build-${subname}-*
 
 # Install dependant pkgs for build
 sudo dnf install -y dnf-plugins-core

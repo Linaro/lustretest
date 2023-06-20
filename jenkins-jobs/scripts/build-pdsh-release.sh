@@ -10,11 +10,12 @@ dist=${DIST:-'oe2203sp1'}
 arch=$(arch)
 build_what="pdsh"
 cache_dir="/home/jenkins/agent/cache"
-last_build_file="${cache_dir}/build/lastbuild-${build_what}-${dist}"
-build_cache_dir=$(dirname $last_build_file)
-build_dir=${workspace}/build-${build_what}-${dist}-$build_id
-srpm_cache_dir="${cache_dir}/src/${build_what}"
+subname="${build_what}-${dist}"
 rpm_repo_dir="${build_what}/${dist}/${arch}"
+last_build_file="${cache_dir}/build/lastbuild-${subname}"
+build_cache_dir=$(dirname $last_build_file)
+build_dir="${workspace}/build-${subname}-${build_id}"
+srpm_cache_dir="${cache_dir}/src/${build_what}"
 rpm_repo="/home/jenkins/agent/rpm-repo/${rpm_repo_dir}"
 rpm_repo_base_url="https://uk.linaro.cloud/repo"
 rpm_repo_url="${rpm_repo_base_url}/${rpm_repo_dir}"
@@ -36,13 +37,13 @@ sudo mkdir -p $build_cache_dir
 sudo chown jenkins:jenkins -R $build_cache_dir
 if [[ -f $last_build_file ]] &&
    [[ "$version" == "$(cat $last_build_file)" ]]; then
-	echo "The same build kernel version $version skip build."
+	echo "The same build version $version skip build."
 	exit 0
 fi
 
 
 echo "Cleanup workspace dir"
-rm -rf ${workspace}/build-${build_what}-${dist}-*
+rm -rf ${workspace}/build-${subname}-*
 
 # Install dependant pkgs for build
 sudo dnf install -y dnf-plugins-core
