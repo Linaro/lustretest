@@ -1,0 +1,36 @@
+---
+- project:
+    name: 'project-build-release'
+    dist:
+      - 'oe2203sp1'
+    jobs:
+      - '{name}-{build_what}-{dist}'
+
+- job-template:
+    name: '{name}-{build_what}-{dist}'
+    node: 'build-agent-{dist}'
+
+    # default var values
+    build_what: 'pdsh'
+    version: '2.34-5.el8'
+    arch: 'aarch64'
+
+    parameters:
+      - string:
+          name: 'DIST'
+          default: '{dist}'
+          description: 'Distro version to build, e.g.: el8, oe2203sp1'
+      - string:
+          name: 'VERSION'
+          default: '{version}'
+          description: '{build_what} version to build, e.g.: 2.34-5.el8
+            see http://rpmfind.net/linux/rpm2html/search.php?query=pdsh&submit=Search+...&system=&arch=aarch64'
+
+    builders:
+      - shell:
+          !include-raw-escape: scripts/build-{build_what}-release.sh
+    publishers:
+      - groovy-postbuild:
+          script: |
+            def summary = manager.createSummary("package.gif")
+            summary.appendText("See <a href=https://uk.linaro.cloud/repo/{build_what}/{dist}/{arch}/>RPM release repo.</a>", false)
