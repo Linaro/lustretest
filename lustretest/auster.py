@@ -106,11 +106,11 @@ class Auster():
                 f"-D {self.test_info['logdir']} " \
                 f"{self.test_info['suites']}"
 
-            msg = f"""
-                Exec the test suites on the node: {self.ip}
-                Timeout: {self.test_info['timeout']}
-                Cmd: {cmd}
-                """
+            msg = \
+                f"Exec the test suites on the node: {self.ip}\n" \
+                f"Timeout: {self.test_info['timeout']}\n" \
+                f"Cmd: {cmd}\n..."
+
             self._info(msg)
             rc = self.ssh_exec(cmd, self.test_info['timeout'])
             self._info("Auster test finish, rc = %d", rc)
@@ -231,9 +231,10 @@ class Auster():
             test_results['triggering_build_number'] = self.test_info['build_id']
             test_results['total_enforcing_sessions'] = '1'
             # lustre-master-el8.5-x86_64--linaro-full-part-1--1.10
-            test_name = f"lustre-{self.test_info['lustre_branch']}\
-                -{self.test_info['dist']}-{self.test_info['arch']}--{self.test_info['group_name']}--\
-                {test_results['test_sequence']}.{test_results['test_index']}"
+            test_name = f"lustre-{self.test_info['lustre_branch']}-" \
+                f"{self.test_info['dist']}-{self.test_info['arch']}--" \
+                f"{self.test_info['group_name']}--" \
+                f"{test_results['test_sequence']}.{test_results['test_index']}"
             test_results['test_name'] = test_name
             test_results['test_suites'] = self.test_info['suites'].strip()
             yaml.safe_dump(test_results, file)

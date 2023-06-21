@@ -425,8 +425,8 @@ class Provision():
             cmd = f"sudo dnf config-manager --add-repo {rpm_repo}"
             self.run_cmd(node, client, cmd)
             repo_option = "--repo kernel"
-        cmd = f"sudo dnf repoquery {repo_option} --latest-limit=1  \
-                --qf '%{{VERSION}}-%{{RELEASE}}' kernel.{self.arch}"
+        cmd = f"sudo dnf repoquery {repo_option} --latest-limit=1 " \
+                f"--qf '%{{VERSION}}-%{{RELEASE}}' kernel.{self.arch}"
         version = self.run_cmd_ret_std(node, client, cmd)
         if not version:
             sys.exit(node + ":  Kernel version is empty! Failed run cmd: " + cmd)
