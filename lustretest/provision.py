@@ -397,9 +397,15 @@ class Provision():
             self.run_cmd(node, client, cmd)
 
     def get_add_rpm_repo_cmds(self):
-        e2fsprogs_rpm_repo = f"{self.rpm_repo_host}/e2fsprogs/v1.46.6.wc1-lustre/{self.dist}/{self.arch}/e2fsprogs.repo"
-        lustre_rpm_repo = f"{self.rpm_repo_host}/lustre/{self.lustre_branch}/{self.dist}/{self.arch}/lustre.repo"
-        iozone_rpm_repo = f"{self.rpm_repo_host}/iozone/{self.dist}/{self.arch}/iozone.repo"
+        e2fsprogs_rpm_repo = \
+            f"{self.rpm_repo_host}/e2fsprogs/v1.46.6.wc1-lustre/" \
+            f"{self.dist}/{self.arch}/e2fsprogs.repo"
+        lustre_rpm_repo = \
+            f"{self.rpm_repo_host}/lustre/{self.lustre_branch}/" \
+            f"{self.dist}/{self.arch}/lustre.repo"
+        iozone_rpm_repo = \
+            f"{self.rpm_repo_host}/iozone/{self.dist}/" \
+            f"{self.arch}/iozone.repo"
 
         cmds = []
         cmd = f"sudo dnf config-manager --add-repo {e2fsprogs_rpm_repo}"
@@ -412,7 +418,9 @@ class Provision():
         cmds.append(cmd)
 
         if self.dist.startswith("oe2203"):
-            pdsh_rpm_repo = f"{self.rpm_repo_host}/pdsh/{self.dist}/{self.arch}/pdsh.repo"
+            pdsh_rpm_repo = \
+                f"{self.rpm_repo_host}/pdsh/{self.dist}/" \
+                f"{self.arch}/pdsh.repo"
             cmd = f"sudo dnf config-manager --add-repo {pdsh_rpm_repo}"
             cmds.append(cmd)
 
@@ -421,20 +429,23 @@ class Provision():
     def install_kernel(self, node, client):
         repo_option = ''
         if self.dist == 'el8':
-            rpm_repo = f"{self.rpm_repo_host}/kernel/{self.dist}/{self.arch}/kernel.repo"
+            rpm_repo = f"{self.rpm_repo_host}/kernel/{self.dist}/" \
+                f"{self.arch}/kernel.repo"
             cmd = f"sudo dnf config-manager --add-repo {rpm_repo}"
             self.run_cmd(node, client, cmd)
             repo_option = "--repo kernel"
         cmd = f"sudo dnf repoquery {repo_option} --latest-limit=1 " \
-                f"--qf '%{{VERSION}}-%{{RELEASE}}' kernel.{self.arch}"
+            f"--qf '%{{VERSION}}-%{{RELEASE}}' kernel.{self.arch}"
         version = self.run_cmd_ret_std(node, client, cmd)
         if not version:
             sys.exit(node + ":  Kernel version is empty! Failed run cmd: " + cmd)
 
         pkgs = f"kernel-{version} kernel-debuginfo-{version} " \
-            f"kernel-debuginfo-common-aarch64-{version} kernel-devel-{version} kernel-core-{version} " \
-            f"kernel-headers-{version} kernel-modules-{version} kernel-modules-extra-{version} " \
-            f"kernel-tools-{version} kernel-tools-libs-{version} kernel-tools-libs-devel-{version} " \
+            f"kernel-debuginfo-common-aarch64-{version} " \
+            f"kernel-devel-{version} kernel-core-{version} " \
+            f"kernel-headers-{version} kernel-modules-{version} " \
+            f"kernel-modules-extra-{version} kernel-tools-{version} " \
+            f"kernel-tools-libs-{version} kernel-tools-libs-devel-{version} " \
             f"kernel-tools-debuginfo-{version}"
 
         cmd = f"sudo dnf install -y {pkgs}"
