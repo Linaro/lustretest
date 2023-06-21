@@ -3,7 +3,7 @@
     name: 'project-periodical-test-lustre'
     branch_distro:
       - 'master-rhel8':
-          distro: 'rhel8.8'
+          dist: 'el8'
           branch: 'master'
           trigger_time: |
             TZ=Asia/Shanghai

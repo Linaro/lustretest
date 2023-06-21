@@ -18,7 +18,7 @@ import utils
 #
 
 
-def get_cluster_dir(logger, provision_new, cluster_provision):
+def get_cluster_dir(logger, provision_new, cluster_provision, dist='el8'):
     if provision_new:
         cluster_dir = cluster_provision.get_cluster_dir()
         cluster_lock = FileLock(cluster_dir + "/.lock", timeout=0)
@@ -30,7 +30,7 @@ def get_cluster_dir(logger, provision_new, cluster_provision):
                 "is in used, no cluster for test now!!"
             logger.info(msg)
     else:  # find an idle cluster
-        clusters_top_dir = const.TEST_WORKSPACE
+        clusters_top_dir = path_join(const.TEST_WORKSPACE, dist)
         cluster_dirs = [path_join(clusters_top_dir, f) for f in listdir(
             clusters_top_dir) if isdir(path_join(clusters_top_dir, f))
             and f.startswith(const.LUSTRE_CLUSTER_PREFIX)]
@@ -70,7 +70,12 @@ def main(
         Annotated[bool,
                   typer.Option(
                       help="Destroy the VM cluster after finish running the test.")
-                  ] = False
+                  ] = False,
+    dist:
+        Annotated[str,
+                  typer.Option(
+                      help="Distro to test. E.g.: el8, oe2203sp1")
+                  ] = 'el8'
 ):
     """
     Run a Lustre test group or test suites on a VM cluster.
@@ -80,7 +85,7 @@ def main(
     E.g.
     test_runner.py --test-group-id 1
 
-    test_runner.py --test-suites sanity
+    test_runner.py --test-suites sanity --dist el8
 
     test_runner.py --test-suites "sanity --only 1-100 sanityn --only 20-30"
     """
@@ -94,15 +99,16 @@ def main(
         raise typer.Exit(
             "At least a test groupt or test suites is given. Aborted!!!")
 
-    msg = f"options are: [{test_group_id}, {test_suites}, {provision_new}, {destroy_cluster}]"
+    msg = f"options are: [{test_group_id}, {test_suites}, " \
+        f"{provision_new}, {destroy_cluster}, {dist}]"
     logger.info(msg)
 
     #
     # get cluster_dir and lock
     #
-    cluster_provision = Provision(logger, provision_new)
+    cluster_provision = Provision(logger, provision_new, dist)
     cluster_dir, cluster_lock = get_cluster_dir(
-        logger, provision_new, cluster_provision)
+        logger, provision_new, cluster_provision, dist)
     if not cluster_dir:
         sys.exit("get cluster fail!!")
 
@@ -149,7 +155,7 @@ def main(
                 break
         auster_test = Auster(logger, test_group_id,
                              test_suites, exec_node_ip,
-                             const.SHARED_NFS_DIR)
+                             const.SHARED_NFS_DIR, dist=dist)
         rc = auster_test.run_test()
 
         if rc != const.TEST_SUCC:

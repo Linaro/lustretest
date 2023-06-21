@@ -119,9 +119,11 @@ class Provision():
     def prepare_tf_conf(self):
         test_hash = host_name_gen()
         test_name = const.LUSTRE_CLUSTER_PREFIX + test_hash.lower()
-        self.cluster_dir = path_join(self.clusters_top_dir, test_name)
+        self.cluster_dir = path_join(self.clusters_top_dir, self.dist,
+                                     test_name)
         self.copy_dir()
 
+        vm_image = const.VM_IMAGES[self.dist]
         network_port_prefix = const.LUSTRE_CLUSTER_PREFIX + test_hash
         tf_vars = {
             const.LUSTRE_NODE_01: test_name + const.LUSTRE_NODE_NUM_01,
@@ -133,7 +135,8 @@ class Provision():
             const.LUSTRE_CLIENT02_PORT: network_port_prefix + const.LUSTRE_CLIENT02_PORT_PREFIX,
             const.LUSTRE_MDS01_PORT: network_port_prefix + const.LUSTRE_MDS01_PORT_PREFIX,
             const.LUSTRE_MDS02_PORT: network_port_prefix + const.LUSTRE_MDS02_PORT_PREFIX,
-            const.LUSTRE_OST01_PORT: network_port_prefix + const.LUSTRE_OST01_PORT_PREFIX
+            const.LUSTRE_OST01_PORT: network_port_prefix + const.LUSTRE_OST01_PORT_PREFIX,
+            const.TF_VM_IMAGE_VAR: vm_image
         }
         # Write the file to json file
         with open(path_join(self.cluster_dir, const.TERRAFORM_VARIABLES_JSON), "w") as f:
@@ -338,10 +341,10 @@ class Provision():
                               stderr=subprocess.STDOUT) as p:
             self.realtime_output(p)
             if p.returncode == 0:
-                self._info('Terraform apply success')
+                self._info('Cluster clean success')
                 return True
 
-            self._error('Terraform apply failed')
+            self._error('Cluster clean failed')
             return False
 
     #

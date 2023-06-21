@@ -43,21 +43,30 @@ pipeline {{
                 stage('Run test group 1') {{
                     steps {{
                         dir("lustretest-main/lustretest") {{
-                            sh 'source /home/centos/venv3/bin/activate;python test_runner.py --test-group-id 1 '
+                            sh 'source /home/centos/venv3/bin/activate; \
+				    python test_runner.py \
+				    --test-group-id 1 \
+				    --dist {dist}'
                         }}
                     }}
                 }}
                 stage('Run test group 2') {{
                     steps {{
                         dir("lustretest-main/lustretest") {{
-                            sh 'source /home/centos/venv3/bin/activate;python test_runner.py --test-group-id 2'
+                            sh 'source /home/centos/venv3/bin/activate; \
+				    python test_runner.py \
+				    --test-group-id 2 \
+				    --dist {dist}'
                         }}
                     }}
                 }}
                 stage('Run test group 3') {{
                     steps {{
                         dir("lustretest-main/lustretest") {{
-                            sh 'source /home/centos/venv3/bin/activate;python test_runner.py --test-group-id 3'
+                            sh 'source /home/centos/venv3/bin/activate; \
+				    python test_runner.py \
+				    --test-group-id 3 \
+				    --dist {dist}'
                         }}
                     }}
                 }}

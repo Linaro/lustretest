@@ -66,6 +66,12 @@ LUSTRE_MDS01_PORT = "lustre_client01_port"
 LUSTRE_MDS02_PORT = "lustre_client01_port"
 LUSTRE_OST01_PORT = "lustre_client01_port"
 
+TF_VM_IMAGE_VAR = "image"
+VM_IMAGES = {
+    'el8': 'vm-almalinux-8',
+    'oe2203sp1': 'vm-openeuler-minimal-22.03-LTS-SP1'
+}
+
 LUSTRE_CLIENT01_PORT_PREFIX = "_client01_port"
 LUSTRE_CLIENT02_PORT_PREFIX = "_client02_port"
 LUSTRE_MDS01_PORT_PREFIX = "_mds01_port"
