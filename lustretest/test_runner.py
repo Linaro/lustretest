@@ -75,7 +75,12 @@ def main(
         Annotated[str,
                   typer.Option(
                       help="Distro to test. E.g.: el8, oe2203sp1")
-                  ] = 'el8'
+                  ] = 'el8',
+    lustre_branch:
+        Annotated[str,
+                  typer.Option(
+                      help="Lustre branch to test. E.g.: master, b2_15")
+                  ] = 'master'
 ):
     """
     Run a Lustre test group or test suites on a VM cluster.
@@ -100,13 +105,14 @@ def main(
             "At least a test groupt or test suites is given. Aborted!!!")
 
     msg = f"options are: [{test_group_id}, {test_suites}, " \
-        f"{provision_new}, {destroy_cluster}, {dist}]"
+        f"{provision_new}, {destroy_cluster}, {dist}, {lustre_branch}]"
     logger.info(msg)
 
     #
     # get cluster_dir and lock
     #
-    cluster_provision = Provision(logger, provision_new, dist)
+    cluster_provision = Provision(logger, provision_new, dist,
+                                  lustre_branch=lustre_branch)
     cluster_dir, cluster_lock = get_cluster_dir(
         logger, provision_new, cluster_provision, dist)
     if not cluster_dir:
@@ -155,7 +161,9 @@ def main(
                 break
         auster_test = Auster(logger, test_group_id,
                              test_suites, exec_node_ip,
-                             const.SHARED_NFS_DIR, dist=dist)
+                             const.SHARED_NFS_DIR,
+                             dist=dist,
+                             lustre_branch=lustre_branch)
         rc = auster_test.run_test()
 
         if rc != const.TEST_SUCC:

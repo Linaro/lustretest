@@ -5,15 +5,21 @@
       - 'master-rhel8':
           dist: 'el8'
           branch: 'master'
+      - 'master-oe2203':
+          dist: 'oe2203sp1'
+          branch: 'master'
           trigger_time: |
             TZ=Asia/Shanghai
-            0 18 * * *
+            0 19 * * *
     jobs:
       - '{name}-{branch_distro}'
 
 - job-template:
     name: '{name}-{branch_distro}'
     project-type: pipeline
+    trigger_time: |
+      TZ=Asia/Shanghai
+      0 18 * * *
     triggers:
       - timed: |
           {trigger_time}

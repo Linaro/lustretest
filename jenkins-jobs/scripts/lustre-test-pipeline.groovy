@@ -1,5 +1,5 @@
 def maloolink="https://testing.whamcloud.com/test_sessions?jobs=custom&user_id=b8340029-197d-4ce0-a8f1-40f76d3bb8c7&builds=${{BUILD_ID}}#redirect"
-def buildlink="http://213.146.155.72:8080/job/project-lustre-build-release-master/lastBuild/"
+def buildlink="http://213.146.155.72:8080/job/project-build-release-lustre-{branch_distro}/lastBuild/"
 
 pipeline {{
     agent {{
@@ -46,6 +46,7 @@ pipeline {{
                             sh 'source /home/centos/venv3/bin/activate; \
 				    python test_runner.py \
 				    --test-group-id 1 \
+				    --lustre-branch {branch} \
 				    --dist {dist}'
                         }}
                     }}
@@ -56,6 +57,7 @@ pipeline {{
                             sh 'source /home/centos/venv3/bin/activate; \
 				    python test_runner.py \
 				    --test-group-id 2 \
+				    --lustre-branch {branch} \
 				    --dist {dist}'
                         }}
                     }}
@@ -66,6 +68,7 @@ pipeline {{
                             sh 'source /home/centos/venv3/bin/activate; \
 				    python test_runner.py \
 				    --test-group-id 3 \
+				    --lustre-branch {branch} \
 				    --dist {dist}'
                         }}
                     }}
