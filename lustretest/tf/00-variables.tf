@@ -55,7 +55,7 @@ variable "lustre_ost01_port" {
 #### VM parameters
 variable "flavor" {
   type    = string
-  default = "vm.large"
+  default = "vm.medium"
 }
 
 variable "jenkinskey" {
