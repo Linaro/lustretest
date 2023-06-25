@@ -430,6 +430,11 @@ class Provision():
                 f"{self.arch}/pdsh.repo"
             cmd = f"sudo dnf config-manager --add-repo {pdsh_rpm_repo}"
             cmds.append(cmd)
+            dbench_rpm_repo = \
+                f"{self.rpm_repo_host}/dbench/{self.dist}/" \
+                f"{self.arch}/dbench.repo"
+            cmd = f"sudo dnf config-manager --add-repo {dbench_rpm_repo}"
+            cmds.append(cmd)
 
         return cmds
 
