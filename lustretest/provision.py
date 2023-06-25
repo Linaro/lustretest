@@ -33,13 +33,13 @@ class Provision():
         self.ssh_clients = {}
         self.clusters_top_dir = const.TEST_WORKSPACE
         self.provision_new = provision_new
-        if provision_new:
-            self._info("Prepare to provision the new cluster")
-            self.prepare_tf_conf()
         self.dist = dist
         self.arch = arch
         self.lustre_branch = lustre_branch
         self.rpm_repo_host = rpm_repo_host
+        if provision_new:
+            self._info("Prepare to provision the new cluster")
+            self.prepare_tf_conf()
 
     def _debug(self, msg, *args):
         self.logger.debug(msg, *args)
