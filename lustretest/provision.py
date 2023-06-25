@@ -468,21 +468,21 @@ class Provision():
             "kmod-lustre-debuginfo kmod-lustre-osd-ldiskfs " \
             "kmod-lustre-tests"
 
-        cmd = "sudo dnf install -y dnf-plugins-core"
+        cmd = "sudo dnf install -y dnf-plugins-core libmodulemd"
         self.run_cmd(node, client, cmd)
 
         cmds = self.get_add_rpm_repo_cmds()
         self.run_cmds(node, client, cmds)
 
         cmds = []
-        cmd = "sudo dnf config-manager --set-enabled ha"
-        cmds.append(cmd)
-        cmd = "sudo dnf config-manager --set-enabled powertools"
-        cmds.append(cmd)
-        cmd = "sudo dnf update libmodulemd -y"
-        cmds.append(cmd)
-        cmd = "sudo dnf install epel-release -y; " \
-            "sudo dnf makecache --refresh"
+        if self.dist == 'el8':
+            cmd = "sudo dnf config-manager --set-enabled ha"
+            cmds.append(cmd)
+            cmd = "sudo dnf config-manager --set-enabled powertools"
+            cmds.append(cmd)
+            cmd = "sudo dnf install epel-release -y"
+            cmds.append(cmd)
+        cmd = "sudo dnf makecache --refresh"
         cmds.append(cmd)
         self.run_cmds(node, client, cmds)
 
