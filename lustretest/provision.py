@@ -40,6 +40,10 @@ class Provision():
         if provision_new:
             self._info("Prepare to provision the new cluster")
             self.prepare_tf_conf()
+        # checking args
+        if not (dist == 'el8' or dist.startswith('oe2203')):
+            msg = f"{dist} is not support!"
+            sys.exit(msg)
 
     def _debug(self, msg, *args):
         self.logger.debug(msg, *args)
@@ -443,15 +447,7 @@ class Provision():
         if not version:
             sys.exit(node + ":  Kernel version is empty! Failed run cmd: " + cmd)
 
-        pkgs = f"kernel-{version} kernel-debuginfo-{version} " \
-            f"kernel-debuginfo-common-aarch64-{version} " \
-            f"kernel-devel-{version} kernel-core-{version} " \
-            f"kernel-headers-{version} kernel-modules-{version} " \
-            f"kernel-modules-extra-{version} kernel-tools-{version} " \
-            f"kernel-tools-libs-{version} kernel-tools-libs-devel-{version} " \
-            f"kernel-tools-debuginfo-{version}"
-
-        cmd = f"sudo dnf install -y {pkgs}"
+        cmd = f"sudo dnf install -y kernel-{version}"
         self.run_cmd(node, client, cmd)
 
     def install_lustre(self, node, client):
@@ -468,7 +464,7 @@ class Provision():
             "kmod-lustre-debuginfo kmod-lustre-osd-ldiskfs " \
             "kmod-lustre-tests"
 
-        cmd = "sudo dnf install -y dnf-plugins-core libmodulemd"
+        cmd = "sudo dnf install -y dnf-plugins-core bc"
         self.run_cmd(node, client, cmd)
 
         cmds = self.get_add_rpm_repo_cmds()
