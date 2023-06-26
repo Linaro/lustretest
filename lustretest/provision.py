@@ -456,6 +456,11 @@ class Provision():
         cmd = f"sudo dnf config-manager --add-repo {rpm_repo}"
         self.run_cmd(node, client, cmd)
 
+        # e2fsprogs-help conflicts with lustre e2fsprogs
+        if self.dist.startswith("oe2203"):
+            cmd = "sudo dnf remove -y e2fsprogs-help"
+            self.run_cmd(node, client, cmd)
+
         cmd = f"sudo dnf repoquery --latest-limit=1 " \
             f"--qf '%{{VERSION}}-%{{RELEASE}}' {what}.{self.arch}"
         version = self.run_cmd_ret_std(node, client, cmd)
