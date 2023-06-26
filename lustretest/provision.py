@@ -507,9 +507,9 @@ class Provision():
         cmds.append(cmd)
         cmd = f"sudo dnf update -y {tool_pkgs}"
         cmds.append(cmd)
-        cmd = f"sudo dnf install -y {lustre_pkgs}"
+        cmd = f"sudo dnf remove --noautoremove -y {lustre_pkgs}"
         cmds.append(cmd)
-        cmd = f"sudo dnf update -y {lustre_pkgs}"
+        cmd = f"sudo dnf install -y {lustre_pkgs}"
         cmds.append(cmd)
         cmd = "sudo dnf autoremove -y"
         cmds.append(cmd)
@@ -519,8 +519,8 @@ class Provision():
     def node_operate(self):
         with futures.ThreadPoolExecutor(max_workers=5) as executor:
             future_to_node = {
-                executor.submit(self.install_lustre, node, client): node \
-                        for node, client in self.ssh_clients.items()
+                executor.submit(self.install_lustre, node, client): node
+                for node, client in self.ssh_clients.items()
             }
             for future in futures.as_completed(future_to_node):
                 node = future_to_node[future]
