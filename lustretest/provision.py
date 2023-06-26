@@ -473,11 +473,11 @@ class Provision():
     def install_lustre(self, node, client):
         tool_pkgs = "pdsh pdsh-rcmd-ssh net-tools dbench fio " \
             "bc attr gcc iozone rsync"
-        lustre_pkgs = "lustre lustre-debuginfo lustre-debugsource " \
-            "lustre-devel lustre-iokit lustre-osd-ldiskfs-mount " \
-            "lustre-osd-ldiskfs-mount-debuginfo lustre-resource-agents " \
-            "lustre-tests lustre-tests-debuginfo kmod-lustre " \
-            "kmod-lustre-debuginfo kmod-lustre-osd-ldiskfs " \
+        lustre_pkgs = "lustre " \
+            "lustre-iokit lustre-osd-ldiskfs-mount " \
+            "lustre-resource-agents " \
+            "lustre-tests kmod-lustre " \
+            "kmod-lustre-osd-ldiskfs " \
             "kmod-lustre-tests"
 
         cmd = "sudo dnf install -y dnf-plugins-core bc"
