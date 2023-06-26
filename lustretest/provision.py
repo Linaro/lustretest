@@ -526,10 +526,14 @@ class Provision():
                 node = future_to_node[future]
                 try:
                     data = future.result()
-                except Exception as e:
+                except SystemExit as e:
                     msg = f"{node}: install lustre failed!! \n{e}"
                     self._info(msg)
                     return False
+                except:
+                    msg = f"{node}: install lustre failed!!"
+                    self._info(msg)
+                    raise
                 msg = f"{node}: install lustre success. result={data}"
                 self._info(msg)
 
