@@ -1,4 +1,5 @@
 from ast import literal_eval
+from concurrent import futures
 from datetime import datetime
 import json
 import os
@@ -8,7 +9,6 @@ import shutil
 import string
 import subprocess
 import sys
-import threading
 import time
 
 import paramiko
@@ -514,17 +514,24 @@ class Provision():
         cmd = "sudo dnf autoremove -y"
         cmds.append(cmd)
         self.run_cmds(node, client, cmds)
+        return True
 
     def node_operate(self):
-        thread_list = []
-        for node, client in self.ssh_clients.items():
-            x = threading.Thread(
-                target=self.install_lustre, args=(node, client,))
-            x.start()
-            thread_list.append(x)
-
-        for x in thread_list:
-            x.join()
+        with futures.ThreadPoolExecutor(max_workers=5) as executor:
+            future_to_node = {
+                executor.submit(self.install_lustre, node, client): node \
+                        for node, client in self.ssh_clients.items()
+            }
+            for future in futures.as_completed(future_to_node):
+                node = future_to_node[future]
+                try:
+                    data = future.result()
+                except Exception as e:
+                    msg = f"{node}: install lustre failed!! \n{e}"
+                    self._info(msg)
+                    return False
+                msg = f"{node}: install lustre success. result={data}"
+                self._info(msg)
 
         for node, client in self.ssh_clients.items():
             self.node_volume_check(node, client)
