@@ -8,7 +8,6 @@ build_id=${BUILD_ID:-'001'}
 extra_patches=${EXTRA_PATCHES}
 git_remote_repo=${GIT_REPO:-'git://git.whamcloud.com/fs/lustre-release.git'}
 distro=${DISTRO:-'rhel8.8'}
-e2fsprogs_branch=${E2FSPROGS_BRANCH:-'v1.46.6.wc1-lustre'}
 
 if [[ $distro =~ rhel8 ]]; then
 	target="4.18-${distro}"
@@ -36,7 +35,7 @@ repoid_base="uk.linaro.cloud_repo"
 local_patch_dir="${cache_dir}/src/patches/${build_what}"
 git_local_repo="${cache_dir}/git/lustre-release.git"
 kernel_rpm_repo_dir="kernel/${dist}/${arch}"
-e2fsprogs_rpm_repo_dir="e2fsprogs/${e2fsprogs_branch}/${dist}/${arch}"
+e2fsprogs_rpm_repo_dir="e2fsprogs/${dist}/${arch}"
 kernel_rpm_repo_url="${rpm_repo_base_url}/${kernel_rpm_repo_dir}"
 e2fsprogs_rpm_repo_url="${rpm_repo_base_url}/${e2fsprogs_rpm_repo_dir}"
 lustre_repoid="${repoid_base}_${rpm_repo_dir//\//_}"

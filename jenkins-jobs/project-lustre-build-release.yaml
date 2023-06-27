@@ -31,7 +31,6 @@
     dist: '{distro}'
     extra_patches: ''
     git_repo: 'git://git.whamcloud.com/fs/lustre-release.git'
-    e2fsprogs_branch: 'v1.46.6.wc1-lustre'
 
     parameters:
       - string:
@@ -42,10 +41,6 @@
           name: 'BRANCH'
           default: '{branch}'
           description: 'branch to build'
-      - string:
-          name: 'E2FSPROGS_BRANCH'
-          default: '{e2fsprogs_branch}'
-          description: 'E2fsprogs branch to build with'
       - string:
           name: 'EXTRA_PATCHES'
           default: '{extra_patches}'
