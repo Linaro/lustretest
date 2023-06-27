@@ -39,4 +39,4 @@
       - groovy-postbuild:
           script: |
             def summary = manager.createSummary("package.gif")
-            summary.appendText("See <a href=https://uk.linaro.cloud/repo/{build_what}/{branch}/{dist}/{arch}/>RPM release repo.</a>", false)
+            summary.appendText("See <a href=https://uk.linaro.cloud/repo/{build_what}/{dist}/{arch}/>RPM release repo.</a>", false)
