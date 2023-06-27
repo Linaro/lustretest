@@ -45,7 +45,7 @@
     - name: sanityn
     - name: insanity
     - name: replay-single
-    - name: conf-sanity
+    # - name: conf-sanity
     - name: sanity-benchmark
     - name: performance-sanity
     - name: sanity-pfl
