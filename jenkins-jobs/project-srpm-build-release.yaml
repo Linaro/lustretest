@@ -1,0 +1,55 @@
+---
+- project:
+    name: 'project-build-release'
+    what_dist:
+      - 'pdsh-oe2203sp1':
+          what: 'pdsh'
+          version: '2.34-5.el8'
+      - 'dbench-oe2203sp1':
+          what: 'dbench'
+          version: '4.0-20.el8'
+      - 'iozone-oe2203sp1':
+          what: 'iozone'
+          version: '3.494-1.fc38'
+      - 'iozone-el8':
+          what: 'iozone'
+          version: '3.494-1.fc38'
+          dist: 'el8'
+      - 'kernel-el8':
+          what: 'kernel'
+          version: '4.18.0-477.10.1.el8_8'
+          dist: 'el8'
+    jobs:
+      - '{name}-{what_dist}'
+
+- job-template:
+    name: '{name}-{what_dist}'
+    node: 'build-agent-{dist}'
+
+    # default var values
+    dist: 'oe2203sp1'
+    arch: 'aarch64'
+
+    parameters:
+      - string:
+          name: 'WHAT'
+          default: '{what}'
+          description: 'What srpm to build, e.g.: pdsh, dbench, etc.'
+      - string:
+          name: 'DIST'
+          default: '{dist}'
+          description: 'Distro version to build, e.g.: el8, oe2203sp1'
+      - string:
+          name: 'VERSION'
+          default: '{version}'
+          description: '{what} version to build, e.g.: 2.34-5.el8
+            see http://rpmfind.net/linux/rpm2html/search.php?query={what}&submit=Search+...&system=&arch=aarch64'
+
+    builders:
+      - shell:
+          !include-raw-escape: scripts/build-srpm-release.sh
+    publishers:
+      - groovy-postbuild:
+          script: |
+            def summary = manager.createSummary("package.gif")
+            summary.appendText("See <a href=https://uk.linaro.cloud/repo/{what}/{dist}/{arch}/>RPM release repo.</a>", false)
