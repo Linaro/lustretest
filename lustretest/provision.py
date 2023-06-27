@@ -403,88 +403,70 @@ class Provision():
         for cmd in cmds:
             self.run_cmd(node, client, cmd)
 
-    def get_add_rpm_repo_cmds(self):
-        lustre_rpm_repo = \
-            f"{self.rpm_repo_host}/lustre/{self.lustre_branch}/" \
-            f"{self.dist}/{self.arch}/lustre.repo"
-        iozone_rpm_repo = \
-            f"{self.rpm_repo_host}/iozone/{self.dist}/" \
-            f"{self.arch}/iozone.repo"
+    def add_rpm_repo(self, node, client, what):
+        if what == 'lustre':
+            rpm_repo = \
+                f"{self.rpm_repo_host}/{what}/{self.lustre_branch}/" \
+                f"{self.dist}/{self.arch}/{what}.repo"
+        else:
+            rpm_repo = \
+                f"{self.rpm_repo_host}/{what}/" \
+                f"{self.dist}/{self.arch}/{what}.repo"
 
-        cmds = []
-        cmd = f"sudo dnf config-manager --add-repo {lustre_rpm_repo}"
-        cmds.append(cmd)
-        cmd = f"sudo dnf config-manager --add-repo {iozone_rpm_repo}"
-        cmds.append(cmd)
-
-        if self.dist.startswith("oe2203"):
-            pdsh_rpm_repo = \
-                f"{self.rpm_repo_host}/pdsh/{self.dist}/" \
-                f"{self.arch}/pdsh.repo"
-            dbench_rpm_repo = \
-                f"{self.rpm_repo_host}/dbench/{self.dist}/" \
-                f"{self.arch}/dbench.repo"
-            cmd = f"sudo dnf config-manager --add-repo {pdsh_rpm_repo}"
-            cmds.append(cmd)
-            cmd = f"sudo dnf config-manager --add-repo {dbench_rpm_repo}"
-            cmds.append(cmd)
-
-        return cmds
-
-    def install_kernel(self, node, client):
-        repo_option = ''
-        if self.dist == 'el8':
-            rpm_repo = f"{self.rpm_repo_host}/kernel/{self.dist}/" \
-                f"{self.arch}/kernel.repo"
-            cmd = f"sudo dnf config-manager --add-repo {rpm_repo}"
-            self.run_cmd(node, client, cmd)
-            repo_option = "--repo kernel"
-        cmd = f"sudo dnf repoquery {repo_option} --latest-limit=1 " \
-            f"--qf '%{{VERSION}}-%{{RELEASE}}' kernel.{self.arch}"
-        version = self.run_cmd_ret_std(node, client, cmd)
-        if not version:
-            sys.exit(node + ":  Kernel version is empty! Failed run cmd: " + cmd)
-
-        cmd = f"sudo dnf install -y kernel-{version}"
-        self.run_cmd(node, client, cmd)
-
-    def install_e2fsprogs(self, node, client):
-        what = 'e2fsprogs'
-        rpm_repo = \
-            f"{self.rpm_repo_host}/{what}/v1.46.6.wc1-lustre/" \
-            f"{self.dist}/{self.arch}/{what}.repo"
         cmd = f"sudo dnf config-manager --add-repo {rpm_repo}"
         self.run_cmd(node, client, cmd)
 
-        # e2fsprogs-help conflicts with lustre e2fsprogs
+    def install_tools(self, node, client):
+        self.add_rpm_repo(node, client, 'iozone')
         if self.dist.startswith("oe2203"):
-            cmd = "sudo dnf remove -y e2fsprogs-help"
-            self.run_cmd(node, client, cmd)
+            self.add_rpm_repo(node, client, 'pdsh')
+            self.add_rpm_repo(node, client, 'dbench')
 
-        cmd = f"sudo dnf repoquery --latest-limit=1 " \
+        tool_pkgs = "pdsh pdsh-rcmd-ssh net-tools dbench fio " \
+            "bc attr gcc iozone rsync"
+        cmd = f"sudo dnf install -y {tool_pkgs}"
+        self.run_cmd(node, client, cmd)
+        cmd = f"sudo dnf update -y {tool_pkgs}"
+        self.run_cmd(node, client, cmd)
+
+    def install_latest_pkg(self, node, client, what):
+        # openEuler2203+ not need to add 4k page size kernel repo
+        if what == 'kernel' and self.dist.startswith("oe2203"):
+            repo_option = ''
+        else:
+            self.add_rpm_repo(node, client, what)
+            repo_option = f"--repo {what}"
+
+        cmd = f"sudo dnf repoquery {repo_option} --latest-limit=1 " \
             f"--qf '%{{VERSION}}-%{{RELEASE}}' {what}.{self.arch}"
         version = self.run_cmd_ret_std(node, client, cmd)
         if not version:
-            sys.exit(node + ":  Version is empty! Failed run cmd: " + cmd)
+            msg = f"{node}: {what} version is empty! Failed run cmd: {cmd}"
+            sys.exit(msg)
 
-        cmd = f"sudo dnf install -y {what}-{version}"
+        if what == 'lustre':
+            pkgs = f"lustre-{version} " \
+                f"lustre-iokit-{version} " \
+                f"lustre-osd-ldiskfs-mount-{version} " \
+                f"lustre-resource-agents-{version} " \
+                f"lustre-tests-{version} " \
+                f"kmod-lustre-{version} " \
+                f"kmod-lustre-osd-ldiskfs-{version} " \
+                f"kmod-lustre-tests-{version}"
+        else:
+            pkgs = f"{what}-{version}"
+
+        # e2fsprogs-help conflicts with lustre e2fsprogs
+        if what == 'e2fsprogs' and self.dist.startswith("oe2203"):
+            cmd = "sudo dnf remove -y e2fsprogs-help"
+            self.run_cmd(node, client, cmd)
+
+        cmd = f"sudo dnf install -y {pkgs}"
         self.run_cmd(node, client, cmd)
 
-    def install_lustre(self, node, client):
-        tool_pkgs = "pdsh pdsh-rcmd-ssh net-tools dbench fio " \
-            "bc attr gcc iozone rsync"
-        lustre_pkgs = "lustre " \
-            "lustre-iokit lustre-osd-ldiskfs-mount " \
-            "lustre-resource-agents " \
-            "lustre-tests kmod-lustre " \
-            "kmod-lustre-osd-ldiskfs " \
-            "kmod-lustre-tests"
-
+    def install_test_pkgs(self, node, client):
         cmd = "sudo dnf install -y dnf-plugins-core bc"
         self.run_cmd(node, client, cmd)
-
-        cmds = self.get_add_rpm_repo_cmds()
-        self.run_cmds(node, client, cmds)
 
         cmds = []
         if self.dist == 'el8':
@@ -498,28 +480,16 @@ class Provision():
         cmds.append(cmd)
         self.run_cmds(node, client, cmds)
 
-        self.install_kernel(node, client)
-
-        self.install_e2fsprogs(node, client)
-
-        cmds = []
-        cmd = f"sudo dnf install -y {tool_pkgs}"
-        cmds.append(cmd)
-        cmd = f"sudo dnf update -y {tool_pkgs}"
-        cmds.append(cmd)
-        cmd = f"sudo dnf remove --noautoremove -y {lustre_pkgs}"
-        cmds.append(cmd)
-        cmd = f"sudo dnf install -y {lustre_pkgs}"
-        cmds.append(cmd)
-        cmd = "sudo dnf autoremove -y"
-        cmds.append(cmd)
-        self.run_cmds(node, client, cmds)
+        self.install_latest_pkg(node, client, 'kernel')
+        self.install_latest_pkg(node, client, 'e2fsprogs')
+        self.install_latest_pkg(node, client, 'lustre')
+        self.install_tools(node, client)
         return True
 
     def node_operate(self):
         with futures.ThreadPoolExecutor(max_workers=5) as executor:
             future_to_node = {
-                executor.submit(self.install_lustre, node, client): node
+                executor.submit(self.install_test_pkgs, node, client): node
                 for node, client in self.ssh_clients.items()
             }
             for future in futures.as_completed(future_to_node):
