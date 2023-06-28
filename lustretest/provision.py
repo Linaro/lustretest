@@ -463,8 +463,10 @@ class Provision():
 
         cmd = f"sudo dnf install -y {pkgs}"
         self.run_cmd(node, client, cmd)
-        cmd = "sudo grubby --set-default-index 0"
-        self.run_cmd(node, client, cmd)
+        if what == 'kernel':
+            kernel_path = f"/boot/vmlinuz-{version}.{self.arch}"
+            cmd = f"sudo grubby --set-default={kernel_path}"
+            self.run_cmd(node, client, cmd)
 
     def install_test_pkgs(self, node, client):
         cmd = "sudo dnf install -y dnf-plugins-core bc"
