@@ -463,6 +463,8 @@ class Provision():
 
         cmd = f"sudo dnf install -y {pkgs}"
         self.run_cmd(node, client, cmd)
+        cmd = "sudo grubby --set-default-index 0"
+        self.run_cmd(node, client, cmd)
 
     def install_test_pkgs(self, node, client):
         cmd = "sudo dnf install -y dnf-plugins-core bc"
