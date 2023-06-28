@@ -35,7 +35,8 @@ class Auster():
             self.test_info['suites'] = test_suites
             self.test_info['group_name'] = 'custom-' + str(uuid.uuid4())[:8]
             self.test_info['timeout'] = -1
-        logdir = f"log-{self.test_info['build_id']}/{self.test_info['group_name']}"
+        logdir = f"{lustre_branch}/{dist}/log-{self.test_info['build_id']}/" \
+            f"{self.test_info['group_name']}"
         self.test_info['logdir'] = f"{nfs_dir}/{logdir}"
         self.test_info['local_logdir'] = f"{self.test_info['workspace']}/test_logs/{logdir}"
         self.test_info['shared_dir'] = nfs_dir
