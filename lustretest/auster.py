@@ -33,7 +33,7 @@ class Auster():
         else:
             self.test_info['group_id'] = 0
             self.test_info['suites'] = test_suites
-            self.test_info['group_name'] = 'custom'
+            self.test_info['group_name'] = 'custom-' + str(uuid.uuid4())[:8]
             self.test_info['timeout'] = -1
         logdir = f"log-{self.test_info['build_id']}/{self.test_info['group_name']}"
         self.test_info['logdir'] = f"{nfs_dir}/{logdir}"
