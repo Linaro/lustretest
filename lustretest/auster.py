@@ -103,7 +103,7 @@ class Auster():
             env_vars = f"TEST_GROUP={self.test_info['group_name']} " \
                 f"SHARED_DIRECTORY={self.test_info['shared_dir']} "
             cmd = f"{env_vars} " \
-                "/usr/lib64/lustre/tests/auster -f multinode -rvs " \
+                "/usr/lib64/lustre/tests/auster -f multinode -rvsk " \
                 f"-D {self.test_info['logdir']} " \
                 f"{self.test_info['suites']}"
 
@@ -116,9 +116,9 @@ class Auster():
             rc = self.ssh_exec(cmd, self.test_info['timeout'])
             self._info("Auster test finish, rc = %d", rc)
 
-            if rc == const.TEST_SUCC:
-                rc = self.parse_test_result()
-                self._info("Auster parse result finish, rc = %d", rc)
+            #if rc == const.TEST_SUCC:
+            rc = self.parse_test_result()
+            self._info("Auster parse result finish, rc = %d", rc)
         else:
             msg = f"No available ssh client for: {self.ip}"
             self._error(msg)
