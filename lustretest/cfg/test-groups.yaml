@@ -53,5 +53,5 @@
     - name: sanity-pfl
     - name: sanity-lfsck
       args:
-        - oe2203sp1: "--except 0"
+        oe2203sp1: "--except 0"
     - name: parallel-scale-nfsv4
