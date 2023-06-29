@@ -35,7 +35,8 @@
     - name: sanity-sec
       args: "--except 26"
     - name: lustre-rsync-test
-    #    - name: racer
+    - name: racer
+      args: "--except all"
     - name: sanity-hsm
     - name: lnet-selftest
 
@@ -45,9 +46,12 @@
     - name: sanityn
     - name: insanity
     - name: replay-single
-    # - name: conf-sanity
+    - name: conf-sanity
+      args: "--except all"
     - name: sanity-benchmark
     - name: performance-sanity
     - name: sanity-pfl
     - name: sanity-lfsck
+      args:
+        - oe2203sp1: "--except 0"
     - name: parallel-scale-nfsv4

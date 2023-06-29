@@ -256,6 +256,10 @@ class Auster():
                     for test_suite in group['test_suite']:
                         name = test_suite['name']
                         args = test_suite.get('args', "")
-                        test_suites_with_args += f" {name} {args}"
+                        if isinstance(args, dict):
+                            args = args.get(self.test_info['dist'], "")
+                        # check if args is '--except all'
+                        if "all" not in args:
+                            test_suites_with_args += f" {name} {args}"
                     break
         return test_suites_with_args
