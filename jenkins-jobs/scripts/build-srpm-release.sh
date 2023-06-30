@@ -117,7 +117,7 @@ sudo mv -fv $top_dir/SRPMS/*.src.rpm $rpm_repo
 sudo createrepo --update $rpm_repo
 
 cat <<EOF | sudo tee ${rpm_repo_file}
-[${what}]
+[${what%%+*}]
 name=${what}
 baseurl=${rpm_repo_url}
 enabled=1
