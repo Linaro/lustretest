@@ -421,9 +421,10 @@ class Provision():
         if self.dist.startswith("oe2203"):
             self.add_rpm_repo(node, client, 'pdsh')
             self.add_rpm_repo(node, client, 'dbench')
+            self.add_rpm_repo(node, client, 'bonnie++')
 
         tool_pkgs = "pdsh pdsh-rcmd-ssh net-tools dbench fio " \
-            "bc attr gcc iozone rsync"
+            "bc attr gcc iozone rsync bonnie++"
         cmd = f"sudo dnf install -y {tool_pkgs}"
         self.run_cmd(node, client, cmd)
         cmd = f"sudo dnf update -y {tool_pkgs}"
