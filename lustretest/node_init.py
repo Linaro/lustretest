@@ -220,7 +220,6 @@ def multinode_conf_gen(node_map, cluster_dir):
         lines += "MGSSIZE=0\n"
         lines += "USER0=runas\n"
         lines += "USER1=runas1\n"
-        lines += "PJDFSTEST_DIR=/home/jenkins/pjdfstest\n"
         lines += ". $LUSTRE/tests/cfg/ncli.sh\n"
         test_conf.write(lines)
 
