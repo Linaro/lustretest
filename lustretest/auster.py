@@ -117,7 +117,7 @@ class Auster():
             rc = self.ssh_exec(cmd, self.test_info['timeout'])
             self._info("Auster test finish, rc = %d", rc)
 
-            #if rc == const.TEST_SUCC:
+            # if rc == const.TEST_SUCC:
             rc = self.parse_test_result()
             self._info("Auster parse result finish, rc = %d", rc)
         else:
@@ -206,7 +206,8 @@ class Auster():
 
         duration_sum = f'{duration_sum/60/60:.1f}'  # hours
         test_results['duration_hours'] = duration_sum
-        msg = f"{self.test_info['group_name']} total tests: {total_sum}, take {duration_sum} hours."
+        msg = f"\n====>{self.test_info['group_name']} total tests: "\
+            f"{total_sum}, take {duration_sum} hours.<===="
         self._info(msg)
         if fail_sum > 0:
             percent = f"{fail_sum/total_sum:.1%}"
