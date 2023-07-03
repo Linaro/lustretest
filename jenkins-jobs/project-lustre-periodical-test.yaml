@@ -3,14 +3,15 @@
     name: 'project-periodical-test-lustre'
     branch_distro:
       - 'master-rhel8':
-          dist: 'el8'
           branch: 'master'
+      - 'b2_15-rhel8':
+          branch: 'b2_15'
       - 'master-oe2203':
           dist: 'oe2203sp1'
           branch: 'master'
-          trigger_time: |
-            TZ=Asia/Shanghai
-            0 19 * * *
+      - 'b2_15-oe2203':
+          dist: 'oe2203sp1'
+          branch: 'b2_15-openeuler-22.03'
     jobs:
       - '{name}-{branch_distro}'
 
@@ -20,6 +21,7 @@
     trigger_time: |
       TZ=Asia/Shanghai
       0 18 * * *
+    dist: 'el8'
     triggers:
       - timed: |
           {trigger_time}
