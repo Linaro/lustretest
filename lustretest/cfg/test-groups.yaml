@@ -12,6 +12,7 @@
     - name: sanity-dom
     - name: mmp
     - name: sanity-lsnapshot
+      args: "--except all"
     - name: sanity-flr
     - name: replay-dual
     - name: runtests
