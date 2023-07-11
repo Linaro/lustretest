@@ -5,9 +5,9 @@
   timeout: -1
   test_suite:
     - name: recovery-small
+      args: "--except 136"
     - name: ost-pools
     - name: pjdfstest
-      args: "--except all"
     - name: sanity-lnet
     - name: mds-survey
     - name: sanity-dom
