@@ -103,7 +103,7 @@ class Auster():
         if self.ssh_client:
             env_vars = f"TEST_GROUP={self.test_info['group_name']} " \
                 f"SHARED_DIRECTORY={self.test_info['shared_dir']} " \
-                f"PJDFSTEST_DIR=/home/jenkins/pjdfstest "
+                f"PJDFSTEST_DIR=/home/{const.CLOUD_INIT_CHECK_USER}/pjdfstest "
             for suite in self.test_info['suites']:
                 cmd = f"{env_vars} " \
                     "/usr/lib64/lustre/tests/auster -f multinode -rvsk " \

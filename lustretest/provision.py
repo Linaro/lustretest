@@ -416,6 +416,19 @@ class Provision():
         cmd = f"sudo dnf config-manager --add-repo {rpm_repo}"
         self.run_cmd(node, client, cmd)
 
+    def install_tool_by_sh(self, node, client, what):
+        sh_dir_url = "https://raw.githubusercontent.com/" \
+            "Linaro/lustretest/main/lustretest"
+        install_sh = f"install_{what}.sh"
+        check_install_dir = f"{what}"
+
+        cmd = "sudo dnf install -y wget"
+        self.run_cmd(node, client, cmd)
+        cmd = f"ls {check_install_dir} || " \
+            f"(wget -c {sh_dir_url}/{install_sh} && " \
+            f"bash {install_sh})"
+        self.run_cmd(node, client, cmd)
+
     def install_tools(self, node, client):
         self.add_rpm_repo(node, client, 'iozone')
         if self.dist.startswith("oe2203"):
@@ -429,6 +442,8 @@ class Provision():
         self.run_cmd(node, client, cmd)
         cmd = f"sudo dnf update -y {tool_pkgs}"
         self.run_cmd(node, client, cmd)
+
+        self.install_tool_by_sh(node, client, 'pjdfstest')
 
     def install_latest_pkg(self, node, client, what):
         # openEuler2203+ not need to add 4k page size kernel repo
