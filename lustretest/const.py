@@ -48,35 +48,21 @@ OST_DISK8 = "/dev/vdi"
 
 # Terraform Resource Name
 LUSTRE_CLUSTER_PREFIX = "lustre-"
-LUSTRE_NODE_NUM_01 = "-01"
-LUSTRE_NODE_NUM_02 = "-02"
-LUSTRE_NODE_NUM_03 = "-03"
-LUSTRE_NODE_NUM_04 = "-04"
-LUSTRE_NODE_NUM_05 = "-05"
+MAX_NODE_NUM = 5
+TF_VAR_NODE_PREFIX = "node"
 
-LUSTRE_NODE_01 = "node01"
-LUSTRE_NODE_02 = "node02"
-LUSTRE_NODE_03 = "node03"
-LUSTRE_NODE_04 = "node04"
-LUSTRE_NODE_05 = "node05"
+MAX_CLIENT_NUM = 2
+TF_VAR_CLIENT_PORT_PREFIX = "lustre_client"
+MAX_MDS_NUM = 2
+TF_VAR_MDS_PORT_PREFIX = "lustre_mds"
+MAX_OST_NUM = 1
+TF_VAR_OST_PORT_PREFIX = "lustre_ost"
 
-LUSTRE_CLIENT01_PORT = "lustre_client01_port"
-LUSTRE_CLIENT02_PORT = "lustre_client02_port"
-LUSTRE_MDS01_PORT = "lustre_client01_port"
-LUSTRE_MDS02_PORT = "lustre_client01_port"
-LUSTRE_OST01_PORT = "lustre_client01_port"
-
-TF_VM_IMAGE_VAR = "image"
+TF_VAR_VM_IMAGE = "image"
 VM_IMAGES = {
     'el8': 'vm-almalinux-8',
     'oe2203sp1': 'vm-openeuler-minimal-22.03-LTS-SP1'
 }
-
-LUSTRE_CLIENT01_PORT_PREFIX = "_client01_port"
-LUSTRE_CLIENT02_PORT_PREFIX = "_client02_port"
-LUSTRE_MDS01_PORT_PREFIX = "_mds01_port"
-LUSTRE_MDS02_PORT_PREFIX = "_mds02_port"
-LUSTRE_OST01_PORT_PREFIX = "_ost01_port"
 
 TERRAFORM_CLIENT01_IP = "client01_ip"
 TERRAFORM_CLIENT02_IP = "client02_ip"
@@ -89,6 +75,11 @@ TERRAFORM_CLIENT02_HOSTNAME = "client02_hostname"
 TERRAFORM_MDS01_HOSTNAME = "mds01_hostname"
 TERRAFORM_MDS02_HOSTNAME = "mds02_hostname"
 TERRAFORM_OST01_HOSTNAME = "ost01_hostname"
+
+MAX_MDS_VOL_NUM = 4
+TF_VAR_MDS_VOL_PREFIX = "mds_volume"
+MAX_OST_VOL_NUM = 8
+TF_VAR_OST_VOL_PREFIX = "ost_volume"
 
 TEST_FAIL = -1
 TEST_SUCC = 0

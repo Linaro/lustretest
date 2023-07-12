@@ -121,27 +121,48 @@ class Provision():
     # TERRAFORM_VARIABLES_JSON
     #
     def prepare_tf_conf(self):
-        test_hash = host_name_gen()
-        test_name = const.LUSTRE_CLUSTER_PREFIX + test_hash.lower()
+        cluster_name = const.LUSTRE_CLUSTER_PREFIX + host_name_gen().lower()
         self.cluster_dir = path_join(self.clusters_top_dir, self.dist,
-                                     test_name)
+                                     cluster_name)
         self.copy_dir()
 
+        # rename Terraform Resources vars to duplicated name between
+        # clusters
         vm_image = const.VM_IMAGES[self.dist]
-        network_port_prefix = const.LUSTRE_CLUSTER_PREFIX + test_hash
         tf_vars = {
-            const.LUSTRE_NODE_01: test_name + const.LUSTRE_NODE_NUM_01,
-            const.LUSTRE_NODE_02: test_name + const.LUSTRE_NODE_NUM_02,
-            const.LUSTRE_NODE_03: test_name + const.LUSTRE_NODE_NUM_03,
-            const.LUSTRE_NODE_04: test_name + const.LUSTRE_NODE_NUM_04,
-            const.LUSTRE_NODE_05: test_name + const.LUSTRE_NODE_NUM_05,
-            const.LUSTRE_CLIENT01_PORT: network_port_prefix + const.LUSTRE_CLIENT01_PORT_PREFIX,
-            const.LUSTRE_CLIENT02_PORT: network_port_prefix + const.LUSTRE_CLIENT02_PORT_PREFIX,
-            const.LUSTRE_MDS01_PORT: network_port_prefix + const.LUSTRE_MDS01_PORT_PREFIX,
-            const.LUSTRE_MDS02_PORT: network_port_prefix + const.LUSTRE_MDS02_PORT_PREFIX,
-            const.LUSTRE_OST01_PORT: network_port_prefix + const.LUSTRE_OST01_PORT_PREFIX,
-            const.TF_VM_IMAGE_VAR: vm_image
+            const.TF_VAR_VM_IMAGE: vm_image
         }
+
+        # node name
+        for num in range(1, const.MAX_NODE_NUM):
+            var = f"{const.TF_VAR_NODE_PREFIX}{num:02d}"
+            value = f"{cluster_name}-{num:02d}"
+            tf_vars[var] = value
+
+        # port name
+        for num in range(1, const.MAX_CLIENT_NUM):
+            var = f"{const.TF_VAR_CLIENT_PORT_PREFIX}{num:02d}_port"
+            value = f"{cluster_name}-client{num:02d}-port"
+            tf_vars[var] = value
+        for num in range(1, const.MAX_MDS_NUM):
+            var = f"{const.TF_VAR_MDS_PORT_PREFIX}{num:02d}_port"
+            value = f"{cluster_name}-mds{num:02d}-port"
+            tf_vars[var] = value
+        for num in range(1, const.MAX_OST_NUM):
+            var = f"{const.TF_VAR_OST_PORT_PREFIX}{num:02d}_port"
+            value = f"{cluster_name}-ost{num:02d}-port"
+            tf_vars[var] = value
+
+        # volume name
+        for num in range(1, const.MAX_MDS_VOL_NUM):
+            var = f"{const.TF_VAR_MDS_VOL_PREFIX}{num:02d}"
+            value = f"{cluster_name}-mds-volume{num:02d}"
+            tf_vars[var] = value
+        for num in range(1, const.MAX_OST_VOL_NUM):
+            var = f"{const.TF_VAR_OST_VOL_PREFIX}{num:02d}"
+            value = f"{cluster_name}-ost-volume{num:02d}"
+            tf_vars[var] = value
+
         # Write the file to json file
         with open(path_join(self.cluster_dir, const.TERRAFORM_VARIABLES_JSON), "w") as f:
             json.dump(tf_vars, f)
