@@ -21,6 +21,7 @@ class Auster():
         self.ssh_client = None
         self.ip = exec_node_ip
         self.test_info = {}
+        self.test_info['suites'] = []
         self.test_info['lustre_branch'] = lustre_branch
         self.test_info['build_id'] = build_id
         self.test_info['dist'] = dist
@@ -32,7 +33,7 @@ class Auster():
             self.test_info['suites'] = self.get_test_suites(test_group_id)
         else:
             self.test_info['group_id'] = 0
-            self.test_info['suites'] = test_suites
+            self.test_info['suites'].append(test_suites)
             self.test_info['group_name'] = 'custom-' + str(uuid.uuid4())[:8]
             self.test_info['timeout'] = -1
         logdir = f"{lustre_branch}/{dist}/log-{self.test_info['build_id']}/" \
@@ -103,21 +104,23 @@ class Auster():
             env_vars = f"TEST_GROUP={self.test_info['group_name']} " \
                 f"SHARED_DIRECTORY={self.test_info['shared_dir']} " \
                 f"PJDFSTEST_DIR=/home/jenkins/pjdfstest "
-            cmd = f"{env_vars} " \
-                "/usr/lib64/lustre/tests/auster -f multinode -rvsk " \
-                f"-D {self.test_info['logdir']} " \
-                f"{self.test_info['suites']}"
+            for suite in self.test_info['suites']:
+                cmd = f"{env_vars} " \
+                    "/usr/lib64/lustre/tests/auster -f multinode -rvsk " \
+                    f"-D {self.test_info['logdir']} {suite}"
 
-            msg = \
-                f"Exec the test suites on the node: {self.ip}\n" \
-                f"Timeout: {self.test_info['timeout']}\n" \
-                f"Cmd: {cmd}\n..."
+                msg = \
+                    f"Exec the test suite on the node: {self.ip}\n" \
+                    f"Timeout: {self.test_info['timeout']}\n" \
+                    f"Cmd: {cmd}\n..."
 
+                self._info(msg)
+                rc = self.ssh_exec(cmd, self.test_info['timeout'])
+                msg = f"Auster test finish, test suite: {suite}, rc = {rc}"
+                self._info(msg)
+            msg = f"Auster test finish, test suites: {self.test_info['suites']}"
             self._info(msg)
-            rc = self.ssh_exec(cmd, self.test_info['timeout'])
-            self._info("Auster test finish, rc = %d", rc)
 
-            # if rc == const.TEST_SUCC:
             rc = self.parse_test_result()
             self._info("Auster parse result finish, rc = %d", rc)
         else:
@@ -239,7 +242,7 @@ class Auster():
                 f"{self.test_info['group_name']}--" \
                 f"{test_results['test_sequence']}.{test_results['test_index']}"
             test_results['test_name'] = test_name
-            test_results['test_suites'] = self.test_info['suites'].strip()
+            test_results['test_suites'] = ', '.join(self.test_info['suites'])
             yaml.safe_dump(test_results, file)
 
         if fail:
@@ -248,7 +251,7 @@ class Auster():
         return const.TEST_SUCC
 
     def get_test_suites(self, test_group_id):
-        test_suites_with_args = ""
+        test_suites_with_args = []
         with open(const.TEST_ARGS_CONFIG, "r") as test_args:
             test_groups = yaml.load(test_args, Loader=yaml.FullLoader)
             for group in test_groups:
@@ -262,6 +265,7 @@ class Auster():
                             args = args.get(self.test_info['dist'], "")
                         # check if args is '--except all'
                         if "all" not in args:
-                            test_suites_with_args += f" {name} {args}"
+                            suite = f"{name} {args}"
+                            test_suites_with_args.append(suite)
                     break
         return test_suites_with_args
