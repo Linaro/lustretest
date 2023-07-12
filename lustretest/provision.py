@@ -134,31 +134,31 @@ class Provision():
         }
 
         # node name
-        for num in range(1, const.MAX_NODE_NUM):
+        for num in range(1, const.MAX_NODE_NUM+1):
             var = f"{const.TF_VAR_NODE_PREFIX}{num:02d}"
             value = f"{cluster_name}-{num:02d}"
             tf_vars[var] = value
 
         # port name
-        for num in range(1, const.MAX_CLIENT_NUM):
+        for num in range(1, const.MAX_CLIENT_NUM+1):
             var = f"{const.TF_VAR_CLIENT_PORT_PREFIX}{num:02d}_port"
             value = f"{cluster_name}-client{num:02d}-port"
             tf_vars[var] = value
-        for num in range(1, const.MAX_MDS_NUM):
+        for num in range(1, const.MAX_MDS_NUM+1):
             var = f"{const.TF_VAR_MDS_PORT_PREFIX}{num:02d}_port"
             value = f"{cluster_name}-mds{num:02d}-port"
             tf_vars[var] = value
-        for num in range(1, const.MAX_OST_NUM):
+        for num in range(1, const.MAX_OST_NUM+1):
             var = f"{const.TF_VAR_OST_PORT_PREFIX}{num:02d}_port"
             value = f"{cluster_name}-ost{num:02d}-port"
             tf_vars[var] = value
 
         # volume name
-        for num in range(1, const.MAX_MDS_VOL_NUM):
+        for num in range(1, const.MAX_MDS_VOL_NUM+1):
             var = f"{const.TF_VAR_MDS_VOL_PREFIX}{num:02d}"
             value = f"{cluster_name}-mds-volume{num:02d}"
             tf_vars[var] = value
-        for num in range(1, const.MAX_OST_VOL_NUM):
+        for num in range(1, const.MAX_OST_VOL_NUM+1):
             var = f"{const.TF_VAR_OST_VOL_PREFIX}{num:02d}"
             value = f"{cluster_name}-ost-volume{num:02d}"
             tf_vars[var] = value
@@ -304,7 +304,7 @@ class Provision():
     # Using SSH, all the ssh keys credential is the same
     #
     def node_check(self):
-        if len(self.node_ip_list) == 5:
+        if len(self.node_ip_list) == const.MAX_NODE_NUM:
             ssh_check_cmd = "ls -l " + const.CLOUD_INIT_FINISH
             while True:
                 for ip in self.node_ip_list:
@@ -324,7 +324,7 @@ class Provision():
                         self._info("Timeout on  connect to the node: " + ip)
 
                 ready_clients = len(self.ssh_clients)
-                if ready_clients == 5:
+                if ready_clients == const.MAX_NODE_NUM:
                     self._info("All the clients is ready")
                     break
                 self._info("Ready clients are: " + str(ready_clients))
@@ -345,11 +345,11 @@ class Provision():
                             "The cloud-init process is not finished: " + ip)
                 ready_node = len(node_status)
                 self._info("Ready nodes: " + str(node_status))
-                if ready_node == 5:
+                if ready_node == const.MAX_NODE_NUM:
                     break
                 time.sleep(10)
 
-            if len(node_status) == 5:
+            if len(node_status) == const.MAX_NODE_NUM:
                 return True
 
             self._error("The cloud-init processes of nodes are "
@@ -528,7 +528,7 @@ class Provision():
         return True
 
     def node_operate(self):
-        with futures.ThreadPoolExecutor(max_workers=5) as executor:
+        with futures.ThreadPoolExecutor(max_workers=const.MAX_NODE_NUM) as executor:
             future_to_node = {
                 executor.submit(self.install_test_pkgs, node, client): node
                 for node, client in self.ssh_clients.items()

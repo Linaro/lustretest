@@ -171,6 +171,7 @@ def multinode_conf_gen(node_map, cluster_dir):
                 elif total_client == 1:
                     total_client += 1
                     total_clients += ' ' + node_info[0]
+                    lines += "CLIENTCOUNT=2\n"
                     lines += "RCLIENTS=\"" + total_clients + "\"\n"
             if node_info[2] == const.MDS:
                 if total_mds == 0:
@@ -298,11 +299,11 @@ def reboot_and_check(nodes, logger):
 
         ready_node = len(node_status)
         logger.info("Ready nodes: " + str(node_status))
-        if ready_node == 5:
+        if ready_node == const.MAX_NODE_NUM:
             break
         time.sleep(5)
 
-    if len(node_status) == 5:
+    if len(node_status) == const.MAX_NODE_NUM:
         return True
 
     logger.info("The reboot processes of nodes are "

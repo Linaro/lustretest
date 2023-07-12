@@ -62,11 +62,6 @@ resource "openstack_blockstorage_volume_v2" "ost01_volume07" {
   size = var.ost_size
 }
 
-resource "openstack_blockstorage_volume_v2" "ost01_volume08" {
-  name = var.ost_volume08
-  size = var.ost_size
-}
-
 # Attach volume to instance instance db
 resource "openstack_compute_volume_attach_v2" "ost01_volume01_attach" {
   instance_id = openstack_compute_instance_v2.ost01.id
@@ -101,9 +96,4 @@ resource "openstack_compute_volume_attach_v2" "ost01_volume06_attach" {
 resource "openstack_compute_volume_attach_v2" "ost01_volume07_attach" {
   instance_id = openstack_compute_instance_v2.ost01.id
   volume_id   = openstack_blockstorage_volume_v2.ost01_volume07.id
-}
-
-resource "openstack_compute_volume_attach_v2" "ost01_volume08_attach" {
-  instance_id = openstack_compute_instance_v2.ost01.id
-  volume_id   = openstack_blockstorage_volume_v2.ost01_volume08.id
 }
