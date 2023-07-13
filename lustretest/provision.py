@@ -380,23 +380,18 @@ class Provision():
     # procedures which is in cloud-init to another function.
     #
     def provision(self, cluster_dir=None):
-        if not self.provision_new:
+        if self.provision_new:
+            tf_return = self.terraform_apply()
+            if not tf_return:
+                return False
+        else:
             self._info("Prepare to use the exist cluster: " + cluster_dir)
             self.cluster_dir = cluster_dir
-
-        self._info("tf conf dir: " + self.cluster_dir)
-        if not path_exists(self.cluster_dir):
-            self._error("No exist terraform config path exist:" +
-                        self.cluster_dir)
-            return False
-        self.clean_node_info()
-        tf_return = self.terraform_apply()
-        if tf_return:
-            self.gen_node_info()
-        else:
-            return False
+            self.clean_node_info()
 
         # check the file is there
+        self.gen_node_info()
+        self._info("tf conf dir: " + self.cluster_dir)
         if path_exists(path_join(self.cluster_dir, const.NODE_INFO)):
             if self.node_check():
                 self._info("Install Lustre from the repo...")
