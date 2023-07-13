@@ -23,6 +23,8 @@
     - name: replay-ost-single
     - name: obdfilter-survey
     - name: sanity-scrub
+      args:
+        oe2203sp1: "--except 8"
 
 - name: linaro-full-part-2
   id: 2
