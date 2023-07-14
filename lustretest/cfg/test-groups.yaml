@@ -40,7 +40,8 @@
       args: "--except 26"
     - name: lustre-rsync-test
     - name: racer
-      args: "--except all"
+      args:
+        el8: "--except all"
     - name: sanity-hsm
     - name: lnet-selftest
 
