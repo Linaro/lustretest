@@ -112,8 +112,9 @@ fi
 # TODO: download such patches from git repo
 mkdir -p tmp-patches
 cp -rv $local_patch_dir/*.patch tmp-patches
-cp -rv $local_patch_dir/${distro}/*.patch tmp-patches || true
 cp -rv $local_patch_dir/${branch}/*.patch tmp-patches || true
+cp -rv $local_patch_dir/${dist}/*.patch tmp-patches || true
+cp -rv $local_patch_dir/${dist}/${branch}/*.patch tmp-patches || true
 repo_option=""
 if [[ $distro =~ rhel8 ]]; then
 	repo_option="--repo ${kernel_repoid}"
