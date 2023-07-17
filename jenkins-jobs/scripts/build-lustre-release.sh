@@ -9,12 +9,16 @@ extra_patches=${EXTRA_PATCHES}
 git_remote_repo=${GIT_REPO:-'git://git.whamcloud.com/fs/lustre-release.git'}
 distro=${DISTRO:-'rhel8.8'}
 
+co_branch=$branch
 if [[ $distro =~ rhel8 ]]; then
 	target="4.18-${distro}"
 	dist="el8"
 elif [[ $distro =~ oe2203 ]]; then
 	target="5.10-${distro}"
 	dist=${distro}
+        if [[ $branch =~ b2_15 ]]; then
+		co_branch="b2_15-openeuler-22.03"
+	fi
 fi
 
 arch=$(arch)
@@ -87,7 +91,7 @@ sudo ln -s $(which ccache) /usr/local/bin/c++
 echo "Generate the release tar bz..."
 mkdir -p $build_dir
 cd $build_dir
-git clone --branch $branch --reference $git_local_repo $git_remote_repo
+git clone --branch $co_branch --reference $git_local_repo $git_remote_repo
 cd lustre-release
 commit_id=$(git rev-parse --short HEAD)
 
@@ -175,4 +179,4 @@ gpgcheck=0
 EOF
 
 echo $commit_id > $last_build_file
-echo "Finish build $build_id. branch: $branch, commit ID: $commit_id"
+echo "Finish build $build_id. branch: $co_branch, commit ID: $commit_id"

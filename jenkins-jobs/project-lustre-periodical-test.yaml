@@ -11,7 +11,7 @@
           branch: 'master'
       - 'b2_15-oe2203':
           dist: 'oe2203sp1'
-          branch: 'b2_15-openeuler-22.03'
+          branch: 'b2_15'
     jobs:
       - '{name}-{branch_distro}'
 
