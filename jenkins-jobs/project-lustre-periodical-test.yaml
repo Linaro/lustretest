@@ -7,10 +7,10 @@
       - 'b2_15-rhel8':
           branch: 'b2_15'
       - 'master-oe2203':
-          dist: 'oe2203sp1'
+          dist: 'oe2203sp2'
           branch: 'master'
       - 'b2_15-oe2203':
-          dist: 'oe2203sp1'
+          dist: 'oe2203sp2'
           branch: 'b2_15'
     jobs:
       - '{name}-{branch_distro}'

@@ -7,6 +7,7 @@ branch=${BRANCH:-'v1.46.6.wc1-lustre'}
 build_id=${BUILD_ID:-'001'}
 git_remote_repo=${GIT_REPO:-'git://git.whamcloud.com/tools/e2fsprogs.git'}
 dist=${DIST:-'el8'}
+dist_main=${dist%sp*}
 
 arch=$(arch)
 build_what="e2fsprogs"
@@ -21,7 +22,8 @@ rpm_repo_base_url="https://uk.linaro.cloud/repo"
 rpm_repo_url="${rpm_repo_base_url}/${rpm_repo_dir}"
 rpm_repo_file="${rpm_repo}/${build_what}.repo"
 
-git_local_repo="${cache_dir}/git/e2fsprogs.git"
+git_local_repo="${cache_dir}/git/${build_what}.git"
+local_patch_dir="${cache_dir}/src/patches/${build_what}"
 
 # check dist rpm macro existence
 dist_macro=$(rpm -E %{?dist})
@@ -67,6 +69,14 @@ if [[ -f $last_build_file ]] && [[ "$commit_id" == "$(cat $last_build_file)" ]];
 	echo "The same build commit $commit_id skip build."
 	exit 0
 fi
+
+# Apply more extra patches from local cache dir which are only for build not for upstream
+# TODO: download such patches from git repo
+mkdir -p tmp-patches
+cp -rv $local_patch_dir/*.patch tmp-patches || true
+cp -rv $local_patch_dir/${dist_main}/*.patch tmp-patches || true
+cp -rv $local_patch_dir/${dist}/*.patch tmp-patches || true
+git apply -v tmp-patches/*.patch
 
 # configure
 ./configure

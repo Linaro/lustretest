@@ -24,7 +24,7 @@
     - name: obdfilter-survey
     - name: sanity-scrub
       args:
-        oe2203sp1: "--except 8"
+        oe2203: "--except 8"
 
 - name: linaro-full-part-2
   id: 2
@@ -57,5 +57,5 @@
     - name: sanity-pfl
     - name: sanity-lfsck
       args:
-        oe2203sp1: "--except all"
+        oe2203: "--except all"
     - name: parallel-scale-nfsv4

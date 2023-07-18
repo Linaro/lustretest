@@ -1,4 +1,5 @@
 from os import environ as env
+import re
 import uuid
 
 import paramiko
@@ -25,6 +26,7 @@ class Auster():
         self.test_info['lustre_branch'] = lustre_branch
         self.test_info['build_id'] = build_id
         self.test_info['dist'] = dist
+        self.test_info['dist_main'] = re.sub('sp\d+', '', dist)
         self.test_info['arch'] = arch
         self.test_info['run_uuid'] = run_uuid
         self.test_info['workspace'] = workspace
@@ -262,7 +264,7 @@ class Auster():
                         name = test_suite['name']
                         args = test_suite.get('args', "")
                         if isinstance(args, dict):
-                            args = args.get(self.test_info['dist'], "")
+                            args = args.get(self.test_info['dist_main'], "")
                         # check if args is '--except all'
                         if "all" not in args:
                             suite = f"{name} {args}"

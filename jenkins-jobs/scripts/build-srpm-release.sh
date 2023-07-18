@@ -69,6 +69,7 @@ if [[ $dist =~ el8 ]]; then
 fi
 #sudo dnf update -y
 pkgs+=(ccache gcc make autoconf automake libtool rpm-build wget createrepo)
+pkgs+=(gcc-c++ popt-devel dos2unix)
 sudo dnf install -y ${pkgs[@]}
 sudo ln -s $(which ccache) /usr/local/bin/gcc &&
 sudo ln -s $(which ccache) /usr/local/bin/g++ &&

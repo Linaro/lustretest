@@ -3,12 +3,12 @@
     name: 'project-build-release'
     dist:
       - 'el8'
-      - 'oe2203sp1'
+      - 'oe2203sp2'
     jobs:
-      - '{name}-{build_what}-{branch}-{dist}'
+      - '{name}-{build_what}-{dist}'
 
 - job-template:
-    name: '{name}-{build_what}-{branch}-{dist}'
+    name: '{name}-{build_what}-{dist}'
     node: 'build-agent-{dist}'
 
     # default var values
