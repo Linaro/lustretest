@@ -27,7 +27,7 @@ pipeline {{
         stage('Build') {{
             steps {{
                 echo 'Building..'
-                build job: 'project-build-release-lustre-{branch_distro}'
+                build job: 'build-lustre-{branch_distro}'
 	    }}
         }}
 
