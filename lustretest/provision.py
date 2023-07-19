@@ -488,11 +488,6 @@ class Provision():
         else:
             pkgs = f"{what}-{version}"
 
-        # e2fsprogs-help conflicts with lustre e2fsprogs
-        if what == 'e2fsprogs' and self.dist.startswith("oe2203"):
-            cmd = "sudo dnf remove -y e2fsprogs-help"
-            self.run_cmd(node, client, cmd)
-
         cmd = f"sudo dnf install -y {pkgs}"
         self.run_cmd(node, client, cmd)
         if what == 'kernel':
