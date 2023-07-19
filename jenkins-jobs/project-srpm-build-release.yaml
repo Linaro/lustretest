@@ -1,6 +1,6 @@
 ---
 - project:
-    name: 'project-build-release'
+    name: 'build'
     what_dist:
       - 'pdsh-oe2203':
           what: 'pdsh'

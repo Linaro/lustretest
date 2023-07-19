@@ -1,6 +1,6 @@
 ---
 - project:
-    name: 'project-build-release'
+    name: 'build'
     branch_distro:
       - 'master-rhel8':
           distro: 'rhel8.8'
@@ -19,14 +19,14 @@
           git_repo: 'https://github.com/xin3liang/lustre-release.git'
           branch: 'b2_15'
     jobs:
-      - '{name}-{build_what}-{branch_distro}'
+      - '{name}-{what}-{branch_distro}'
 
 - job-template:
-    name: '{name}-{build_what}-{branch_distro}'
+    name: '{name}-{what}-{branch_distro}'
     node: 'build-agent-{dist}'
 
     # default var values
-    build_what: 'lustre'
+    what: 'lustre'
     arch: 'aarch64'
     dist: '{distro}'
     extra_patches: ''
@@ -55,9 +55,9 @@
 
     builders:
       - shell:
-          !include-raw-escape: scripts/build-{build_what}-release.sh
+          !include-raw-escape: scripts/build-{what}-release.sh
     publishers:
       - groovy-postbuild:
           script: |
             def summary = manager.createSummary("package.gif")
-            summary.appendText("See <a href=https://uk.linaro.cloud/repo/{build_what}/{branch}/{dist}/{arch}/>RPM release repo.</a>", false)
+            summary.appendText("See <a href=https://uk.linaro.cloud/repo/{what}/{branch}/{dist}/{arch}/>RPM release repo.</a>", false)

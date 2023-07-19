@@ -1,18 +1,18 @@
 ---
 - project:
-    name: 'project-build-release'
+    name: 'build'
     dist:
       - 'el8'
       - 'oe2203sp2'
     jobs:
-      - '{name}-{build_what}-{dist}'
+      - '{name}-{what}-{dist}'
 
 - job-template:
-    name: '{name}-{build_what}-{dist}'
+    name: '{name}-{what}-{dist}'
     node: 'build-agent-{dist}'
 
     # default var values
-    build_what: 'e2fsprogs'
+    what: 'e2fsprogs'
     branch: 'v1.46.6.wc1-lustre'
     arch: 'aarch64'
     git_repo: 'git://git.whamcloud.com/tools/e2fsprogs.git'
@@ -34,9 +34,9 @@
 
     builders:
       - shell:
-          !include-raw-escape: scripts/build-{build_what}-release.sh
+          !include-raw-escape: scripts/build-{what}-release.sh
     publishers:
       - groovy-postbuild:
           script: |
             def summary = manager.createSummary("package.gif")
-            summary.appendText("See <a href=https://uk.linaro.cloud/repo/{build_what}/{dist}/{arch}/>RPM release repo.</a>", false)
+            summary.appendText("See <a href=https://uk.linaro.cloud/repo/{what}/{dist}/{arch}/>RPM release repo.</a>", false)

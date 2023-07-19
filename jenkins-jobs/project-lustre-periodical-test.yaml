@@ -1,6 +1,6 @@
 ---
 - project:
-    name: 'project-periodical-test-lustre'
+    name: 'test-periodically'
     branch_distro:
       - 'master-rhel8':
           branch: 'master'
@@ -13,10 +13,11 @@
           dist: 'oe2203sp2'
           branch: 'b2_15'
     jobs:
-      - '{name}-{branch_distro}'
+      - '{name}-{what}-{branch_distro}'
 
 - job-template:
-    name: '{name}-{branch_distro}'
+    name: '{name}-{what}-{branch_distro}'
+    what: 'lustre'
     project-type: pipeline
     trigger_time: |
       TZ=Asia/Shanghai
