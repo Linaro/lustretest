@@ -13,7 +13,7 @@
 
     # default var values
     what: 'e2fsprogs'
-    branch: 'v1.46.6.wc1-lustre'
+    branch: 'master-lustre'
     arch: 'aarch64'
     git_repo: 'git://git.whamcloud.com/tools/e2fsprogs.git'
 
