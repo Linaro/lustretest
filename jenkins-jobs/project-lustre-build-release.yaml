@@ -9,7 +9,6 @@
       - 'master-oe2203':
           distro: 'oe2203sp2'
           branch: 'master'
-          extra_patches: '50978'
       - 'b2_15-rhel8':
           distro: 'rhel8.8'
           branch: 'b2_15'

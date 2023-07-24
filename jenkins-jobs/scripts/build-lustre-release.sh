@@ -108,7 +108,7 @@ if [[ -n ${extra_patches} ]]; then
     echo ${extra_patches} | sed -n 1'p' | tr ',' '\n' | while read patch; do
         curl \
             "https://review.whamcloud.com/changes/${patch}/revisions/current/patch" \
-            | base64 -d | git apply -v -3
+            | base64 -d | git apply -v
     done
 fi
 
