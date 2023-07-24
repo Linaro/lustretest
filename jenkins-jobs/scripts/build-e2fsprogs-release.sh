@@ -72,11 +72,13 @@ fi
 
 # Apply more extra patches from local cache dir which are only for build not for upstream
 # TODO: download such patches from git repo
+if [[ $dist =~ oe ]]; then
 mkdir -p tmp-patches
 cp -rv $local_patch_dir/*.patch tmp-patches || true
 cp -rv $local_patch_dir/${dist_main}/*.patch tmp-patches || true
 cp -rv $local_patch_dir/${dist}/*.patch tmp-patches || true
 git apply -v tmp-patches/*.patch
+fi
 
 # configure
 ./configure
