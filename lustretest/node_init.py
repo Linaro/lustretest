@@ -219,7 +219,6 @@ def multinode_conf_gen(node_map, cluster_dir):
         lines += "MDSSIZE=0\n"
         lines += "OSTSIZE=0\n"
         lines += "MGSSIZE=0\n"
-        lines += "MAXFREE=100000000\n"
         lines += ". $LUSTRE/tests/cfg/ncli.sh\n"
         test_conf.write(lines)
 
