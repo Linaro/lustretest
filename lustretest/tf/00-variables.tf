@@ -3,7 +3,7 @@
 #### GLANCE
 variable "image" {
   type    = string
-  default = "vm-almalinux-8"
+  default = "vm-rocky-8"
 }
 
 #### NEUTRON

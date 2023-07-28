@@ -60,7 +60,7 @@ TF_VAR_OST_PORT_PREFIX = "lustre_ost"
 
 TF_VAR_VM_IMAGE = "image"
 VM_IMAGES = {
-    'el8': 'vm-almalinux-8',
+    'el8': 'vm-rocky-8',
     'oe2203sp1': 'vm-openeuler-minimal-22.03-LTS-SP1',
     'oe2203sp2': 'vm-openeuler-minimal-22.03-LTS-SP2'
 }

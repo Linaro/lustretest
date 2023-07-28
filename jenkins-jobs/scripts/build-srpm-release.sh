@@ -22,7 +22,6 @@ rpm_repo_base_url="https://uk.linaro.cloud/repo"
 rpm_repo_url="${rpm_repo_base_url}/${rpm_repo_dir}"
 rpm_repo_file="${rpm_repo}/${what}.repo"
 
-srpm="${what}-${version}.src.rpm"
 top_dir="${build_dir}/rpmbuild"
 spec_file="${what}.spec"
 
@@ -31,12 +30,16 @@ case "$what" in
 	srpm_download_url="https://download1.rpmfusion.org/nonfree/fedora/development/rawhide/Everything/source/SRPMS/${first_ch}"
         ;;
     "kernel")
-	srpm_download_url="https://repo.almalinux.org/vault/8/BaseOS/Source/Packages/"
+	srpm_download_url="https://download.rockylinux.org/pub/rocky/8/BaseOS/source/tree/Packages/${first_ch}"
+	version=$(sudo dnf repoquery --latest-limit=1 \
+		--qf '%{VERSION}-%{RELEASE}' kernel.${arch})
         ;;
     *)
         srpm_download_url="https://download.fedoraproject.org/pub/epel/8/Everything/SRPMS/Packages/${first_ch}"
         ;;
 esac
+
+srpm="${what}-${version}.src.rpm"
 
 # check dist rpm macro existence
 dist_macro=$(rpm -E %{?dist})
@@ -63,6 +66,7 @@ pkgs=()
 if [[ $dist =~ el8 ]]; then
 	sudo dnf config-manager --set-enabled ha
 	sudo dnf config-manager --set-enabled powertools
+	sudo dnf config-manager --set-enabled devel
 	sudo dnf install -y epel-release
 	pkgs+=(distcc)
 	sudo dnf update -y
@@ -89,7 +93,7 @@ if [[ "$what" == "pdsh" ]] && [[ $dist =~ oe2203 ]]; then
 	sudo dnf install -y libgenders-devel  perl-generators readline-devel
 	build_options="--nodeps --without nodeupdown --without torque --without slurm"
 else
-	echo sudo dnf builddep -y --spec SPECS/${spec_file}
+	sudo dnf builddep -y --spec SPECS/${spec_file}
 fi
 
 # (TODO): download config from github
