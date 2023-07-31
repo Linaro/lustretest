@@ -41,7 +41,7 @@ class Provision():
             self._info("Prepare to provision the new cluster")
             self.prepare_tf_conf()
         # checking args
-        if not (dist == 'el8' or dist.startswith('oe2203')):
+        if not (dist.startswith('el') or dist.startswith('oe2203')):
             msg = f"{dist} is not support!"
             sys.exit(msg)
 
