@@ -436,12 +436,10 @@ class Provision():
         sh_dir_url = "https://raw.githubusercontent.com/" \
             "Linaro/lustretest/main/lustretest"
         install_sh = f"install_{what}.sh"
-        check_install_dir = f"{what}"
 
         cmd = "sudo dnf install -y wget"
         self.run_cmd(node, client, cmd)
-        cmd = f"ls {check_install_dir} || " \
-            f"(wget -c {sh_dir_url}/{install_sh} && " \
+        cmd =  f"(wget -O {install_sh} {sh_dir_url}/{install_sh} && " \
             f"bash {install_sh})"
         self.run_cmd(node, client, cmd)
 
