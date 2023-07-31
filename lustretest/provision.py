@@ -503,8 +503,13 @@ class Provision():
             cmds.append(cmd)
             cmd = "sudo dnf config-manager --set-enabled powertools"
             cmds.append(cmd)
-            cmd = "sudo dnf install epel-release -y"
+        if self.dist == 'el9':
+            cmd = "sudo dnf config-manager --set-enabled highavailability"
             cmds.append(cmd)
+            cmd = "sudo dnf config-manager --set-enabled crb"
+            cmds.append(cmd)
+        cmd = "sudo dnf install epel-release -y || true"
+        cmds.append(cmd)
         cmd = "sudo dnf makecache --refresh"
         cmds.append(cmd)
         self.run_cmds(node, client, cmds)
