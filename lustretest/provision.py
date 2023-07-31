@@ -463,7 +463,7 @@ class Provision():
 
     def install_latest_pkg(self, node, client, what):
         # openEuler2203+ not need to add 4k page size kernel repo
-        if what == 'kernel' and self.dist.startswith("oe2203"):
+        if what == 'kernel' and self.dist != 'el8':
             repo_option = ''
         else:
             self.add_rpm_repo(node, client, what)
