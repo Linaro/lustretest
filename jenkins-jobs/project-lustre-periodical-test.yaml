@@ -4,6 +4,9 @@
     branch_distro:
       - 'master-rhel8':
           branch: 'master'
+      - 'master-rhel9':
+          dist: 'el9'
+          branch: 'master'
       - 'b2_15-rhel8':
           branch: 'b2_15'
       - 'master-oe2203':
