@@ -6,6 +6,10 @@
           distro: 'rhel8.8'
           branch: 'master'
           dist: 'el8'
+      - 'master-rhel9':
+          distro: 'rhel9.2'
+          branch: 'master'
+          dist: 'el9'
       - 'master-oe2203':
           distro: 'oe2203sp2'
           branch: 'master'

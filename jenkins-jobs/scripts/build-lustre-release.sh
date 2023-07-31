@@ -14,6 +14,9 @@ co_branch=$branch
 if [[ $distro =~ rhel8 ]]; then
 	target="4.18-${distro}"
 	dist="el8"
+elif [[ $distro =~ rhel9 ]]; then
+	target="5.14-${distro}"
+	dist="el9"
 elif [[ $distro =~ oe2203 ]]; then
 	target="5.10-${distro}"
 	dist=${distro}
@@ -59,27 +62,34 @@ sudo rm -rf /etc/yum.repos.d/${build_what}.repo
 # Install dependant pkgs for build
 sudo dnf install -y dnf-plugins-core
 pkgs=()
-if [[ $distro =~ rhel ]]; then
-	sudo dnf config-manager --set-enabled ha
-	sudo dnf config-manager --set-enabled powertools
-	sudo dnf config-manager --add-repo $kernel_rpm_repo
+if [[ $dist =~ el ]]; then
+	if [[ $dist =~ el9 ]]; then
+		sudo dnf config-manager --set-enabled highavailability
+		sudo dnf config-manager --set-enabled crb
+	else
+		sudo dnf config-manager --set-enabled ha
+		sudo dnf config-manager --set-enabled powertools
+		sudo dnf config-manager --add-repo $kernel_rpm_repo
+		pkgs+=(distcc redhat-lsb-core)
+	fi
 	sudo dnf install -y epel-release
-	pkgs+=(distcc redhat-lsb-core yum-utils)
+	pkgs+=(yum-utils)
 	sudo dnf update -y
-elif [[ $distro =~ oe ]]; then
+elif [[ $dist =~ oe ]]; then
 	sudo dnf install -y openeuler-lsb
 fi
+
 sudo dnf config-manager --add-repo $e2fsprogs_rpm_repo
 sudo dnf config-manager --add-repo $rpm_repo_remote || true
 pkgs+=(git ccache gcc make autoconf automake libtool rpm-build wget createrepo)
 pkgs+=(audit-libs-devel binutils-devel elfutils-devel kabi-dw ncurses-devel newt-devel numactl-devel \
-	openssl-devel pciutils-devel perl perl-devel python3-docutils xmlto xz-devel elfutils-libelf-devel \
-	libcap-devel libcap-ng-devel libyaml libyaml-devel kernel-rpm-macros libblkid-devel libtirpc-devel \
-	libnl3-devel mpich libmount-devel llvm-devel clang)
-pkgs+=(libtirpc-devel libblkid-devel libuuid-devel libudev-devel openssl-devel zlib-devel libaio-devel \
-	libattr-devel elfutils-libelf-devel python3 python3-devel python3-setuptools \
+	openssl-devel pciutils-devel perl perl-devel python3-docutils xmlto xz-devel \
+	libcap-devel libcap-ng-devel libyaml libblkid-devel libtirpc-devel \
+	llvm-devel clang)
+pkgs+=(libtirpc-devel libblkid-devel libuuid-devel libudev-devel openssl-devel libaio-devel \
+	libattr-devel python3 python3-devel python3-setuptools \
 	python3-cffi libffi-devel git ncompress libcurl-devel keyutils-libs-devel)
-pkgs+=(python3-packaging dkms bash-completion openmpi-devel texinfo e2fsprogs-devel bison)
+pkgs+=(python3-packaging texinfo)
 sudo dnf install -y ${pkgs[@]}
 sudo ln -s $(which ccache) /usr/local/bin/gcc &&
 sudo ln -s $(which ccache) /usr/local/bin/g++ &&
