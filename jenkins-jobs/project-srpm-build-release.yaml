@@ -15,6 +15,10 @@
           what: 'iozone'
           version: '3.494-1.fc38'
           dist: 'el8'
+      - 'iozone-el9':
+          what: 'iozone'
+          version: '3.494-1.fc38'
+          dist: 'el9'
       - 'kernel-el8':
           what: 'kernel'
           dist: 'el8'

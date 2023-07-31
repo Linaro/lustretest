@@ -3,6 +3,7 @@
     name: 'build'
     dist:
       - 'el8'
+      - 'el9'
       - 'oe2203sp2'
     jobs:
       - '{name}-{what}-{dist}'

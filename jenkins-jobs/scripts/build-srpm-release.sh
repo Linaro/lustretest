@@ -63,12 +63,17 @@ rm -rf ${workspace}/build-${subname}-*
 # Install dependant pkgs for build
 sudo dnf install -y dnf-plugins-core
 pkgs=()
-if [[ $dist =~ el8 ]]; then
-	sudo dnf config-manager --set-enabled ha
-	sudo dnf config-manager --set-enabled powertools
+if [[ $dist =~ el ]]; then
+	if [[ $dist =~ el9 ]]; then
+		sudo dnf config-manager --set-enabled highavailability
+		sudo dnf config-manager --set-enabled crb
+	else
+		sudo dnf config-manager --set-enabled ha
+		sudo dnf config-manager --set-enabled powertools
+		pkgs+=(distcc)
+	fi
 	sudo dnf config-manager --set-enabled devel
 	sudo dnf install -y epel-release
-	pkgs+=(distcc)
 	sudo dnf update -y
 fi
 #sudo dnf update -y

@@ -3,7 +3,7 @@
 set -xe
 
 workspace=${WORKSPACE:-"/home/jenkins/agent/build"}
-branch=${BRANCH:-'v1.46.6.wc1-lustre'}
+branch=${BRANCH:-'master-lustre'}
 build_id=${BUILD_ID:-'001'}
 git_remote_repo=${GIT_REPO:-'git://git.whamcloud.com/tools/e2fsprogs.git'}
 dist=${DIST:-'el8'}
@@ -38,11 +38,16 @@ rm -rf ${workspace}/build-${subname}-*
 # Install dependant pkgs for build
 sudo dnf install -y dnf-plugins-core
 pkgs=()
-if [[ $dist =~ el8 ]]; then
-	sudo dnf config-manager --set-enabled ha
-	sudo dnf config-manager --set-enabled powertools
+if [[ $dist =~ el ]]; then
+	if [[ $dist =~ el9 ]]; then
+		sudo dnf config-manager --set-enabled highavailability
+		sudo dnf config-manager --set-enabled crb
+	else
+		sudo dnf config-manager --set-enabled ha
+		sudo dnf config-manager --set-enabled powertools
+		pkgs+=(distcc redhat-lsb-core)
+	fi
 	sudo dnf install -y epel-release
-	pkgs+=(distcc redhat-lsb-core)
 elif [[ $dist =~ oe ]]; then
 	sudo dnf install -y openeuler-lsb
 fi
@@ -72,7 +77,7 @@ fi
 
 # Apply more extra patches from local cache dir which are only for build not for upstream
 # TODO: download such patches from git repo
-if [[ $dist =~ oe ]]; then
+if [[ $dist =~ (oe|el9) ]]; then
 mkdir -p tmp-patches
 cp -rv $local_patch_dir/*.patch tmp-patches || true
 cp -rv $local_patch_dir/${dist_main}/*.patch tmp-patches || true
