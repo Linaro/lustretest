@@ -439,7 +439,7 @@ class Provision():
 
         cmd = "sudo dnf install -y wget"
         self.run_cmd(node, client, cmd)
-        cmd =  f"(wget -O {install_sh} {sh_dir_url}/{install_sh} && " \
+        cmd = f"(wget -O {install_sh} {sh_dir_url}/{install_sh} && " \
             f"bash {install_sh})"
         self.run_cmd(node, client, cmd)
 

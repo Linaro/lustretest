@@ -265,10 +265,18 @@ class Auster():
                         name = test_suite['name']
                         args = test_suite.get('args', "")
                         if isinstance(args, dict):
-                            args = args.get(self.test_info['dist_main'], "")
-                        # check if args is '--except all'
-                        if "all" not in args:
-                            suite = f"{name} {args}"
+                            key = self.test_info['dist_main']
+                            value = args.get(key, "")
+                            if value == "":
+                                key = f"{self.test_info['dist_main']}_" \
+                                    f"{self.test_info['lustre_branch']}"
+                                value = args.get(key, "")
+                        else:
+                            value = args
+
+                        # check if value is '--except all'
+                        if "all" not in value:
+                            suite = f"{name} {value}"
                             test_suites_with_args.append(suite)
                     break
         return test_suites_with_args
