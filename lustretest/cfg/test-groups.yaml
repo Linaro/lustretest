@@ -56,6 +56,4 @@
     - name: performance-sanity
     - name: sanity-pfl
     - name: sanity-lfsck
-      args:
-        oe2203_b2_15: "--except all"
     - name: parallel-scale-nfsv4
