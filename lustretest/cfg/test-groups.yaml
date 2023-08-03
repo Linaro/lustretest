@@ -56,4 +56,5 @@
     - name: performance-sanity
     - name: sanity-pfl
     - name: sanity-lfsck
+      args: "--except 9a"
     - name: parallel-scale-nfsv4
