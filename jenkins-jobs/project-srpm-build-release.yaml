@@ -2,12 +2,24 @@
 - project:
     name: 'build'
     what_dist:
+      - 'pdsh-oe2003':
+          what: 'pdsh'
+          version: '2.34-5.el8'
+          dist: 'oe2003sp3'
       - 'pdsh-oe2203':
           what: 'pdsh'
           version: '2.34-5.el8'
+      - 'dbench-oe2003':
+          what: 'dbench'
+          version: '4.0-20.el8'
+          dist: 'oe2003sp3'
       - 'dbench-oe2203':
           what: 'dbench'
           version: '4.0-20.el8'
+      - 'iozone-oe2003':
+          what: 'iozone'
+          version: '3.494-2.fc39'
+          dist: 'oe2003sp3'
       - 'iozone-oe2203':
           what: 'iozone'
           version: '3.494-1.fc38'
@@ -22,6 +34,10 @@
       - 'kernel-el8':
           what: 'kernel'
           dist: 'el8'
+      - 'bonnie++-oe2003':
+          what: 'bonnie++'
+          version: '1.98-1.el8'
+          dist: 'oe2003sp3'
       - 'bonnie++-oe2203':
           what: 'bonnie++'
           version: '1.98-1.el8'

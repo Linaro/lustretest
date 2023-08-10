@@ -94,7 +94,7 @@ wget -c ${srpm_download_url}/$srpm -O ${srpm_cache_dir}/$srpm
 rpm -ivh --define "_topdir $top_dir" ${srpm_cache_dir}/$srpm
 cd $top_dir
 build_options=""
-if [[ "$what" == "pdsh" ]] && [[ $dist =~ oe2203 ]]; then
+if [[ "$what" == "pdsh" ]] && [[ $dist =~ oe ]]; then
 	sudo dnf install -y libgenders-devel  perl-generators readline-devel
 	build_options="--nodeps --without nodeupdown --without torque --without slurm"
 else

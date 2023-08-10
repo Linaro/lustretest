@@ -4,6 +4,7 @@
     dist:
       - 'el8'
       - 'el9'
+      - 'oe2003sp3'
       - 'oe2203sp2'
     jobs:
       - '{name}-{what}-{dist}'
