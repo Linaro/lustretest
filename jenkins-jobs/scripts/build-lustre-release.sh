@@ -17,6 +17,12 @@ if [[ $distro =~ rhel8 ]]; then
 elif [[ $distro =~ rhel9 ]]; then
 	target="5.14-${distro}"
 	dist="el9"
+elif [[ $distro =~ oe2003 ]]; then
+	target="4.19-${distro}"
+	dist=${distro}
+        if [[ $branch =~ b2_15 ]]; then
+		co_branch="b2_15-openeuler-20.03"
+	fi
 elif [[ $distro =~ oe2203 ]]; then
 	target="5.10-${distro}"
 	dist=${distro}
@@ -76,6 +82,10 @@ if [[ $dist =~ el ]]; then
 	pkgs+=(yum-utils)
 	sudo dnf update -y
 elif [[ $dist =~ oe ]]; then
+	if [[ $dist =~ oe2003 ]]; then
+		sudo dnf install -y \
+			https://repo.openeuler.org/openEuler-22.03-LTS-SP2/everything/aarch64/Packages/kernel-rpm-macros-30-35.oe2203sp2.aarch64.rpm
+	fi
 	sudo dnf install -y openeuler-lsb
 fi
 
