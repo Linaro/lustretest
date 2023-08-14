@@ -100,7 +100,7 @@ class Provision():
         source_dir = const.TERRAFORM_CONF_TEMPLATE_DIR
         if not path_exists(self.cluster_dir):
             try:
-                os.mkdir(self.cluster_dir)
+                os.makedirs(self.cluster_dir)
             except OSError:
                 self._error("mkdir failed: " + self.cluster_dir)
                 raise
