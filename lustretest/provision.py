@@ -41,7 +41,7 @@ class Provision():
             self._info("Prepare to provision the new cluster")
             self.prepare_tf_conf()
         # checking args
-        if not (dist.startswith('el') or dist.startswith('oe2203')):
+        if not (dist.startswith('el') or dist.startswith('oe')):
             msg = f"{dist} is not support!"
             sys.exit(msg)
 
@@ -445,7 +445,7 @@ class Provision():
 
     def install_tools(self, node, client):
         self.add_rpm_repo(node, client, 'iozone')
-        if self.dist.startswith("oe2203"):
+        if self.dist.startswith("oe"):
             self.add_rpm_repo(node, client, 'pdsh')
             self.add_rpm_repo(node, client, 'dbench')
             self.add_rpm_repo(node, client, 'bonnie++')
