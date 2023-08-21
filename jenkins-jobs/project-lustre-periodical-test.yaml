@@ -9,6 +9,9 @@
           branch: 'master'
       - 'b2_15-rhel8':
           branch: 'b2_15'
+      - 'master-oe2003':
+          dist: 'oe2003sp3'
+          branch: 'master'
       - 'master-oe2203':
           dist: 'oe2203sp2'
           branch: 'master'
