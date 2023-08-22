@@ -21,13 +21,13 @@ elif [[ $distro =~ oe2003 ]]; then
 	target="4.19-${distro}"
 	dist=${distro}
         if [[ $branch =~ b2_15 ]]; then
-		co_branch="b2_15-openeuler-20.03"
+		co_branch="b2_15-openeuler"
 	fi
 elif [[ $distro =~ oe2203 ]]; then
 	target="5.10-${distro}"
 	dist=${distro}
         if [[ $branch =~ b2_15 ]]; then
-		co_branch="b2_15-openeuler-22.03"
+		co_branch="b2_15-openeuler"
 	fi
 fi
 
