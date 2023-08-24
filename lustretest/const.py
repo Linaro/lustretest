@@ -1,4 +1,9 @@
+import logging
 import os
+
+logging.basicConfig(format='%(message)s',
+                    level=logging.INFO)
+LOG = logging.getLogger(__name__)
 
 CLIENT = 'CLIENT'
 MDS = 'MDS'

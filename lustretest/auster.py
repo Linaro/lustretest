@@ -7,17 +7,17 @@ from paramiko import ssh_exception
 import yaml
 
 import const
+from const import LOG
 import myyamlsanitizer
 
 
 class Auster():
-    def __init__(self, logger, test_group_id, test_suites,
+    def __init__(self, test_group_id, test_suites,
                  exec_node_ip, nfs_dir, lustre_branch='master',
                  build_id=env['BUILD_ID'], dist='el8', arch='aarch64',
                  run_uuid=env['CUMULATIVE_RESULT_ID'],
                  workspace=env['WORKSPACE']
                  ):
-        self.logger = logger
         self.ssh_user = const.DEFAULT_SSH_USER
         self.ssh_client = None
         self.ip = exec_node_ip
@@ -44,15 +44,6 @@ class Auster():
         self.test_info['local_logdir'] = f"{self.test_info['workspace']}/test_logs/{logdir}"
         self.test_info['shared_dir'] = nfs_dir
 
-    def _debug(self, msg, *args):
-        self.logger.debug(msg, *args)
-
-    def _info(self, msg, *args):
-        self.logger.info(msg, *args)
-
-    def _error(self, msg, *args):
-        self.logger.error(msg, *args)
-
     def ssh_connection(self):
         private_key = \
             paramiko.RSAKey.from_private_key_file(const.SSH_PRIVATE_KEY)
@@ -65,18 +56,18 @@ class Auster():
                                     pkey=private_key)
         except ssh_exception.NoValidConnectionsError as e:
             msg = f"Not yet connected to this node: {e}"
-            self._info(msg)
+            LOG.info(msg)
             return
 
         # # Test SSH connection
         # stdin, stdout, stderr = self.ssh_client.exec_command('ls /')
         # error = stderr.read()
         # if error.strip():
-        #     self._error(error)
+        #     LOG.error(error)
         #     return
 
         msg = f"SSH client for IP: {self.ip} initialization is finished"
-        self._info(msg)
+        LOG.info(msg)
 
     def ssh_close(self):
         self.ssh_client.close()
@@ -92,11 +83,11 @@ class Auster():
             stdout._set_mode('b')
             for line in iter(stdout.readline, b""):
                 line = line.decode('utf-8', 'ignore')
-                self._info(line.strip())
+                LOG.info(line.strip())
             return stdout.channel.recv_exit_status()
         except TimeoutError:
             msg = f"Cmd running timeout, cmd: {cmd}"
-            self._info(msg)
+            LOG.info(msg)
             return const.TEST_FAIL
 
     def run_test(self):
@@ -116,18 +107,18 @@ class Auster():
                     f"Timeout: {self.test_info['timeout']}\n" \
                     f"Cmd: {cmd}\n..."
 
-                self._info(msg)
+                LOG.info(msg)
                 rc = self.ssh_exec(cmd, self.test_info['timeout'])
                 msg = f"Auster test finish, test suite: {suite}, rc = {rc}"
-                self._info(msg)
+                LOG.info(msg)
             msg = f"Auster test finish, test suites: {self.test_info['suites']}"
-            self._info(msg)
+            LOG.info(msg)
 
             rc = self.parse_test_result()
-            self._info("Auster parse result finish, rc = %d", rc)
+            LOG.info("Auster parse result finish, rc = %d", rc)
         else:
             msg = f"No available ssh client for: {self.ip}"
-            self._error(msg)
+            LOG.error(msg)
             rc = const.TEST_FAIL
 
         return rc
@@ -149,7 +140,8 @@ class Auster():
                 test_results = yaml.safe_load(
                     myyamlsanitizer.sanitize(filedata))
             except (ImportError, yaml.parser.ParserError, yaml.scanner.ScannerError):
-                self._error("yaml file is invalid, file:" + yamlfile)
+                msg = f"yaml file is invalid, file: {yamlfile}"
+                LOG.error(msg)
                 raise
 
             for test in test_results.get('Tests', {}):
@@ -186,7 +178,7 @@ class Auster():
 
                 msg = f"{test_script}: {msg}, total tests: " \
                     f"{test_count}, take {test_duration}  s."
-                self._info(msg)
+                LOG.info(msg)
                 test['total'] = test_count
                 if failed_subtests:
                     failed_count = len(failed_subtests)
@@ -197,7 +189,7 @@ class Auster():
                     msg = f"    Failed total: {failed_count}/{test_count}," \
                         f" {percent}. Failed tests: "
                     msg += ",".join(failed_subtests)
-                    self._info(msg)
+                    LOG.info(msg)
                 if skipped_subtests:
                     skipped_count = len(skipped_subtests)
                     skip_sum += skipped_count
@@ -207,25 +199,25 @@ class Auster():
                     msg = f"    Skipped total: {skipped_count}/{test_count}," \
                         f" {percent} . Skipped tests: "
                     msg += ",".join(skipped_subtests)
-                    self._info(msg)
+                    LOG.info(msg)
 
         duration_sum = f'{duration_sum/60/60:.1f}'  # hours
         test_results['duration_hours'] = duration_sum
         msg = f"\n====>{self.test_info['group_name']} total tests: "\
             f"{total_sum}, take {duration_sum} hours.<===="
-        self._info(msg)
+        LOG.info(msg)
         if fail_sum > 0:
             percent = f"{fail_sum/total_sum:.1%}"
             test_results['failed_total'] = total_sum
             test_results['failed_percent'] = percent
             msg = f"    Failed total: {fail_sum}/{total_sum}, {percent}."
-            self._info(msg)
+            LOG.info(msg)
         if skip_sum > 0:
             percent = f"{skip_sum/total_sum:.1%}"
             test_results['skipped_total'] = skip_sum
             test_results['skipped_percent'] = percent
             msg = f"    Skipped total: {skip_sum}/{total_sum}, {percent}."
-            self._info(msg)
+            LOG.info(msg)
         # Add missing required fields to results.yml for Maloo DB upload
         with open(yamlfile, 'w', encoding='utf8') as file:
             test_results['cumulative_result_id'] = self.test_info['run_uuid']

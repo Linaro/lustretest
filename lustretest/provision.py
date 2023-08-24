@@ -14,6 +14,7 @@ import time
 import paramiko
 
 import const
+from const import LOG
 
 
 def host_name_gen():
@@ -22,10 +23,9 @@ def host_name_gen():
 
 
 class Provision():
-    def __init__(self, logger, provision_new, dist='el8',
+    def __init__(self, provision_new, dist='el8',
                  arch='aarch64', lustre_branch='master',
                  rpm_repo_host="https://uk.linaro.cloud/repo"):
-        self.logger = logger
         self.node_map = None
         self.cluster_dir = None
         self.node_ip_list = []
@@ -38,21 +38,12 @@ class Provision():
         self.lustre_branch = lustre_branch
         self.rpm_repo_host = rpm_repo_host
         if provision_new:
-            self._info("Prepare to provision the new cluster")
+            LOG.info("Prepare to provision the new cluster")
             self.prepare_tf_conf()
         # checking args
         if not (dist.startswith('el') or dist.startswith('oe')):
             msg = f"{dist} is not support!"
             sys.exit(msg)
-
-    def _debug(self, msg, *args):
-        self.logger.debug(msg, *args)
-
-    def _info(self, msg, *args):
-        self.logger.info(msg, *args)
-
-    def _error(self, msg, *args):
-        self.logger.error(msg, *args)
 
     def ssh_connection(self, ip):
         private_key = \
@@ -68,11 +59,11 @@ class Provision():
         # stdin, stdout, stderr = ssh_client.exec_command('ls /')
         # error = stderr.read()
         # if error.strip():
-        #     self._error(error)
+        #     LOG.error(error)
         #     return
 
-        self._info("SSH client for IP: " +
-                   ip + " initialization is finished")
+        msg = f"SSH client for IP: {ip} initialization is finished"
+        LOG.info(msg)
         return ssh_client
 
     def ssh_exec(self, ssh_client, cmd):
@@ -80,7 +71,7 @@ class Provision():
         # print stdout and stderr in realtime
         _, stdout, _ = ssh_client.exec_command(cmd, get_pty=True)
         for line in iter(stdout.readline, ""):
-            self._info(line.strip())
+            LOG.info(line.strip())
 
         rc = stdout.channel.recv_exit_status()
         if rc != 0:
@@ -102,7 +93,8 @@ class Provision():
             try:
                 os.makedirs(self.cluster_dir)
             except OSError:
-                self._error("mkdir failed: " + self.cluster_dir)
+                msg = f"mkdir failed: {self.cluster_dir}"
+                LOG.error(msg)
                 raise
         for f in os.listdir(source_dir):
             if f.endswith("tf") or f == "cloud-init":
@@ -178,14 +170,15 @@ class Provision():
                                   stderr=subprocess.STDOUT) as p:
                 self.realtime_output(p)
                 if p.returncode == 0:
-                    self._info('Terraform init success')
+                    LOG.info('Terraform init success')
                     return True
 
-                self._error('Terraform init failed')
+                LOG.error('Terraform init failed')
                 return False
 
-        self._error("Terraform init failed: terraform args does not exist: "
-                    + const.TERRAFORM_VARIABLES_JSON)
+        msg = "Terraform init failed: terraform args does not exist: "\
+            f"{const.TERRAFORM_VARIABLES_JSON}"
+        LOG.error(msg)
         return False
 
     def realtime_output(self, p):
@@ -193,7 +186,7 @@ class Provision():
             line = p.stdout.readline()
             line = line.strip()
             if line:
-                self._info(line.decode('utf-8'))
+                LOG.info(line.decode('utf-8'))
 
     #
     # Terraform Apply
@@ -210,10 +203,10 @@ class Provision():
                     n += 1
                     if p.returncode == 0:
                         msg = f"Terraform apply success, try {n} times"
-                        self._info(msg)
+                        LOG.info(msg)
                         return True
             msg = f"Terraform apply failed, try {n} times"
-            self._error(msg)
+            LOG.error(msg)
         return False
 
     #
@@ -226,11 +219,11 @@ class Provision():
                               stderr=subprocess.STDOUT) as p:
             self.realtime_output(p)
             if p.returncode == 0:
-                self._info('Terraform destroy success')
+                LOG.info('Terraform destroy success')
                 shutil.rmtree(self.cluster_dir, ignore_errors=True)
                 return True
 
-            self._error('Terraform destroy failed')
+            LOG.error('Terraform destroy failed')
             return False
 
     #
@@ -314,25 +307,29 @@ class Provision():
                             if ssh_client not in self.ssh_clients:
                                 self.ssh_clients[ip] = ssh_client
                         else:
-                            self._info("The node reboot is not finished")
+                            LOG.info("The node reboot is not finished")
                     except paramiko.ssh_exception.NoValidConnectionsError:
-                        self._info("can not connect to the node: " + ip)
+                        msg = f"can not connect to the node: {ip}"
+                        LOG.info(msg)
                     except paramiko.ssh_exception.SSHException:
-                        self._info("Error reading SSH protocol banner[Errno 104] "
-                                   "Connection reset by peer: " + ip)
+                        msg = "Error reading SSH protocol banner[Errno 104] " \
+                            f"Connection reset by peer: {ip}"
+                        LOG.info(msg)
                     except TimeoutError:
-                        self._info("Timeout on  connect to the node: " + ip)
+                        msg = f"Timeout on  connect to the node: {ip}"
+                        LOG.info(msg)
 
                 ready_clients = len(self.ssh_clients)
                 if ready_clients == const.MAX_NODE_NUM:
-                    self._info("All the clients is ready")
+                    LOG.info("All the clients is ready")
                     break
-                self._info("Ready clients are: " + str(ready_clients))
+                msg = f"Ready clients are: {ready_clients}"
+                LOG.info(msg)
                 time.sleep(10)
 
             t1 = datetime.now()
             node_status = []
-            self._info(
+            LOG.info(
                 "====================check cloud init=======================")
             while (datetime.now() - t1).seconds <= const.CLOUD_INIT_TIMEOUT:
                 for ip, client in self.ssh_clients.items():
@@ -341,10 +338,11 @@ class Provision():
                     if self.ssh_exec(client, ssh_check_cmd):
                         node_status.append(ip)
                     else:
-                        self._info(
-                            "The cloud-init process is not finished: " + ip)
+                        msg = f"The cloud-init process is not finished: {ip}"
+                        LOG.info(msg)
                 ready_node = len(node_status)
-                self._info("Ready nodes: " + str(node_status))
+                msg = f"Ready nodes: {node_status}"
+                LOG.info(msg)
                 if ready_node == const.MAX_NODE_NUM:
                     break
                 time.sleep(10)
@@ -352,12 +350,12 @@ class Provision():
             if len(node_status) == const.MAX_NODE_NUM:
                 return True
 
-            self._error("The cloud-init processes of nodes are "
-                        "not totally ready, only ready: "
-                        + str(len(node_status)))
+            msg = "The cloud-init processes of nodes are not totally ready, " \
+                f"Only ready: {len(node_status)}"
+            LOG.error(msg)
             return False
 
-        self._error("Cluster node count is not right")
+        LOG.error("Cluster node count is not right")
         return False
 
     def clean_node_info(self):
@@ -366,10 +364,10 @@ class Provision():
                               stderr=subprocess.STDOUT) as p:
             self.realtime_output(p)
             if p.returncode == 0:
-                self._info('Cluster clean success')
+                LOG.info('Cluster clean success')
                 return True
 
-            self._error('Cluster clean failed')
+            LOG.error('Cluster clean failed')
             return False
 
     #
@@ -381,11 +379,13 @@ class Provision():
     #
     def provision(self, cluster_dir=None):
         if not self.provision_new:
-            self._info("Prepare to use the exist cluster: " + cluster_dir)
+            msg = f"Prepare to use the exist cluster: {cluster_dir}"
+            LOG.info(msg)
             self.cluster_dir = cluster_dir
             self.clean_node_info()
 
-        self._info("tf conf dir: " + self.cluster_dir)
+        msg = f"tf conf dir: {self.cluster_dir}"
+        LOG.info(msg)
         tf_return = self.terraform_apply()
         if not tf_return:
             return False
@@ -394,25 +394,29 @@ class Provision():
         # check the file is there
         if path_exists(path_join(self.cluster_dir, const.NODE_INFO)):
             if self.node_check():
-                self._info("Install Lustre from the repo...")
+                LOG.info("Install Lustre from the repo...")
                 return self.node_operate()
 
-            self._error("The node_check is failed")
+            LOG.error("The node_check is failed")
             return False
 
-        self._error("The config file does not exist: " +
-                    path_join(self.cluster_dir, const.NODE_INFO))
+        msg = "The config file does not exist: " \
+            f"{path_join(self.cluster_dir, const.NODE_INFO)}"
+        LOG.error(msg)
         return False
 
     def run_cmd(self, node, client, cmd):
-        self._info(node + ":  " + cmd)
+        msg = f"{node}:  {cmd}"
+        LOG.info(msg)
         if self.ssh_exec(client, cmd):
-            self._info(node + ":  Success run cmd: " + cmd)
+            msg = f"{node}:  Success run cmd: {cmd}"
+            LOG.info(msg)
         else:
-            sys.exit(node + ":  Failed run cmd: " + cmd)
+            msg = f"{node}:  Failed run cmd: {cmd}"
+            sys.exit(msg)
 
     def run_cmd_ret_std(self, node, client, cmd):
-        self._info(node + ":  " + cmd)
+        LOG.info(node + ":  " + cmd)
         return self.ssh_exec_ret_std(client, cmd)
 
     def run_cmds(self, node, client, cmds):
@@ -532,14 +536,14 @@ class Provision():
                     data = future.result()
                 except SystemExit as e:
                     msg = f"{node}: install lustre failed!! \n{e}"
-                    self._info(msg)
+                    LOG.info(msg)
                     return False
                 except:
                     msg = f"{node}: install lustre failed!!"
-                    self._info(msg)
+                    LOG.info(msg)
                     raise
                 msg = f"{node}: install lustre success. result={data}"
-                self._info(msg)
+                LOG.info(msg)
 
         for node, client in self.ssh_clients.items():
             self.node_volume_check(node, client)
@@ -547,7 +551,8 @@ class Provision():
 
     def node_volume_check(self, node, client):
         check_volume = 'lsblk'
-        self._info("The node " + node + " volumes info: ")
+        msg = f"The node {node} volumes info: "
+        LOG.info(msg)
         self.ssh_exec(client, check_volume)
 
     def get_cluster_dir(self):

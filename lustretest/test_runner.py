@@ -1,4 +1,3 @@
-import logging
 from os import listdir
 from os.path import basename, isdir, join as path_join
 import sys
@@ -9,6 +8,7 @@ from typing_extensions import Annotated
 
 from auster import Auster
 import const
+from const import LOG
 from node_init import multinode_conf_gen, node_init
 from provision import Provision
 import utils
@@ -18,7 +18,7 @@ import utils
 #
 
 
-def get_cluster_dir(logger, provision_new, cluster_provision, dist='el8'):
+def get_cluster_dir(provision_new, cluster_provision, dist='el8'):
     if provision_new:
         cluster_dir = cluster_provision.get_cluster_dir()
         cluster_lock = FileLock(cluster_dir + "/.lock", timeout=0)
@@ -28,7 +28,7 @@ def get_cluster_dir(logger, provision_new, cluster_provision, dist='el8'):
         except Timeout:
             msg = basename(cluster_dir) + \
                 "is in used, no cluster for test now!!"
-            logger.info(msg)
+            LOG.info(msg)
     else:  # find an idle cluster
         clusters_top_dir = path_join(const.TEST_WORKSPACE, dist)
         cluster_dirs = [path_join(clusters_top_dir, f) for f in listdir(
@@ -45,7 +45,7 @@ def get_cluster_dir(logger, provision_new, cluster_provision, dist='el8'):
                 in_used += 1
                 msg = basename(cluster_dir) + \
                     " is in used, total used: " + str(in_used)
-                logger.info(msg)
+                LOG.info(msg)
 
     return "", None
 
@@ -95,9 +95,6 @@ def main(
     test_runner.py --test-suites "sanity --only 1-100 sanityn --only 20-30"
     """
 
-    logging.basicConfig(format='%(message)s',
-                        level=logging.INFO)
-    logger = logging.getLogger(__name__)
     rc = const.TEST_SUCC
 
     if test_group_id is None and test_suites is None:
@@ -106,30 +103,30 @@ def main(
 
     msg = f"options are: [{test_group_id}, {test_suites}, " \
         f"{provision_new}, {destroy_cluster}, {dist}, {lustre_branch}]"
-    logger.info(msg)
+    LOG.info(msg)
 
     #
     # get cluster_dir and lock
     #
-    cluster_provision = Provision(logger, provision_new, dist,
+    cluster_provision = Provision(provision_new, dist,
                                   lustre_branch=lustre_branch)
     cluster_dir, cluster_lock = get_cluster_dir(
-        logger, provision_new, cluster_provision, dist)
+        LOG. provision_new, cluster_provision, dist)
     if not cluster_dir:
         sys.exit("get cluster fail!!")
 
     #
     # do provision, node init and test stages.
     #
-    logger.info("cluster dir:'%s'", cluster_dir)
+    LOG.info("cluster dir:'%s'", cluster_dir)
     try:
         #
         # prrovision stage
         #
-        logger.info("Provision stage running...")
+        LOG.info("Provision stage running...")
         result = cluster_provision.provision(cluster_dir)
         if result:
-            logger.info("Provision stage is successful")
+            LOG.info("Provision stage is successful")
             # (liuxl)TODO: move below part into Provision class
             for _, client in cluster_provision.ssh_clients.items():
                 client.close()
@@ -140,26 +137,26 @@ def main(
         # node init stage
         # (liuxl)TODO: This should only do reboot for old cluster
         #
-        logger.info("Node init stage running...")
+        LOG.info("Node init stage running...")
         node_map = utils.read_node_info(path_join(cluster_dir,
                                                   const.NODE_INFO))
 
         multinode_conf_gen(node_map, cluster_dir)
-        node_init(node_map, cluster_dir, logger)
-        logger.info("Node init stage is successful")
+        node_init(node_map, cluster_dir)
+        LOG.info("Node init stage is successful")
 
         #
         # Run test stage
         #
 
-        logger.info("Test run stage running...")
+        LOG.info("Test run stage running...")
         # Choose the first node as the test exec node.
         exec_node_ip = ""
         for _, node_info in node_map.items():
             if node_info[2] == const.CLIENT:
                 exec_node_ip = node_info[1]
                 break
-        auster_test = Auster(logger, test_group_id,
+        auster_test = Auster(test_group_id,
                              test_suites, exec_node_ip,
                              const.SHARED_NFS_DIR,
                              dist=dist,
@@ -168,7 +165,7 @@ def main(
 
         if rc != const.TEST_SUCC:
             sys.exit("Test running is not pass")
-        logger.info("Test run stage is successful")
+        LOG.info("Test run stage is successful")
     finally:
         cluster_lock.release()
         # Destroy cluster if provision_new for on demand cluster

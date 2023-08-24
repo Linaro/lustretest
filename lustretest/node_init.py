@@ -8,10 +8,11 @@ import paramiko
 from scp import SCPClient
 
 import const
+from const import LOG
 
 
 class Node():
-    def __init__(self, host, ip, node_type, node_map, logger):
+    def __init__(self, host, ip, node_type, node_map):
         self.host = host
         self.ip = ip
         self.type = node_type
@@ -19,16 +20,6 @@ class Node():
         self.ssh_private_key = None
         self.node_map = node_map
         self.ssh_client = None
-        self.logger = logger
-
-    def _debug(self, msg, *args):
-        self.logger.debug(msg, *args)
-
-    def _info(self, msg, *args):
-        self.logger.info(msg, *args)
-
-    def _error(self, msg, *args):
-        self.logger.error(msg, *args)
 
     def ssh_connection(self):
         private_key = paramiko.RSAKey.from_private_key_file(
@@ -41,7 +32,7 @@ class Node():
         # # Test SSH connection
         # stdin, stdout, stderr = self.ssh_client.exec_command('ls /')
         # result = stdout.read()
-        # self._info(result.decode('utf-8'))
+        # LOG.info(result.decode('utf-8'))
         return self.ssh_client
 
     def ssh_close(self):
@@ -52,7 +43,7 @@ class Node():
         # print stdout and stderr in realtime
         _, stdout, _ = self.ssh_client.exec_command(cmd, get_pty=True)
         for line in iter(stdout.readline, ""):
-            self._info(line.strip())
+            LOG.info(line.strip())
 
         rc = stdout.channel.recv_exit_status()
         if rc != 0:
@@ -68,7 +59,8 @@ class Node():
         except FileNotFoundError:
             sys.exit("SCP failed: " + local_path)
         else:
-            self._info("SCP success: " + local_path)
+            msg = f"SCP success: {local_path}"
+            LOG.info(msg)
 
     def scp_get(self, remote_path, local_path):
         scp_client = SCPClient(
@@ -78,7 +70,8 @@ class Node():
         except FileNotFoundError:
             sys.exit("SCP failed: " + local_path)
         else:
-            self._info("SCP success: " + local_path)
+            msg = f"SCP success: {local_path}"
+            LOG.info(msg)
 
     def init(self, cluster_dir):
         # Install the Lustre client packages on two machines, and the Lustre server
@@ -106,10 +99,12 @@ class Node():
             if self.ssh_connection() is None:
                 sys.exit("SSH client initialization failed: " + self.ip)
         except paramiko.ssh_exception.NoValidConnectionsError:
-            self._info("can not connect to the node: " + self.ip)
+            msg = f"can not connect to the node: {self.ip}"
+            LOG.info(msg)
         except paramiko.ssh_exception.SSHException:
-            self._info("Error reading SSH protocol banner[Errno 104] "
-                       "Connection reset by peer: " + self.ip)
+            msg = "Error reading SSH protocol banner[Errno 104] " \
+                f"Connection reset by peer: {self.ip}"
+            LOG.info(msg)
         # please make sure to remove the file first
         self.ssh_exec("yes | rm -i " + path_join(const.SSH_CFG_DIR, "id_rsa"))
         self.scp_send(const.SSH_PRIVATE_KEY, const.SSH_CFG_DIR)
@@ -224,7 +219,7 @@ def multinode_conf_gen(node_map, cluster_dir):
         test_conf.write(lines)
 
 
-def node_init(node_map, cluster_dir, logger):
+def node_init(node_map, cluster_dir):
     total_client = 0
     total_mds = 0
     test_client1 = None
@@ -235,7 +230,7 @@ def node_init(node_map, cluster_dir, logger):
 
     for _, node_info in node_map.items():
         test_node = Node(node_info[0], node_info[1],
-                         node_info[2], node_map, logger)
+                         node_info[2], node_map)
         if node_info[2] == const.CLIENT:
             if total_client == 0:
                 test_client1 = test_node
@@ -260,7 +255,7 @@ def node_init(node_map, cluster_dir, logger):
     test_ost1.init(cluster_dir)
 
     nodes = [test_client1, test_client2, test_mds1, test_mds2, test_ost1]
-    if not reboot_and_check(nodes, logger):
+    if not reboot_and_check(nodes):
         sys.exit("The reboot process is not finished")
 
     test_client1.ssh_close()
@@ -270,16 +265,17 @@ def node_init(node_map, cluster_dir, logger):
     test_ost1.ssh_close()
 
 
-def reboot_and_check(nodes, logger):
+def reboot_and_check(nodes):
     for node in nodes:
         node.reboot()
 
     node_status = []
     start_time = datetime.now()
-    logger.info("Begin to check the Node Reboot process")
+    LOG.info("Begin to check the Node Reboot process")
     while (datetime.now() - start_time).seconds <= const.REBOOT_TIMEOUT:
-        logger.info("Check all the clients every 5s")
-        logger.info("Ready nodes: " + str(node_status))
+        LOG.info("Check all the clients every 5s")
+        msg = f"Ready nodes: {node_status}"
+        LOG.info(msg)
         for node in nodes:
             if node.ip in node_status:
                 continue
@@ -288,18 +284,22 @@ def reboot_and_check(nodes, logger):
                 if node.ssh_connection():
                     node_status.append(node.ip)
                 else:
-                    logger.info(
-                        "The node reboot is not finished: " + node.ip)
+                    msg = f"The node reboot is not finished: {node.ip}"
+                    LOG.info(msg)
             except paramiko.ssh_exception.NoValidConnectionsError:
-                logger.info("can not connect to the node: " + node.ip)
+                msg = f"can not connect to the node: {node.ip}"
+                LOG.info(msg)
             except paramiko.ssh_exception.SSHException:
-                logger.info("Error reading SSH protocol banner[Errno 104] "
-                            "Connection reset by peer: " + node.ip)
+                msg = "Error reading SSH protocol banner[Errno 104] " \
+                    f"Connection reset by peer: {node.ip}"
+                LOG.info(msg)
             except TimeoutError:
-                logger.info("Timeout on  connect to the node: " + node.ip)
+                msg = f"Timeout on  connect to the node: {node.ip}"
+                LOG.info(msg)
 
         ready_node = len(node_status)
-        logger.info("Ready nodes: " + str(node_status))
+        msg = f"Ready nodes: {node_status}"
+        LOG.info(msg)
         if ready_node == const.MAX_NODE_NUM:
             break
         time.sleep(5)
@@ -307,7 +307,7 @@ def reboot_and_check(nodes, logger):
     if len(node_status) == const.MAX_NODE_NUM:
         return True
 
-    logger.info("The reboot processes of nodes are "
-                "not totally ready, only ready: "
-                + str(len(node_status)))
+    msg = "The reboot processes of nodes are " \
+        f"not totally ready, only ready: {len(node_status)}"
+    LOG.info(msg)
     return False
