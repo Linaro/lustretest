@@ -111,7 +111,7 @@ def main(
     cluster_provision = Provision(provision_new, dist,
                                   lustre_branch=lustre_branch)
     cluster_dir, cluster_lock = get_cluster_dir(
-        LOG. provision_new, cluster_provision, dist)
+        provision_new, cluster_provision, dist)
     if not cluster_dir:
         sys.exit("get cluster fail!!")
 
