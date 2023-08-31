@@ -54,7 +54,6 @@
       args: "--except all"
     - name: sanity-benchmark
     - name: performance-sanity
-      args: "--except all"
     - name: sanity-pfl
     - name: sanity-lfsck
       args: "--except 9a"
