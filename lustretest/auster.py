@@ -98,7 +98,8 @@ class Auster():
                 f"SHARED_DIRECTORY={self.test_info['shared_dir']} " \
                 f"PJDFSTEST_DIR=/home/{const.CLOUD_INIT_CHECK_USER}/pjdfstest "
             for suite in self.test_info['suites']:
-                cmd = f"module load mpi/openmpi-{self.test_info['arch']} &&" \
+                cmd = ". /etc/profile.d/modules.sh &&" \
+                    f"module load mpi/openmpi-{self.test_info['arch']} &&" \
                     f"{env_vars} " \
                     "/usr/lib64/lustre/tests/auster -f multinode -rvsk " \
                     f"-D {self.test_info['logdir']} {suite}"
