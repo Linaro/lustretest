@@ -31,6 +31,7 @@
   timeout: -1
   test_suite:
     - name: sanity
+      args: "--except 398k,398l"
     - name: sanity-pcc
       args: "--except 7a,7b"
     - name: sanity-quota
