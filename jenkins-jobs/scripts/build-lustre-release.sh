@@ -85,6 +85,8 @@ elif [[ $dist =~ oe ]]; then
 	if [[ $dist =~ oe2003 ]]; then
 		sudo dnf install -y \
 			https://repo.openeuler.org/openEuler-22.03-LTS-SP2/everything/aarch64/Packages/kernel-rpm-macros-30-35.oe2203sp2.aarch64.rpm
+		sudo dnf install -y  openmpi-2.1.1-18.oe1 \
+			openmpi-devel-2.1.1-18.oe1
 	fi
 	sudo dnf install -y openeuler-lsb
 fi
@@ -99,7 +101,7 @@ pkgs+=(audit-libs-devel binutils-devel elfutils-devel kabi-dw ncurses-devel newt
 pkgs+=(libtirpc-devel libblkid-devel libuuid-devel libudev-devel openssl-devel libaio-devel \
 	libattr-devel python3 python3-devel python3-setuptools \
 	python3-cffi libffi-devel git ncompress libcurl-devel keyutils-libs-devel)
-pkgs+=(python3-packaging texinfo openmpi openmpi-devel)
+pkgs+=(python3-packaging texinfo)
 sudo dnf install -y ${pkgs[@]}
 sudo ln -s $(which ccache) /usr/local/bin/gcc &&
 sudo ln -s $(which ccache) /usr/local/bin/g++ &&
