@@ -116,6 +116,9 @@ mkdir -p $build_dir
 cd $build_dir
 git clone --branch $co_branch --reference $git_local_repo $git_remote_repo
 cd lustre-release
+git  remote add upstream git://git.whamcloud.com/fs/lustre-release.git &&
+git fetch upstream &&
+git rebase upstream/$branch
 commit_id=$(git rev-parse --short HEAD)
 
 # Check if need to build
