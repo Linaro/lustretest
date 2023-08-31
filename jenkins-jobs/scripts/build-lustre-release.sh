@@ -99,13 +99,14 @@ pkgs+=(audit-libs-devel binutils-devel elfutils-devel kabi-dw ncurses-devel newt
 pkgs+=(libtirpc-devel libblkid-devel libuuid-devel libudev-devel openssl-devel libaio-devel \
 	libattr-devel python3 python3-devel python3-setuptools \
 	python3-cffi libffi-devel git ncompress libcurl-devel keyutils-libs-devel)
-pkgs+=(python3-packaging texinfo)
+pkgs+=(python3-packaging texinfo openmpi openmpi-devel)
 sudo dnf install -y ${pkgs[@]}
 sudo ln -s $(which ccache) /usr/local/bin/gcc &&
 sudo ln -s $(which ccache) /usr/local/bin/g++ &&
 sudo ln -s $(which ccache) /usr/local/bin/cc &&
 sudo ln -s $(which ccache) /usr/local/bin/c++
-export PATH=/usr/lib64/openmpi/bin:$PATH
+. /etc/profile.d/modules.sh &&
+module load mpi/openmpi-${arch}
 
 # Prepare
 echo "Generate the release tar bz..."
