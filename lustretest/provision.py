@@ -462,6 +462,7 @@ class Provision():
         self.run_cmd(node, client, cmd)
 
         self.install_tool_by_sh(node, client, 'pjdfstest')
+        self.install_tool_by_sh(node, client, 'ior')
 
     def install_latest_pkg(self, node, client, what):
         # openEuler2203+ not need to add 4k page size kernel repo
