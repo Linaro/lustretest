@@ -13,7 +13,7 @@
       - 'master-oe2003':
           distro: 'oe2003sp3'
           branch: 'master'
-          extra_patches: '51753, 51958, 52090'
+          extra_patches: '51753, 51958'
       - 'master-oe2203':
           distro: 'oe2203sp2'
           branch: 'master'
