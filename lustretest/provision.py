@@ -455,7 +455,7 @@ class Provision():
             self.add_rpm_repo(node, client, 'bonnie++')
 
         tool_pkgs = "pdsh pdsh-rcmd-ssh net-tools dbench fio " \
-            "bc attr gcc iozone rsync bonnie++"
+            "bc attr gcc iozone rsync bonnie++ chrony"
         cmd = f"sudo dnf install -y {tool_pkgs}"
         self.run_cmd(node, client, cmd)
         cmd = f"sudo dnf update -y {tool_pkgs}"
