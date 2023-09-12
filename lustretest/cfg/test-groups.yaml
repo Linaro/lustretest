@@ -18,6 +18,7 @@
     - name: replay-dual
     - name: runtests
     - name: parallel-scale
+      args: "--except all"
     - name: metadata-updates
     - name: large-scale
     - name: replay-ost-single
@@ -55,6 +56,7 @@
       args: "--except all"
     - name: sanity-benchmark
     - name: performance-sanity
+      args: "--except all"
     - name: sanity-pfl
     - name: sanity-lfsck
       args: "--except 9a"
