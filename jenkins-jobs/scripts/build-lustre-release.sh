@@ -49,9 +49,7 @@ repoid_base="uk.linaro.cloud_repo"
 
 local_patch_dir="${cache_dir}/src/patches/${build_what}"
 git_local_repo="${cache_dir}/git/lustre-release.git"
-kernel_rpm_repo_dir="kernel/${dist}/${arch}"
 e2fsprogs_rpm_repo_dir="e2fsprogs/${dist}/${arch}"
-kernel_rpm_repo="${rpm_repo_base_url}/${kernel_rpm_repo_dir}/kernel.repo"
 e2fsprogs_rpm_repo="${rpm_repo_base_url}/${e2fsprogs_rpm_repo_dir}/e2fsprogs.repo"
 release_num=""
 
@@ -75,7 +73,6 @@ if [[ $dist =~ el ]]; then
 	else
 		sudo dnf config-manager --set-enabled ha
 		sudo dnf config-manager --set-enabled powertools
-		sudo dnf config-manager --add-repo $kernel_rpm_repo
 		pkgs+=(distcc redhat-lsb-core)
 	fi
 	sudo dnf install -y epel-release
@@ -147,11 +144,7 @@ cp -rv $local_patch_dir/${dist_main}/*.patch tmp-patches || true
 cp -rv $local_patch_dir/${dist_main}/${branch}/*.patch tmp-patches || true
 cp -rv $local_patch_dir/${dist}/*.patch tmp-patches || true
 cp -rv $local_patch_dir/${dist}/${branch}/*.patch tmp-patches || true
-repo_option=""
-if [[ $distro =~ rhel8 ]]; then
-	repo_option="--repo kernel"
-fi
-kernel_release=$(sudo dnf repoquery  ${repo_option} \
+kernel_release=$(sudo dnf repoquery \
 	--latest-limit=1  --qf '%{RELEASE}' kernel.${arch})
 sed -i "s/KRELEASE/${kernel_release}/" tmp-patches/*.patch
 git apply -v tmp-patches/*.patch

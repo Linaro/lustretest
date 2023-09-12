@@ -465,8 +465,8 @@ class Provision():
         self.install_tool_by_sh(node, client, 'ior')
 
     def install_latest_pkg(self, node, client, what):
-        # openEuler2203+ not need to add 4k page size kernel repo
-        if what == 'kernel' and self.dist != 'el8':
+        # not need to add kernel repo, use official provided
+        if what == 'kernel':
             repo_option = ''
         else:
             self.add_rpm_repo(node, client, what)
