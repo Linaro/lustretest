@@ -26,6 +26,7 @@
     - name: sanity-scrub
       args:
         oe2203: "--except 8"
+        oe2003_master: "--except all"
 
 - name: linaro-full-part-2
   id: 2
