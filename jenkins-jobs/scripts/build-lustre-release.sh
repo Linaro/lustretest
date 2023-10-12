@@ -30,6 +30,7 @@ elif [[ $distro =~ oe2203 ]]; then
 		co_branch="b2_15-openeuler"
 	fi
 fi
+target_file="lustre/kernel_patches/targets/${target}.target.in"
 
 arch=$(arch)
 build_what="lustre"
@@ -144,10 +145,10 @@ cp -rv $local_patch_dir/${dist_main}/*.patch tmp-patches || true
 cp -rv $local_patch_dir/${dist_main}/${branch}/*.patch tmp-patches || true
 cp -rv $local_patch_dir/${dist}/*.patch tmp-patches || true
 cp -rv $local_patch_dir/${dist}/${branch}/*.patch tmp-patches || true
+git apply -v tmp-patches/*.patch
 kernel_release=$(sudo dnf repoquery \
 	--latest-limit=1  --qf '%{RELEASE}' kernel.${arch})
-sed -i "s/KRELEASE/${kernel_release}/" tmp-patches/*.patch
-git apply -v tmp-patches/*.patch
+sed -E -i "s/lnxrel=(.*)/lnxrel=\"$kernel_release\"/" $target_file
 
 # releae number +1
 version=$(sudo dnf repoquery --repo lustre \
