@@ -27,6 +27,7 @@ pipeline {{
         stage('Build') {{
             steps {{
                 echo 'Building..'
+                build job: 'build-e2fsprogs-{dist}'
                 build job: 'build-lustre-{branch_distro}'
 	    }}
         }}
