@@ -35,6 +35,7 @@ target_file="lustre/kernel_patches/targets/${target}.target.in"
 arch=$(arch)
 build_what="lustre"
 cache_dir="/home/jenkins/agent/cache"
+ssh_cache_dir="${cache_dir}/ssh"
 subname="${build_what}-${branch}-${dist}"
 rpm_repo_dir="${build_what}/${branch}/${dist}/${arch}"
 last_build_file="${cache_dir}/build/lastbuild-${subname}"
@@ -112,6 +113,8 @@ module load mpi/openmpi-${arch}
 echo "Generate the release tar bz..."
 mkdir -p $build_dir
 cd $build_dir
+git config --global user.email "xinliang.liu@linaro.org"
+git config --global user.name "Xinliang Liu"
 git clone --branch $co_branch --reference $git_local_repo $git_remote_repo
 cd lustre-release
 git  remote add upstream git://git.whamcloud.com/fs/lustre-release.git &&
@@ -201,5 +204,16 @@ enabled=1
 gpgcheck=0
 EOF
 
+if [[ $dist =~ oe ]]; then
+	sudo chown jenkins:jenkins -R $ssh_cache_dir
+	git  remote add mygithub \
+		git@github.com:xin3liang/lustre-release.git
+	git  remote add mygitee \
+		git@gitee.com:xin3liang/lustre-src.git
+	export GIT_SSH_COMMAND="ssh -i ${ssh_cache_dir}/id_rsa.github \
+		-o IdentitiesOnly=yes"
+	git push mygithub HEAD -f
+	git push mygitee HEAD -f
+fi
 echo $commit_id > $last_build_file
 echo "Finish build $build_id. branch: $co_branch, commit ID: $commit_id"
