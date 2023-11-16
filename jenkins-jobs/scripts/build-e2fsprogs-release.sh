@@ -12,6 +12,7 @@ dist_main=${dist%sp*}
 arch=$(arch)
 build_what="e2fsprogs"
 cache_dir="/home/jenkins/agent/cache"
+ssh_cache_dir="${cache_dir}/ssh"
 subname="${build_what}-${dist}"
 rpm_repo_dir="${build_what}/${dist}/${arch}"
 last_build_file="${cache_dir}/build/lastbuild-${subname}"
@@ -109,5 +110,14 @@ enabled=1
 gpgcheck=0
 EOF
 
+if [[ $dist =~ oe ]]; then
+	cd ${build_dir}/e2fsprogs
+	sudo chown jenkins:jenkins -R $ssh_cache_dir
+	git  remote add mygitee \
+		git@gitee.com:xin3liang/e2fsprogs.git
+	export GIT_SSH_COMMAND="ssh -i ${ssh_cache_dir}/id_rsa.github \
+		-o IdentitiesOnly=yes"
+	git push mygitee HEAD -f
+fi
 echo $commit_id > $last_build_file
 echo "Finish build $build_id. branch: $branch, commit ID: $commit_id"
