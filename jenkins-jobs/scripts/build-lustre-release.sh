@@ -125,8 +125,12 @@ commit_id=$(git rev-parse --short HEAD)
 # Check if need to build
 sudo mkdir -p $build_cache_dir
 sudo chown jenkins:jenkins -R $build_cache_dir
-if [[ -f $last_build_file ]] && [[ "$commit_id" == "$(cat $last_build_file)" ]]; then
-	echo "The same build commit $commit_id skip build."
+kernel_release=$(sudo dnf repoquery \
+	--latest-limit=1  --qf '%{RELEASE}' kernel.${arch})
+if [[ -f $last_build_file ]] &&
+	[[ "$commit_id" == "$(awk 'NR==1' $last_build_file)" ]] &&
+	[[ "$kernel_release" == "$(awk 'NR==2' $last_build_file)" ]]; then
+	echo "The same build commit $commit_id and kernel $kernel_release skip build."
 	exit 0
 fi
 
@@ -149,8 +153,6 @@ cp -rv $local_patch_dir/${dist_main}/${branch}/*.patch tmp-patches || true
 cp -rv $local_patch_dir/${dist}/*.patch tmp-patches || true
 cp -rv $local_patch_dir/${dist}/${branch}/*.patch tmp-patches || true
 git apply -v tmp-patches/*.patch
-kernel_release=$(sudo dnf repoquery \
-	--latest-limit=1  --qf '%{RELEASE}' kernel.${arch})
 sed -E -i "s/lnxrel=(.*)/lnxrel=\"$kernel_release\"/" $target_file
 
 # releae number +1
@@ -205,6 +207,7 @@ gpgcheck=0
 EOF
 
 if [[ $dist =~ oe ]]; then
+	cd ${build_dir}/lustre-release
 	sudo chown jenkins:jenkins -R $ssh_cache_dir
 	git  remote add mygithub \
 		git@github.com:xin3liang/lustre-release.git
@@ -216,4 +219,5 @@ if [[ $dist =~ oe ]]; then
 	git push mygitee HEAD -f
 fi
 echo $commit_id > $last_build_file
+echo $kernel_release >> $last_build_file
 echo "Finish build $build_id. branch: $co_branch, commit ID: $commit_id"
