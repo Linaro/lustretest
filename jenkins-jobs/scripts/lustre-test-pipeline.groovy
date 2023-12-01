@@ -28,7 +28,9 @@ pipeline {{
             steps {{
                 echo 'Building..'
                 build job: 'build-e2fsprogs-{dist}'
-                build job: 'build-lustre-{branch_distro}'
+                build job: 'build-lustre-{branch_distro}',
+		      parameters: [string(name: 'KERNEL_VERSION',
+				      value: '{kernel_version}')]
 	    }}
         }}
 
@@ -48,6 +50,7 @@ pipeline {{
 				    python test_runner.py \
 				    --test-group-id 1 \
 				    --lustre-branch {branch} \
+				    --kernel-version {kernel_version} \
 				    --dist {dist}'
                         }}
                     }}
@@ -59,6 +62,7 @@ pipeline {{
 				    python test_runner.py \
 				    --test-group-id 2 \
 				    --lustre-branch {branch} \
+				    --kernel-version {kernel_version} \
 				    --dist {dist}'
                         }}
                     }}
@@ -70,6 +74,7 @@ pipeline {{
 				    python test_runner.py \
 				    --test-group-id 3 \
 				    --lustre-branch {branch} \
+				    --kernel-version {kernel_version} \
 				    --dist {dist}'
                         }}
                     }}

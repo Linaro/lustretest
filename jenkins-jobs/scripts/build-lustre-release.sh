@@ -9,6 +9,8 @@ extra_patches=${EXTRA_PATCHES}
 git_remote_repo=${GIT_REPO:-'git://git.whamcloud.com/fs/lustre-release.git'}
 distro=${DISTRO:-'rhel8.8'}
 dist_main=${distro%sp*}
+kernel_version=${KERNEL_VERSION:-''}
+kernel_release=${kernel_version##*-}
 
 co_branch=$branch
 if [[ $distro =~ rhel8 ]]; then
@@ -125,8 +127,10 @@ commit_id=$(git rev-parse --short HEAD)
 # Check if need to build
 sudo mkdir -p $build_cache_dir
 sudo chown jenkins:jenkins -R $build_cache_dir
-kernel_release=$(sudo dnf repoquery \
-	--latest-limit=1  --qf '%{RELEASE}' kernel.${arch})
+if [[ -z "$kernel_release" ]]; then
+	kernel_release=$(sudo dnf repoquery \
+		--latest-limit=1  --qf '%{RELEASE}' kernel.${arch})
+fi
 if [[ -f $last_build_file ]] &&
 	[[ "$commit_id" == "$(awk 'NR==1' $last_build_file)" ]] &&
 	[[ "$kernel_release" == "$(awk 'NR==2' $last_build_file)" ]]; then

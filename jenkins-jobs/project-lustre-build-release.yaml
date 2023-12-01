@@ -3,7 +3,7 @@
     name: 'build'
     branch_distro:
       - 'master-rhel8':
-          distro: 'rhel8.8'
+          distro: 'rhel8.9'
           branch: 'master'
           dist: 'el8'
       - 'master-rhel9':
@@ -42,6 +42,7 @@
     dist: '{distro}'
     extra_patches: ''
     git_repo: 'git://git.whamcloud.com/fs/lustre-release.git'
+    kernel_version: ''
 
     parameters:
       - string:
@@ -63,6 +64,10 @@
           name: 'GIT_REPO'
           default: '{git_repo}'
           description: 'Src git repo.'
+      - string:
+          name: 'KERNEL_VERSION'
+          default: '{kernel_version}'
+          description: 'kernel version to build, e.g.: 4.18.0-477.10.1.el8_8'
 
     builders:
       - shell:

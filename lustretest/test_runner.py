@@ -76,6 +76,11 @@ def main(
                   typer.Option(
                       help="Distro to test. E.g.: el8, oe2203sp1")
                   ] = 'el8',
+    kernel_version:
+        Annotated[str,
+                  typer.Option(
+                      help="Kernel version to test.")
+                  ] = None,
     lustre_branch:
         Annotated[str,
                   typer.Option(
@@ -109,6 +114,7 @@ def main(
     # get cluster_dir and lock
     #
     cluster_provision = Provision(provision_new, dist,
+                                  kernel_version=kernel_version,
                                   lustre_branch=lustre_branch)
     cluster_dir, cluster_lock = get_cluster_dir(
         provision_new, cluster_provision, dist)

@@ -25,6 +25,7 @@ def host_name_gen():
 class Provision():
     def __init__(self, provision_new, dist='el8',
                  arch='aarch64', lustre_branch='master',
+                 kernel_version=None,
                  rpm_repo_host="https://uk.linaro.cloud/repo"):
         self.node_map = None
         self.cluster_dir = None
@@ -37,6 +38,7 @@ class Provision():
         self.arch = arch
         self.lustre_branch = lustre_branch
         self.rpm_repo_host = rpm_repo_host
+        self.kernel_version = kernel_version
         if provision_new:
             LOG.info("Prepare to provision the new cluster")
             self.prepare_tf_conf()
@@ -465,16 +467,19 @@ class Provision():
         self.install_tool_by_sh(node, client, 'ior')
 
     def install_latest_pkg(self, node, client, what):
+        version = None
         # not need to add kernel repo, use official provided
         if what == 'kernel':
             repo_option = ''
+            version = self.kernel_version
         else:
             self.add_rpm_repo(node, client, what)
             repo_option = f"--repo {what}"
 
-        cmd = f"sudo dnf repoquery {repo_option} --latest-limit=1 " \
-            f"--qf '%{{VERSION}}-%{{RELEASE}}' {what}.{self.arch}"
-        version = self.run_cmd_ret_std(node, client, cmd)
+        if not version:
+            cmd = f"sudo dnf repoquery {repo_option} --latest-limit=1 " \
+                f"--qf '%{{VERSION}}-%{{RELEASE}}' {what}.{self.arch}"
+            version = self.run_cmd_ret_std(node, client, cmd)
         if not version:
             msg = f"{node}: {what} version is empty! Failed run cmd: {cmd}"
             sys.exit(msg)
