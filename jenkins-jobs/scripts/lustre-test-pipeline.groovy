@@ -50,7 +50,7 @@ pipeline {{
 				    python test_runner.py \
 				    --test-group-id 1 \
 				    --lustre-branch {branch} \
-				    --kernel-version {kernel_version} \
+				    --kernel-version "{kernel_version}" \
 				    --dist {dist}'
                         }}
                     }}
@@ -62,7 +62,7 @@ pipeline {{
 				    python test_runner.py \
 				    --test-group-id 2 \
 				    --lustre-branch {branch} \
-				    --kernel-version {kernel_version} \
+				    --kernel-version "{kernel_version}" \
 				    --dist {dist}'
                         }}
                     }}
@@ -74,7 +74,7 @@ pipeline {{
 				    python test_runner.py \
 				    --test-group-id 3 \
 				    --lustre-branch {branch} \
-				    --kernel-version {kernel_version} \
+				    --kernel-version "{kernel_version}" \
 				    --dist {dist}'
                         }}
                     }}
