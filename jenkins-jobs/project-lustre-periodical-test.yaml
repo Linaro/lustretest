@@ -5,29 +5,29 @@
       - 'master-rhel8':
           branch: 'master'
           dist: 'el8'
-          kernel_version: 'kernel-4.18.0-513.9.1.el8_9'
+          kernel_version: '4.18.0-513.9.1.el8_9'
       - 'master-rhel9':
           dist: 'el9'
           branch: 'master'
-          kernel_version: 'kernel-5.14.0-284.30.1.el9_2'
+          kernel_version: '5.14.0-284.30.1.el9_2'
       - 'master-oe2003':
           dist: 'oe2003sp3'
           branch: 'master'
-          kernel_version: 'kernel-4.19.90-2309.5.0.0220.oe1'
+          kernel_version: '4.19.90-2309.5.0.0220.oe1'
       - 'master-oe2203':
           dist: 'oe2203sp2'
           branch: 'master'
-          kernel_version: 'kernel-5.10.0-153.28.0.105.oe2203sp2'
+          kernel_version: '5.10.0-153.28.0.105.oe2203sp2'
       - 'b2_15-rhel8':
           branch: 'b2_15'
       - 'b2_15-oe2003':
           dist: 'oe2003sp3'
           branch: 'b2_15'
-          kernel_version: 'kernel-4.19.90-2311.4.0.0227.oe1'
+          kernel_version: '4.19.90-2311.4.0.0227.oe1'
       - 'b2_15-oe2203':
           dist: 'oe2203sp2'
           branch: 'b2_15'
-          kernel_version: 'kernel-5.10.0-153.33.0.110.oe2203sp2'
+          kernel_version: '5.10.0-153.33.0.110.oe2203sp2'
     jobs:
       - '{name}-{what}-{branch_distro}'
 
