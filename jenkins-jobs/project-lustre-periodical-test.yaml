@@ -27,7 +27,6 @@
       - 'b2_15-oe2203':
           dist: 'oe2203sp2'
           branch: 'b2_15'
-          kernel_version: '5.10.0-153.34.0.111.oe2203sp2'
     jobs:
       - '{name}-{what}-{branch_distro}'
 
