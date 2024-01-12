@@ -9,7 +9,7 @@
       - 'master-rhel9':
           dist: 'el9'
           branch: 'master'
-          kernel_version: '5.14.0-284.30.1.el9_2'
+          kernel_version: '5.14.0-362.13.1.el9_3'
       - 'master-oe2003':
           dist: 'oe2003sp3'
           branch: 'master'

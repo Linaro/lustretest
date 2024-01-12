@@ -7,9 +7,10 @@
           branch: 'master'
           dist: 'el8'
       - 'master-rhel9':
-          distro: 'rhel9.2'
+          distro: 'rhel9.3'
           branch: 'master'
           dist: 'el9'
+          extra_patches: '53394'
       - 'master-oe2003':
           distro: 'oe2003sp3'
           branch: 'master'
