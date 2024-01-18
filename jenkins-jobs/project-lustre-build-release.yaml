@@ -10,7 +10,6 @@
           distro: 'rhel9.3'
           branch: 'master'
           dist: 'el9'
-          extra_patches: '53394'
       - 'master-oe2003':
           distro: 'oe2003sp3'
           branch: 'master'
