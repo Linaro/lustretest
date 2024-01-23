@@ -19,17 +19,13 @@ if [[ $distro =~ rhel8 ]]; then
 elif [[ $distro =~ rhel9 ]]; then
 	target="5.14-${distro}"
 	dist="el9"
-elif [[ $distro =~ oe2003 ]]; then
-	target="4.19-${distro}"
+elif [[ $distro =~ oe ]]; then
+	co_branch="${branch}-openeuler"
 	dist=${distro}
-        if [[ $branch =~ b2_15 ]]; then
-		co_branch="b2_15-openeuler"
-	fi
-elif [[ $distro =~ oe2203 ]]; then
-	target="5.10-${distro}"
-	dist=${distro}
-        if [[ $branch =~ b2_15 ]]; then
-		co_branch="b2_15-openeuler"
+	if [[ $distro =~ oe2003 ]]; then
+		target="4.19-${distro}"
+	elif [[ $distro =~ oe2203 ]]; then
+		target="5.10-${distro}"
 	fi
 fi
 target_file="lustre/kernel_patches/targets/${target}.target.in"
@@ -68,6 +64,7 @@ rm -rf ${workspace}/build-${subname}-*
 sudo rm -rf /etc/yum.repos.d/${build_what}.repo
 
 # Install dependant pkgs for build
+sudo dnf update -y || true
 sudo dnf install -y dnf-plugins-core
 pkgs=()
 if [[ $dist =~ el ]]; then
@@ -81,13 +78,10 @@ if [[ $dist =~ el ]]; then
 	fi
 	sudo dnf install -y epel-release
 	pkgs+=(yum-utils)
-	sudo dnf update -y
 elif [[ $dist =~ oe ]]; then
 	if [[ $dist =~ oe2003 ]]; then
 		sudo dnf install -y \
 			https://repo.openeuler.org/openEuler-22.03-LTS-SP2/everything/aarch64/Packages/kernel-rpm-macros-30-35.oe2203sp2.aarch64.rpm
-		sudo dnf install -y  openmpi-2.1.1-18.oe1 \
-			openmpi-devel-2.1.1-18.oe1
 	fi
 	sudo dnf install -y openeuler-lsb
 fi
@@ -102,14 +96,12 @@ pkgs+=(audit-libs-devel binutils-devel elfutils-devel kabi-dw ncurses-devel newt
 pkgs+=(libtirpc-devel libblkid-devel libuuid-devel libudev-devel openssl-devel libaio-devel \
 	libattr-devel python3 python3-devel python3-setuptools \
 	python3-cffi libffi-devel git ncompress libcurl-devel keyutils-libs-devel)
-pkgs+=(python3-packaging texinfo)
+pkgs+=(python3-packaging texinfo kernel-rpm-macros)
 sudo dnf install -y ${pkgs[@]}
 sudo ln -s $(which ccache) /usr/local/bin/gcc &&
 sudo ln -s $(which ccache) /usr/local/bin/g++ &&
 sudo ln -s $(which ccache) /usr/local/bin/cc &&
 sudo ln -s $(which ccache) /usr/local/bin/c++
-. /etc/profile.d/modules.sh &&
-module load mpi/openmpi-${arch}
 
 # Prepare
 echo "Generate the release tar bz..."
@@ -182,6 +174,20 @@ code_base=$(find . -name "lustre*tar.gz")
 code_base=$(basename $code_base)
 
 sudo dnf builddep -y lustre.spec
+
+## install a workable openmpi
+if [[ $dist =~ oe2003 ]]; then
+	sudo dnf install -y  openmpi-2.1.1-18.oe1 \
+		openmpi-devel-2.1.1-18.oe1
+elif [[ $dist =~ oe2203 ]]; then
+	sudo dnf remove -y openmpi openmpi-devel --noautoremove
+	sudo dnf install -y \
+		https://repo.openeuler.org/openEuler-22.03-LTS-SP2/everything/aarch64/Packages/openmpi-4.1.4-2.oe2203sp2.aarch64.rpm
+	sudo dnf install -y \
+		https://repo.openeuler.org/openEuler-22.03-LTS-SP2/everything/aarch64/Packages/openmpi-devel-4.1.4-2.oe2203sp2.aarch64.rpm
+fi
+. /etc/profile.d/modules.sh &&
+module load mpi/openmpi-${arch}
 
 # Build
 echo "Build rpms..."

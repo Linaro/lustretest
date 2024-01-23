@@ -12,10 +12,11 @@
           dist: 'el9'
       - 'master-oe2003':
           distro: 'oe2003sp3'
+          git_repo: 'https://github.com/xin3liang/lustre-release.git'
           branch: 'master'
-          extra_patches: '51958'
       - 'master-oe2203':
-          distro: 'oe2203sp2'
+          distro: 'oe2203sp3'
+          git_repo: 'https://github.com/xin3liang/lustre-release.git'
           branch: 'master'
       - 'b2_15-rhel8':
           distro: 'rhel8.9'
@@ -27,7 +28,7 @@
           git_repo: 'https://github.com/xin3liang/lustre-release.git'
           branch: 'b2_15'
       - 'b2_15-oe2203':
-          distro: 'oe2203sp2'
+          distro: 'oe2203sp3'
           git_repo: 'https://github.com/xin3liang/lustre-release.git'
           branch: 'b2_15'
     jobs:

@@ -74,9 +74,8 @@ if [[ $dist =~ el ]]; then
 	fi
 	sudo dnf config-manager --set-enabled devel
 	sudo dnf install -y epel-release
-	sudo dnf update -y
 fi
-#sudo dnf update -y
+sudo dnf update -y || true
 pkgs+=(ccache gcc make autoconf automake libtool rpm-build wget createrepo)
 pkgs+=(gcc-c++ popt-devel dos2unix)
 sudo dnf install -y ${pkgs[@]}
@@ -91,39 +90,44 @@ sudo mkdir -p $srpm_cache_dir
 sudo chown jenkins:jenkins -R $srpm_cache_dir
 mkdir -p $build_dir
 wget -c ${srpm_download_url}/$srpm -O ${srpm_cache_dir}/$srpm
-rpm -ivh --define "_topdir $top_dir" ${srpm_cache_dir}/$srpm
-cd $top_dir
 build_options=""
 if [[ "$what" == "pdsh" ]] && [[ $dist =~ oe ]]; then
 	sudo dnf install -y libgenders-devel  perl-generators readline-devel
 	build_options="--nodeps --without nodeupdown --without torque --without slurm"
 else
-	sudo dnf builddep -y --spec SPECS/${spec_file}
+	sudo dnf builddep -y --srpm ${srpm_cache_dir}/$srpm
 fi
 
+# Build
+echo "Build rpms..."
 # (TODO): download config from github
 if [[ "$what" == "kernel" ]] && [[ $dist =~ el8 ]]; then
+    rpm -ivh --define "_topdir $top_dir" ${srpm_cache_dir}/$srpm
     kernel_src_dir="${cache_dir}/src/kernel"
     cp -vf $kernel_src_dir/kernel-4.18-rhel8.8-aarch64-4k.config \
   	$top_dir/SOURCES/kernel-aarch64.config
 
     append_version="_4k"
     build_options="--without debug --without kabichk"
+
+    rpmbuild --define "_topdir $top_dir" \
+	${build_options} \
+	${append_version:+--define "buildid $append_version"} \
+	-ba SPECS/${spec_file}
+else
+    rpmbuild --define "_topdir $top_dir" \
+	${build_options} \
+	--rebuild -ra ${srpm_cache_dir}/$srpm
 fi
 
-# Build
-echo "Build rpms..."
-rpmbuild --define "_topdir $top_dir" \
-       	${build_options} -ba \
-	${append_version:+--define "buildid $append_version"} \
-	SPECS/${spec_file}
 
 # Release
 echo "Re-generate rpm repo..."
 sudo mkdir -p $rpm_repo
 sudo rm -rfv $rpm_repo/*.rpm
 sudo mv -fv $top_dir/RPMS/aarch64/*.aarch64.rpm $rpm_repo
-sudo mv -fv $top_dir/SRPMS/*.src.rpm $rpm_repo
+sudo mv -fv $top_dir/SRPMS/*.src.rpm $rpm_repo ||
+	sudo cp -v ${srpm_cache_dir}/$srpm $rpm_repo
 sudo createrepo --update $rpm_repo
 
 cat <<EOF | sudo tee ${rpm_repo_file}

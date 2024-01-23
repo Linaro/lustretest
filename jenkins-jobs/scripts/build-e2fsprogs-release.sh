@@ -52,7 +52,7 @@ if [[ $dist =~ el ]]; then
 elif [[ $dist =~ oe ]]; then
 	sudo dnf install -y openeuler-lsb
 fi
-#sudo dnf update -y
+sudo dnf update -y || true
 pkgs+=(git ccache gcc make autoconf automake libtool rpm-build wget createrepo)
 sudo dnf install -y ${pkgs[@]}
 sudo ln -s $(which ccache) /usr/local/bin/gcc &&

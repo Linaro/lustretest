@@ -69,7 +69,8 @@ VM_IMAGES = {
     'el9': 'vm-rocky-9',
     'oe2003sp3': 'vm-openeuler-minimal-20.03-LTS-SP3',
     'oe2203sp1': 'vm-openeuler-minimal-22.03-LTS-SP1',
-    'oe2203sp2': 'vm-openeuler-minimal-22.03-LTS-SP2'
+    'oe2203sp2': 'vm-openeuler-minimal-22.03-LTS-SP2',
+    'oe2203sp3': 'vm-openeuler-minimal-22.03-LTS-SP3',
 }
 
 TERRAFORM_CLIENT01_IP = "client01_ip"

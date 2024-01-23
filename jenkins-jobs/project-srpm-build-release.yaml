@@ -18,18 +18,18 @@
           version: '4.0-20.el8'
       - 'iozone-oe2003':
           what: 'iozone'
-          version: '3.494-2.fc39'
+          version: '3.506-1.fc40'
           dist: 'oe2003sp3'
       - 'iozone-oe2203':
           what: 'iozone'
-          version: '3.494-1.fc38'
+          version: '3.506-1.fc40'
       - 'iozone-el8':
           what: 'iozone'
-          version: '3.494-1.fc38'
+          version: '3.506-1.fc40'
           dist: 'el8'
       - 'iozone-el9':
           what: 'iozone'
-          version: '3.494-1.fc38'
+          version: '3.506-1.fc40'
           dist: 'el9'
       - 'kernel-el8':
           what: 'kernel'
@@ -49,7 +49,7 @@
     node: 'build-agent-{dist}'
 
     # default var values
-    dist: 'oe2203sp2'
+    dist: 'oe2203sp3'
     arch: 'aarch64'
     version: ''
 

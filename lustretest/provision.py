@@ -520,7 +520,7 @@ class Provision():
             cmds.append(cmd)
         cmd = "sudo dnf install epel-release -y || true"
         cmds.append(cmd)
-        cmd = "sudo dnf makecache --refresh"
+        cmd = "sudo dnf update -y --refresh || true"
         cmds.append(cmd)
         self.run_cmds(node, client, cmds)
 
