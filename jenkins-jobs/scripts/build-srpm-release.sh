@@ -139,4 +139,5 @@ gpgcheck=0
 EOF
 
 echo $version > $last_build_file
+sudo cp -fv $last_build_file $rpm_repo/current-build.txt
 echo "Finish ${what} build $build_id. original version: $version, new version: ${version%.*}.${dist}}"

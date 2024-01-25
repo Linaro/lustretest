@@ -230,4 +230,5 @@ if [[ $dist =~ oe ]]; then
 fi
 echo $commit_id > $last_build_file
 echo $kernel_release >> $last_build_file
+sudo cp -fv $last_build_file $rpm_repo/current-build.txt
 echo "Finish build $build_id. branch: $co_branch, commit ID: $commit_id"

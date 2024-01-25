@@ -120,4 +120,5 @@ if [[ $dist =~ oe ]]; then
 	git push mygitee HEAD -f
 fi
 echo $commit_id > $last_build_file
+sudo cp -fv $last_build_file $rpm_repo/current-build.txt
 echo "Finish build $build_id. branch: $branch, commit ID: $commit_id"
