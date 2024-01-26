@@ -11,6 +11,7 @@ distro=${DISTRO:-'rhel8.8'}
 dist_main=${distro%sp*}
 kernel_version=${KERNEL_VERSION:-''}
 kernel_release=${kernel_version##*-}
+openeuler_yum_repo_mirror=${OPENEULER_YUM_REPO_MIRROR:-"http://fr-repo.openeuler.org"}
 
 co_branch=$branch
 if [[ $distro =~ rhel8 ]]; then
@@ -81,7 +82,7 @@ if [[ $dist =~ el ]]; then
 elif [[ $dist =~ oe ]]; then
 	if [[ $dist =~ oe2003 ]]; then
 		sudo dnf install -y \
-			https://repo.openeuler.org/openEuler-22.03-LTS-SP2/everything/aarch64/Packages/kernel-rpm-macros-30-35.oe2203sp2.aarch64.rpm
+			${openeuler_yum_repo_mirror}/openEuler-22.03-LTS-SP2/everything/aarch64/Packages/kernel-rpm-macros-30-35.oe2203sp2.aarch64.rpm
 	fi
 	sudo dnf install -y openeuler-lsb
 fi
@@ -182,9 +183,9 @@ if [[ $dist =~ oe2003 ]]; then
 elif [[ $dist =~ oe2203 ]]; then
 	sudo dnf remove -y openmpi openmpi-devel --noautoremove
 	sudo dnf install -y \
-		https://repo.openeuler.org/openEuler-22.03-LTS-SP2/everything/aarch64/Packages/openmpi-4.1.4-2.oe2203sp2.aarch64.rpm
+		${openeuler_yum_repo_mirror}/openEuler-22.03-LTS-SP2/everything/aarch64/Packages/openmpi-4.1.4-2.oe2203sp2.aarch64.rpm
 	sudo dnf install -y \
-		https://repo.openeuler.org/openEuler-22.03-LTS-SP2/everything/aarch64/Packages/openmpi-devel-4.1.4-2.oe2203sp2.aarch64.rpm
+		${openeuler_yum_repo_mirror}/openEuler-22.03-LTS-SP2/everything/aarch64/Packages/openmpi-devel-4.1.4-2.oe2203sp2.aarch64.rpm
 fi
 . /etc/profile.d/modules.sh &&
 module load mpi/openmpi-${arch}
